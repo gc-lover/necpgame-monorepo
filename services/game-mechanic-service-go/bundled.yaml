@@ -1,0 +1,1389 @@
+openapi: 3.0.3
+info:
+  title: Game Mechanic Service API
+  description: '**Enterprise-grade API for Core Game Mechanics and Systems**
+
+
+    ## Domain Purpose
+
+    Comprehensive core game mechanics service providing validation, state management,
+
+    event processing, and rule execution for the NECPGAME platform.
+
+
+    ## Business Value
+
+    - Real-time game mechanics validation and execution
+
+    - Advanced state synchronization and conflict resolution
+
+    - Performance-optimized event processing pipeline
+
+    - Enterprise-grade scalability for millions of concurrent gaming sessions
+
+    - Comprehensive game rule engine and scripting support
+
+
+    ## Performance Targets
+
+    - P99 Latency: <15ms for core operations
+
+    - Throughput: 200,000+ mechanic operations per second
+
+    - Concurrent Sessions: 500,000+ active game sessions supported
+
+    - Memory per Session: <2KB for game state storage
+
+
+    ## Domain Inheritance
+
+    This service inherits from game-entities.yaml providing:
+
+    - Game session state tracking with optimistic locking
+
+    - Event processing integration with combat and ability systems
+
+    - Character state validation and synchronization
+
+    - Rule engine integration with effect and ability systems
+
+    - Strict typing with validation rules
+
+    '
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Team
+    email: api@necpgame.com
+  license:
+    name: MIT
+servers:
+- url: https://api.necpgame.com/v1/game-mechanic-service
+  description: Production environment
+- url: https://staging-api.necpgame.com/v1/game-mechanic-service
+  description: Staging environment
+- url: http://localhost:8080/api/v1/game-mechanic-service
+  description: Local development
+security:
+- BearerAuth: []
+tags:
+- name: Core Mechanics
+  description: Fundamental game mechanics validation and execution
+- name: State Management
+  description: Game state synchronization and conflict resolution
+- name: Event Processing
+  description: Game event processing and pipeline management
+- name: Rule Engine
+  description: Game rule execution and scripting system
+- name: Validation System
+  description: Real-time game state and action validation
+- name: Performance Monitoring
+  description: Game mechanics performance monitoring and analytics
+- name: Health Monitoring
+  description: Service health and performance monitoring
+paths:
+  /health:
+    $ref: ./paths/health.yaml#/paths/~1health
+  /mechanics/validate:
+    $ref: ./paths/mechanics-validate.yaml#/paths/~1mechanics~1validate
+  /mechanics/execute:
+    $ref: ./paths/mechanics-execute.yaml#/paths/~1mechanics~1execute
+  /state/sync:
+    $ref: ./paths/state-sync.yaml#/paths/~1state~1sync
+  /state/validate:
+    $ref: ./paths/state-validate.yaml#/paths/~1state~1validate
+  /events/process:
+    $ref: ./paths/events-process.yaml#/paths/~1events~1process
+  /events/batch/validate:
+    $ref: ./paths/events-batch-validate.yaml#/paths/~1events~1batch~1validate
+  /rules/execute:
+    $ref: ./paths/rules-execute.yaml#/paths/~1rules~1execute
+  /rules/validate:
+    $ref: ./paths/rules-validate.yaml#/paths/~1rules~1validate
+  /validation/batch:
+    $ref: ./paths/validation-batch.yaml#/paths/~1validation~1batch
+  /performance/metrics:
+    $ref: ./paths/performance-metrics.yaml#/paths/~1performance~1metrics
+components:
+  schemas:
+    GameMechanic:
+      description: Core game mechanic definition with game domain inheritance
+      allOf:
+      - $ref: ../common/schemas/game-entities.yaml#/BaseGameEntity
+      - type: object
+        properties:
+          mechanic_type:
+            type: string
+            enum:
+            - combat
+            - movement
+            - interaction
+            - state_transition
+            - event_processing
+            description: Type of game mechanic
+          name:
+            type: string
+            minLength: 1
+            maxLength: 100
+            description: Mechanic name
+          description:
+            type: string
+            maxLength: 500
+            description: Mechanic description
+          validation_rules:
+            type: array
+            items:
+              $ref: '#/components/schemas/ValidationRule'
+            description: Rules for validating this mechanic
+          execution_rules:
+            type: array
+            items:
+              $ref: '#/components/schemas/ExecutionRule'
+            description: Rules for executing this mechanic
+          performance_requirements:
+            $ref: '#/components/schemas/PerformanceRequirements'
+          dependencies:
+            type: array
+            items:
+              type: string
+              format: uuid
+            description: IDs of dependent mechanics
+          is_active:
+            type: boolean
+            default: true
+            description: Whether mechanic is active
+    GameEvent:
+      description: Game event entity for event processing
+      type: object
+      required:
+      - id
+      - event_type
+      - source_id
+      - timestamp
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Event unique identifier
+        event_type:
+          type: string
+          enum:
+          - combat_action
+          - ability_use
+          - movement
+          - interaction
+          - state_change
+          - system_event
+          description: Type of game event
+        source_id:
+          type: string
+          format: uuid
+          description: Entity that generated the event
+        target_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Entities affected by the event
+        timestamp:
+          type: string
+          format: date-time
+          description: When event occurred
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 5
+          description: Event processing priority
+        payload:
+          type: object
+          description: Event-specific data payload
+          additionalProperties: true
+        processed_at:
+          type: string
+          format: date-time
+          description: When event was processed
+        processing_duration_ms:
+          type: integer
+          description: How long processing took
+        success:
+          type: boolean
+          description: Whether processing succeeded
+        error_message:
+          type: string
+          description: Error message if processing failed
+    GameRule:
+      description: Game rule definition for rule engine
+      allOf:
+      - $ref: ../common/schemas/game-entities.yaml#/BaseGameEntity
+      - type: object
+        properties:
+          rule_type:
+            type: string
+            enum:
+            - validation
+            - calculation
+            - state_transition
+            - event_trigger
+            description: Type of game rule
+          name:
+            type: string
+            minLength: 1
+            maxLength: 100
+            description: Rule name
+          script:
+            type: string
+            description: Rule execution script (Lua/Python based)
+          parameters:
+            type: object
+            description: Rule parameters and configuration
+            additionalProperties: true
+          conditions:
+            type: array
+            items:
+              $ref: '#/components/schemas/RuleCondition'
+            description: Conditions for rule execution
+          actions:
+            type: array
+            items:
+              $ref: '#/components/schemas/RuleAction'
+            description: Actions to perform when rule triggers
+          performance_limits:
+            $ref: '#/components/schemas/PerformanceLimits'
+          is_active:
+            type: boolean
+            default: true
+            description: Whether rule is active
+    GameState:
+      description: Game state snapshot for validation and synchronization
+      type: object
+      required:
+      - id
+      - session_id
+      - state_data
+      - checksum
+      - version
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: State snapshot unique identifier
+        session_id:
+          type: string
+          format: uuid
+          description: Game session this state belongs to
+        state_data:
+          type: object
+          description: Complete game state data
+          additionalProperties: true
+        checksum:
+          type: string
+          description: State data checksum for integrity
+        version:
+          type: integer
+          minimum: 1
+          description: State version for conflict resolution
+        timestamp:
+          type: string
+          format: date-time
+          description: When state was captured
+        compressed_size_bytes:
+          type: integer
+          description: Size of compressed state data
+        compression_ratio:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Compression achieved
+    ValidationRule:
+      description: Rule for validating game mechanics
+      type: object
+      required:
+      - rule_type
+      - severity
+      properties:
+        rule_type:
+          type: string
+          enum:
+          - permission_check
+          - state_consistency
+          - performance_limit
+          - logic_validation
+          description: Type of validation rule
+        severity:
+          type: string
+          enum:
+          - warning
+          - error
+          - critical
+          description: Severity of validation failure
+        condition:
+          type: string
+          description: Validation condition expression
+        error_message:
+          type: string
+          description: Error message for validation failure
+        auto_fix_available:
+          type: boolean
+          default: false
+          description: Whether automatic fix is available
+    ExecutionRule:
+      description: Rule for executing game mechanics
+      type: object
+      required:
+      - execution_type
+      - priority
+      properties:
+        execution_type:
+          type: string
+          enum:
+          - immediate
+          - queued
+          - conditional
+          - batched
+          description: How mechanic should be executed
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: Execution priority
+        timeout_seconds:
+          type: integer
+          minimum: 1
+          maximum: 300
+          description: Maximum execution time
+        retry_policy:
+          $ref: '#/components/schemas/RetryPolicy'
+        rollback_policy:
+          type: string
+          enum:
+          - none
+          - automatic
+          - manual
+          default: automatic
+          description: Rollback behavior on failure
+    PerformanceRequirements:
+      description: Performance requirements for game mechanic
+      type: object
+      properties:
+        max_latency_ms:
+          type: integer
+          minimum: 1
+          description: Maximum allowed latency
+        min_throughput_per_second:
+          type: integer
+          minimum: 1
+          description: Minimum required throughput
+        max_memory_mb:
+          type: integer
+          minimum: 1
+          description: Maximum memory usage
+        max_cpu_percent:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Maximum CPU usage percentage
+    RuleCondition:
+      description: Condition for rule execution
+      type: object
+      required:
+      - condition_type
+      properties:
+        condition_type:
+          type: string
+          enum:
+          - state_check
+          - event_trigger
+          - time_based
+          - custom_logic
+          description: Type of condition
+        expression:
+          type: string
+          description: Condition expression to evaluate
+        variables:
+          type: object
+          description: Variables for condition evaluation
+          additionalProperties: true
+    RuleAction:
+      description: Action to perform when rule triggers
+      type: object
+      required:
+      - action_type
+      properties:
+        action_type:
+          type: string
+          enum:
+          - state_update
+          - event_generation
+          - notification
+          - external_call
+          description: Type of action to perform
+        parameters:
+          type: object
+          description: Action parameters
+          additionalProperties: true
+        delay_seconds:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Delay before executing action
+    PerformanceLimits:
+      description: Performance limits for rule execution
+      type: object
+      properties:
+        max_execution_time_ms:
+          type: integer
+          minimum: 1
+          default: 1000
+          description: Maximum execution time
+        max_memory_usage_mb:
+          type: integer
+          minimum: 1
+          default: 100
+          description: Maximum memory usage
+        max_concurrent_executions:
+          type: integer
+          minimum: 1
+          default: 100
+          description: Maximum concurrent executions
+    RetryPolicy:
+      description: Retry policy for failed operations
+      type: object
+      properties:
+        max_attempts:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 3
+          description: Maximum retry attempts
+        backoff_strategy:
+          type: string
+          enum:
+          - fixed
+          - exponential
+          - linear
+          default: exponential
+          description: Backoff strategy between retries
+        base_delay_seconds:
+          type: number
+          minimum: 0.1
+          default: 1
+          description: Base delay between retries
+    PerformanceMetrics:
+      description: Real-time performance metrics
+      type: object
+      properties:
+        time_range:
+          type: object
+          properties:
+            start_time:
+              type: string
+              format: date-time
+            end_time:
+              type: string
+              format: date-time
+        operation_metrics:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/OperationMetrics'
+          description: Metrics by operation type
+        system_metrics:
+          type: object
+          properties:
+            active_sessions:
+              type: integer
+              description: Currently active game sessions
+            average_session_duration_minutes:
+              type: number
+              description: Average session duration
+            total_events_processed:
+              type: integer
+              description: Total events processed in time range
+            error_rate:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: Overall error rate
+          description: System-wide performance metrics
+        bottleneck_indicators:
+          type: array
+          items:
+            type: object
+            properties:
+              component:
+                type: string
+                description: System component name
+              metric:
+                type: string
+                description: Metric showing bottleneck
+              value:
+                type: number
+                description: Current metric value
+              threshold:
+                type: number
+                description: Threshold for bottleneck detection
+              severity:
+                type: string
+                enum:
+                - low
+                - medium
+                - high
+                - critical
+                description: Bottleneck severity
+            description: Identified performance bottlenecks
+    OperationMetrics:
+      description: Metrics for specific operation type
+      type: object
+      properties:
+        operation_name:
+          type: string
+          description: Name of the operation
+        total_calls:
+          type: integer
+          description: Total number of calls
+        success_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Success rate
+        average_latency_ms:
+          type: number
+          description: Average latency
+        p95_latency_ms:
+          type: number
+          description: 95th percentile latency
+        p99_latency_ms:
+          type: number
+          description: 99th percentile latency
+        error_count:
+          type: integer
+          description: Number of errors
+        timeout_count:
+          type: integer
+          description: Number of timeouts
+    ValidateMechanicRequest:
+      description: Request payload for mechanic validation
+      type: object
+      required:
+      - mechanic_type
+      - parameters
+      properties:
+        mechanic_type:
+          type: string
+          enum:
+          - combat
+          - movement
+          - interaction
+          - state_transition
+          - event_processing
+          description: Type of mechanic to validate
+        parameters:
+          type: object
+          description: Mechanic-specific parameters
+          additionalProperties: true
+        context:
+          type: object
+          description: Validation context
+          properties:
+            session_id:
+              type: string
+              format: uuid
+              description: Game session ID
+            character_id:
+              type: string
+              format: uuid
+              description: Character performing action
+            target_ids:
+              type: array
+              items:
+                type: string
+                format: uuid
+              description: Target entity IDs
+            current_state:
+              type: object
+              description: Current game state snapshot
+              additionalProperties: true
+    MechanicValidationResult:
+      description: Result of mechanic validation
+      type: object
+      required:
+      - valid
+      - confidence_score
+      properties:
+        valid:
+          type: boolean
+          description: Whether mechanic is valid
+        confidence_score:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Confidence in validation result
+        validation_errors:
+          type: array
+          items:
+            type: object
+            properties:
+              rule_id:
+                type: string
+                format: uuid
+                description: ID of violated rule
+              severity:
+                type: string
+                enum:
+                - warning
+                - error
+                - critical
+                description: Error severity
+              message:
+                type: string
+                description: Error message
+              suggested_fix:
+                type: string
+                description: Suggested fix for error
+          description: Validation errors found
+        performance_impact:
+          type: object
+          properties:
+            estimated_latency_ms:
+              type: integer
+              description: Estimated execution latency
+            resource_usage_prediction:
+              type: string
+              enum:
+              - low
+              - medium
+              - high
+              - critical
+              description: Predicted resource usage
+          description: Performance impact assessment
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Non-blocking validation warnings
+    ExecuteMechanicRequest:
+      description: Request payload for mechanic execution
+      type: object
+      required:
+      - mechanic_type
+      - parameters
+      - validation_token
+      properties:
+        mechanic_type:
+          type: string
+          enum:
+          - combat
+          - movement
+          - interaction
+          - state_transition
+          - event_processing
+          description: Type of mechanic to execute
+        parameters:
+          type: object
+          description: Mechanic execution parameters
+          additionalProperties: true
+        validation_token:
+          type: string
+          description: Token from prior validation
+        execution_context:
+          type: object
+          description: Execution context
+          properties:
+            session_id:
+              type: string
+              format: uuid
+              description: Game session ID
+            character_id:
+              type: string
+              format: uuid
+              description: Character performing action
+            priority:
+              type: integer
+              minimum: 1
+              maximum: 10
+              default: 5
+              description: Execution priority
+            timeout_seconds:
+              type: integer
+              minimum: 1
+              maximum: 300
+              default: 30
+              description: Execution timeout
+    MechanicExecutionResult:
+      description: Result of mechanic execution
+      type: object
+      required:
+      - success
+      - execution_time_ms
+      properties:
+        success:
+          type: boolean
+          description: Whether execution succeeded
+        execution_time_ms:
+          type: integer
+          description: Time taken to execute
+        state_changes:
+          type: array
+          items:
+            type: object
+            properties:
+              entity_id:
+                type: string
+                format: uuid
+                description: Entity that changed
+              change_type:
+                type: string
+                enum:
+                - created
+                - updated
+                - deleted
+                description: Type of change
+              old_value:
+                type: object
+                description: Previous state
+                additionalProperties: true
+              new_value:
+                type: object
+                description: New state
+                additionalProperties: true
+            description: State changes applied
+        events_generated:
+          type: array
+          items:
+            $ref: '#/components/schemas/GameEvent'
+          description: Events generated during execution
+        performance_metrics:
+          type: object
+          properties:
+            cpu_time_ms:
+              type: integer
+              description: CPU time used
+            memory_peak_mb:
+              type: integer
+              description: Peak memory usage
+            database_queries:
+              type: integer
+              description: Database queries performed
+          description: Execution performance metrics
+        rollback_data:
+          type: object
+          description: Data for potential rollback
+          additionalProperties: true
+    SyncStateRequest:
+      description: Request payload for state synchronization
+      type: object
+      required:
+      - session_id
+      - state_delta
+      - client_version
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: Game session ID
+        state_delta:
+          type: object
+          description: State changes to apply
+          additionalProperties: true
+        client_version:
+          type: integer
+          minimum: 1
+          description: Client's current state version
+        server_version:
+          type: integer
+          minimum: 1
+          description: Expected server state version
+        priority:
+          type: string
+          enum:
+          - low
+          - normal
+          - high
+          - critical
+          default: normal
+          description: Synchronization priority
+        conflict_resolution:
+          type: string
+          enum:
+          - client_wins
+          - server_wins
+          - merge
+          - reject
+          default: server_wins
+          description: How to resolve conflicts
+    StateSyncResult:
+      description: Result of state synchronization
+      type: object
+      required:
+      - success
+      - final_version
+      properties:
+        success:
+          type: boolean
+          description: Whether synchronization succeeded
+        final_version:
+          type: integer
+          description: Final state version after sync
+        applied_changes:
+          type: integer
+          description: Number of changes applied
+        conflicts_resolved:
+          type: integer
+          description: Number of conflicts resolved
+        rejected_changes:
+          type: integer
+          description: Number of changes rejected
+        broadcast_required:
+          type: boolean
+          description: Whether changes need to be broadcast
+        sync_latency_ms:
+          type: integer
+          description: Time taken for synchronization
+    ValidateStateRequest:
+      description: Request payload for state validation
+      type: object
+      required:
+      - session_id
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: Game session ID
+        state_snapshot:
+          type: object
+          description: Complete state snapshot to validate
+          additionalProperties: true
+        validation_scope:
+          type: string
+          enum:
+          - full
+          - partial
+          - quick
+          default: full
+          description: Scope of validation to perform
+        include_performance_check:
+          type: boolean
+          default: true
+          description: Include performance bottleneck checking
+    StateValidationResult:
+      description: Result of state validation
+      type: object
+      required:
+      - valid
+      - validation_score
+      properties:
+        valid:
+          type: boolean
+          description: Whether state is valid
+        validation_score:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Overall validation score
+        issues_found:
+          type: array
+          items:
+            type: object
+            properties:
+              issue_type:
+                type: string
+                enum:
+                - consistency_error
+                - performance_issue
+                - security_violation
+                - logic_error
+                description: Type of issue found
+              severity:
+                type: string
+                enum:
+                - low
+                - medium
+                - high
+                - critical
+                description: Issue severity
+              description:
+                type: string
+                description: Issue description
+              location:
+                type: string
+                description: Where in state the issue was found
+              suggested_fix:
+                type: string
+                description: Suggested fix for the issue
+          description: Issues found during validation
+        performance_metrics:
+          type: object
+          properties:
+            validation_time_ms:
+              type: integer
+              description: Time taken for validation
+            state_complexity_score:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: State complexity assessment
+            memory_usage_mb:
+              type: integer
+              description: Memory used during validation
+          description: Validation performance metrics
+    ProcessEventsRequest:
+      description: Request payload for event processing
+      type: object
+      required:
+      - events
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/GameEvent'
+          minItems: 1
+          maxItems: 1000
+          description: Events to process
+        processing_options:
+          type: object
+          properties:
+            parallel_processing:
+              type: boolean
+              default: true
+              description: Process events in parallel
+            fail_fast:
+              type: boolean
+              default: false
+              description: Stop on first failure
+            priority_ordering:
+              type: boolean
+              default: true
+              description: Process by priority order
+            batch_timeout_seconds:
+              type: integer
+              minimum: 1
+              maximum: 300
+              default: 60
+              description: Maximum processing time
+          description: Event processing options
+    EventProcessingResult:
+      description: Result of event processing
+      type: object
+      required:
+      - total_processed
+      - success_count
+      - failure_count
+      properties:
+        total_processed:
+          type: integer
+          description: Total events processed
+        success_count:
+          type: integer
+          description: Successfully processed events
+        failure_count:
+          type: integer
+          description: Failed events
+        processing_time_ms:
+          type: integer
+          description: Total processing time
+        events_processed:
+          type: array
+          items:
+            type: object
+            properties:
+              event_id:
+                type: string
+                format: uuid
+                description: Processed event ID
+              success:
+                type: boolean
+                description: Processing success
+              processing_time_ms:
+                type: integer
+                description: Individual processing time
+              error_message:
+                type: string
+                description: Error if failed
+            description: Individual event processing results
+        aggregate_metrics:
+          type: object
+          properties:
+            average_processing_time_ms:
+              type: number
+              description: Average processing time per event
+            events_per_second:
+              type: number
+              description: Processing throughput
+            memory_peak_mb:
+              type: integer
+              description: Peak memory usage
+          description: Aggregate processing metrics
+    ValidateEventBatchRequest:
+      description: Request payload for event batch validation
+      type: object
+      required:
+      - events
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/GameEvent'
+          minItems: 1
+          maxItems: 1000
+          description: Events to validate
+        validation_options:
+          type: object
+          properties:
+            check_dependencies:
+              type: boolean
+              default: true
+              description: Check event dependencies
+            performance_impact_assessment:
+              type: boolean
+              default: true
+              description: Assess performance impact
+            conflict_detection:
+              type: boolean
+              default: true
+              description: Detect potential conflicts
+            optimization_suggestions:
+              type: boolean
+              default: false
+              description: Provide optimization suggestions
+          description: Validation options
+    EventBatchValidationResult:
+      description: Result of event batch validation
+      type: object
+      required:
+      - valid
+      - events_validated
+      properties:
+        valid:
+          type: boolean
+          description: Whether entire batch is valid
+        events_validated:
+          type: integer
+          description: Number of events validated
+        validation_errors:
+          type: array
+          items:
+            type: object
+            properties:
+              event_index:
+                type: integer
+                description: Index of invalid event
+              event_id:
+                type: string
+                format: uuid
+                description: Invalid event ID
+              errors:
+                type: array
+                items:
+                  type: string
+                description: Validation errors for this event
+            description: Validation errors by event
+        dependency_warnings:
+          type: array
+          items:
+            type: string
+          description: Dependency-related warnings
+        performance_warnings:
+          type: array
+          items:
+            type: string
+          description: Performance-related warnings
+        optimization_suggestions:
+          type: array
+          items:
+            type: string
+          description: Suggested optimizations
+    ExecuteRuleRequest:
+      description: Request payload for rule execution
+      type: object
+      required:
+      - rule_id
+      - context
+      properties:
+        rule_id:
+          type: string
+          format: uuid
+          description: Rule to execute
+        context:
+          type: object
+          description: Execution context and variables
+          additionalProperties: true
+        parameters:
+          type: object
+          description: Additional execution parameters
+          additionalProperties: true
+        execution_options:
+          type: object
+          properties:
+            dry_run:
+              type: boolean
+              default: false
+              description: Execute without applying changes
+            timeout_seconds:
+              type: integer
+              minimum: 1
+              maximum: 300
+              default: 30
+              description: Execution timeout
+            debug_mode:
+              type: boolean
+              default: false
+              description: Enable debug output
+          description: Execution options
+    RuleExecutionResult:
+      description: Result of rule execution
+      type: object
+      required:
+      - success
+      - execution_time_ms
+      properties:
+        success:
+          type: boolean
+          description: Whether execution succeeded
+        execution_time_ms:
+          type: integer
+          description: Execution time
+        result_value:
+          type: object
+          description: Rule execution result
+          additionalProperties: true
+        actions_performed:
+          type: array
+          items:
+            type: object
+            properties:
+              action_type:
+                type: string
+                description: Type of action performed
+              parameters:
+                type: object
+                description: Action parameters
+                additionalProperties: true
+              success:
+                type: boolean
+                description: Action success
+            description: Actions performed during execution
+        debug_output:
+          type: object
+          description: Debug information if enabled
+          additionalProperties: true
+        error_message:
+          type: string
+          description: Error message if execution failed
+    ValidateRuleRequest:
+      description: Request payload for rule validation
+      type: object
+      required:
+      - rule_script
+      properties:
+        rule_script:
+          type: string
+          description: Rule script to validate
+        rule_type:
+          type: string
+          enum:
+          - validation
+          - calculation
+          - state_transition
+          - event_trigger
+          description: Expected rule type
+        test_context:
+          type: object
+          description: Test context for validation
+          additionalProperties: true
+        validation_options:
+          type: object
+          properties:
+            syntax_check:
+              type: boolean
+              default: true
+              description: Check script syntax
+            logic_validation:
+              type: boolean
+              default: true
+              description: Validate script logic
+            performance_analysis:
+              type: boolean
+              default: true
+              description: Analyze performance impact
+            security_scan:
+              type: boolean
+              default: true
+              description: Scan for security vulnerabilities
+          description: Validation options
+    RuleValidationResult:
+      description: Result of rule validation
+      type: object
+      required:
+      - valid
+      - validation_score
+      properties:
+        valid:
+          type: boolean
+          description: Whether rule is valid
+        validation_score:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Overall validation score
+        syntax_errors:
+          type: array
+          items:
+            type: string
+          description: Syntax errors found
+        logic_issues:
+          type: array
+          items:
+            type: string
+          description: Logic issues identified
+        performance_warnings:
+          type: array
+          items:
+            type: string
+          description: Performance warnings
+        security_vulnerabilities:
+          type: array
+          items:
+            type: object
+            properties:
+              severity:
+                type: string
+                enum:
+                - low
+                - medium
+                - high
+                - critical
+                description: Vulnerability severity
+              description:
+                type: string
+                description: Vulnerability description
+              line_number:
+                type: integer
+                description: Line number in script
+            description: Security vulnerabilities found
+        optimization_suggestions:
+          type: array
+          items:
+            type: string
+          description: Suggested optimizations
+    BatchValidationRequest:
+      description: Request payload for batch validation
+      type: object
+      required:
+      - validations
+      properties:
+        validations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidateMechanicRequest'
+          minItems: 1
+          maxItems: 100
+          description: Individual validations to perform
+        batch_options:
+          type: object
+          properties:
+            parallel_processing:
+              type: boolean
+              default: true
+              description: Process validations in parallel
+            stop_on_first_error:
+              type: boolean
+              default: false
+              description: Stop on first validation error
+            aggregate_results:
+              type: boolean
+              default: true
+              description: Aggregate results across validations
+            performance_monitoring:
+              type: boolean
+              default: true
+              description: Monitor batch performance
+          description: Batch processing options
+    BatchValidationResult:
+      description: Result of batch validation
+      type: object
+      required:
+      - total_validations
+      - success_count
+      - failure_count
+      properties:
+        total_validations:
+          type: integer
+          description: Total validations performed
+        success_count:
+          type: integer
+          description: Successful validations
+        failure_count:
+          type: integer
+          description: Failed validations
+        processing_time_ms:
+          type: integer
+          description: Total processing time
+        aggregate_errors:
+          type: array
+          items:
+            type: object
+            properties:
+              error_type:
+                type: string
+                description: Type of error
+              count:
+                type: integer
+                description: Number of occurrences
+              examples:
+                type: array
+                items:
+                  type: string
+                description: Example error messages
+            description: Aggregated error types
+        performance_summary:
+          type: object
+          properties:
+            average_validation_time_ms:
+              type: number
+              description: Average time per validation
+            validations_per_second:
+              type: number
+              description: Validation throughput
+            peak_memory_usage_mb:
+              type: integer
+              description: Peak memory usage
+          description: Batch performance summary
+        validation_results:
+          type: array
+          items:
+            type: object
+            properties:
+              validation_index:
+                type: integer
+                description: Index in batch
+              valid:
+                type: boolean
+                description: Validation result
+              errors:
+                type: array
+                items:
+                  type: string
+                description: Errors for this validation
+              processing_time_ms:
+                type: integer
+                description: Time for this validation
+            description: Individual validation results
+  responses:
+    OK:
+      $ref: ../common/responses/success.yaml#/OK
+    Created:
+      $ref: ../common/responses/success.yaml#/Created
+    Updated:
+      $ref: ../common/responses/success.yaml#/Updated
+    BadRequest:
+      $ref: ../common/responses/error.yaml#/BadRequest
+    NotFound:
+      $ref: ../common/responses/error.yaml#/NotFound
+    Conflict:
+      $ref: ../common/responses/error.yaml#/Conflict
+    UnprocessableEntity:
+      $ref: ../common/responses/error.yaml#/UnprocessableEntity
+  securitySchemes:
+    BearerAuth:
+      $ref: ../common/security/security.yaml#/BearerAuth
+    ServiceAuth:
+      $ref: ../common/security/security.yaml#/ServiceAuth

@@ -1,69 +1,68 @@
 openapi: 3.0.3
 info:
   title: Wallet Service API
-  description: 'Enterprise-grade Wallet Management System для NECPGAME платформы.
+  description: 'Enterprise-grade Wallet Management System  NECPGAME .
 
 
     ## 🎯 **Wallet Service Overview**
 
 
-    Wallet Service предоставляет комплексную систему управления кошельками для платформы
-    NECPGAME с enterprise-grade производительностью и масштабируемостью.
+    Wallet Service NECPGAME  enterprise-grade   .
 
 
-    ### **Ключевые Возможности**
+    ### ** **
 
-    - **Multi-Currency Support**: Поддержка множественных валют
+    - **Multi-Currency Support**:
 
-    - **Wallet Creation**: Создание и настройка кошельков
+    - **Wallet Creation**:
 
-    - **Balance Management**: Управление балансами
+    - **Balance Management**:
 
-    - **Transaction History**: История транзакций
-
-
-    ### **Типы Кошельков**
-
-    - **Primary Wallet**: Основной кошелек игрока
-
-    - **Currency-Specific**: Валютные кошельки
-
-    - **Bonus Wallets**: Кошельки для бонусов
-
-    - **Savings Wallets**: Сберегательные кошельки
+    - **Transaction History**:
 
 
-    ### **Расширенные Возможности**
+    ### ** **
 
-    - **Auto-Conversion**: Автоматическая конвертация валют
+    - **Primary Wallet**:
 
-    - **Wallet Linking**: Связывание кошельков
+    - **Currency-Specific**:
 
-    - **Security Features**: Защита от несанкционированного доступа
+    - **Bonus Wallets**:
 
-    - **Analytics**: Аналитика расходов и доходов
+    - **Savings Wallets**:
+
+
+    ### ** **
+
+    - **Auto-Conversion**:
+
+    - **Wallet Linking**:
+
+    - **Security Features**:
+
+    - **Analytics**:
 
 
     ## 📊 **Performance Targets**
 
-    - **P99 Latency**: <20ms для операций с кошельками
+    - **P99 Latency**: <20ms
 
     - **Throughput**: 150,000+ wallet operations/second
 
-    - **Concurrent Users**: 500,000+ активных пользователей
+    - **Concurrent Users**: 500,000+
 
-    - **Wallet Volume**: 5M+ активных кошельков
+    - **Wallet Volume**: 5M+
 
 
     ## 🔐 **Security**
 
-    - JWT RS256 аутентификация
+    - JWT RS256
 
-    - Rate limiting для предотвращения спама
+    - Rate limiting
 
-    - Input validation и sanitization
+    - Input validation  sanitization
 
-    - Audit logging всех операций
+    - Audit logging
 
     '
   version: 1.0.0
@@ -84,755 +83,52 @@ security:
 - BearerAuth: []
 tags:
 - name: Wallet Management
-  description: Управление кошельками
+  description: null
 - name: Balance Operations
-  description: Операции с балансами
+  description: null
 - name: Transaction History
-  description: История транзакций
+  description: null
 - name: Currency Conversion
-  description: Конвертация валют
+  description: null
 - name: Security
-  description: Безопасность кошельков
+  description: null
 - name: Analytics
-  description: Аналитика кошельков
+  description: null
 - name: Health
-  description: Мониторинг здоровья сервиса
+  description: null
 paths:
   /health:
-    get:
-      summary: Проверка здоровья сервиса
-      operationId: healthCheck
-      tags:
-      - Health
-      responses:
-        '200':
-          description: Сервис работает корректно
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HealthResponse'
-        '503':
-          description: Сервис недоступен
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: null
+    $ref: ./paths/health.yaml#/paths/~1health
   /health/batch:
-    post:
-      summary: Пакетная проверка здоровья
-      operationId: healthBatchCheck
-      tags:
-      - Health
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/HealthBatchRequest'
-      responses:
-        '200':
-          description: Результаты проверки здоровья
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HealthBatchResponse'
-        '400':
-          description: Некорректный запрос
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: null
+    $ref: ./paths/health-batch.yaml#/paths/~1health~1batch
   /health/ws:
-    get:
-      summary: WebSocket проверка здоровья
-      operationId: healthWebSocketCheck
-      tags:
-      - Health
-      responses:
-        '101':
-          description: WebSocket соединение установлено
-        '503':
-          description: WebSocket недоступен
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: null
+    $ref: ./paths/health-ws.yaml#/paths/~1health~1ws
   /wallets:
-    post:
-      summary: Создание кошелька
-      operationId: createWallet
-      tags:
-      - Wallet Management
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateWalletRequest'
-      responses:
-        '201':
-          description: Кошелек создан
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WalletResponse'
-        '400':
-          description: Некорректные данные
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '409':
-          description: Кошелек уже существует
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: null
-    get:
-      summary: Получение списка кошельков
-      operationId: getWallets
-      tags:
-      - Wallet Management
-      parameters:
-      - name: ownerId
-        in: query
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: type
-        in: query
-        schema:
-          type: string
-          enum:
-          - primary
-          - currency
-          - bonus
-          - savings
-          - investment
-      - name: currency
-        in: query
-        schema:
-          type: string
-          enum:
-          - eddies
-          - eurobucks
-          - credits
-      - name: status
-        in: query
-        schema:
-          type: string
-          enum:
-          - active
-          - frozen
-          - closed
-          default: active
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 50
-          default: 20
-      - name: offset
-        in: query
-        schema:
-          type: integer
-          minimum: 0
-          default: 0
-      responses:
-        '200':
-          description: Список кошельков
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WalletListResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: null
+    $ref: ./paths/wallets.yaml#/paths/~1wallets
   /wallets/{walletId}:
-    get:
-      summary: Получение информации о кошельке
-      operationId: getWallet
-      tags:
-      - Wallet Management
-      parameters:
-      - name: walletId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      responses:
-        '200':
-          description: Информация о кошельке
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WalletResponse'
-        '404':
-          description: Кошелек не найден
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: null
-    put:
-      summary: Обновление кошелька
-      operationId: updateWallet
-      tags:
-      - Wallet Management
-      parameters:
-      - name: walletId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateWalletRequest'
-      responses:
-        '200':
-          description: Кошелек обновлен
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WalletResponse'
-        '403':
-          description: Недостаточно прав
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: Кошелек не найден
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: null
-    delete:
-      summary: Закрытие кошелька
-      operationId: closeWallet
-      tags:
-      - Wallet Management
-      parameters:
-      - name: walletId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      responses:
-        '200':
-          description: Кошелек закрыт
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WalletResponse'
-        '403':
-          description: Невозможно закрыть кошелек
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: Кошелек не найден
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: null
+    $ref: ./paths/wallets-{walletId}.yaml#/paths/~1wallets~1{walletId}
   /wallets/{walletId}/balance:
-    get:
-      summary: Получение баланса кошелька
-      operationId: getWalletBalance
-      tags:
-      - Balance Operations
-      parameters:
-      - name: walletId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      responses:
-        '200':
-          description: Баланс кошелька
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WalletBalanceResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: null
+    $ref: ./paths/wallets-{walletId}-balance.yaml#/paths/~1wallets~1{walletId}~1balance
   /wallets/{walletId}/deposit:
-    post:
-      summary: Пополнение кошелька
-      operationId: depositToWallet
-      tags:
-      - Balance Operations
-      parameters:
-      - name: walletId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DepositRequest'
-      responses:
-        '200':
-          description: Кошелек пополнен
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DepositResponse'
-        '400':
-          description: Ошибка пополнения
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: null
+    $ref: ./paths/wallets-{walletId}-deposit.yaml#/paths/~1wallets~1{walletId}~1deposit
   /wallets/{walletId}/withdraw:
-    post:
-      summary: Снятие средств с кошелька
-      operationId: withdrawFromWallet
-      tags:
-      - Balance Operations
-      parameters:
-      - name: walletId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/WithdrawRequest'
-      responses:
-        '200':
-          description: Средства сняты
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WithdrawResponse'
-        '400':
-          description: Ошибка снятия
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '409':
-          description: Недостаточно средств
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: null
+    $ref: ./paths/wallets-{walletId}-withdraw.yaml#/paths/~1wallets~1{walletId}~1withdraw
   /wallets/{walletId}/transfer:
-    post:
-      summary: Перевод между кошельками
-      operationId: transferBetweenWallets
-      tags:
-      - Balance Operations
-      parameters:
-      - name: walletId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TransferRequest'
-      responses:
-        '200':
-          description: Перевод выполнен
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TransferResponse'
-        '400':
-          description: Ошибка перевода
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '409':
-          description: Недостаточно средств
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: null
+    $ref: ./paths/wallets-{walletId}-transfer.yaml#/paths/~1wallets~1{walletId}~1transfer
   /wallets/{walletId}/transactions:
-    get:
-      summary: История транзакций кошелька
-      operationId: getWalletTransactions
-      tags:
-      - Transaction History
-      parameters:
-      - name: walletId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: type
-        in: query
-        schema:
-          type: string
-          enum:
-          - deposit
-          - withdraw
-          - transfer
-          - conversion
-          - fee
-          - all
-          default: all
-      - name: startDate
-        in: query
-        schema:
-          type: string
-          format: date
-      - name: endDate
-        in: query
-        schema:
-          type: string
-          format: date
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 50
-      - name: offset
-        in: query
-        schema:
-          type: integer
-          minimum: 0
-          default: 0
-      responses:
-        '200':
-          description: История транзакций
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WalletTransactionHistoryResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: null
+    $ref: ./paths/wallets-{walletId}-transactions.yaml#/paths/~1wallets~1{walletId}~1transactions
   /wallets/conversion:
-    post:
-      summary: Конвертация валют
-      operationId: convertCurrency
-      tags:
-      - Currency Conversion
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ConversionRequest'
-      responses:
-        '200':
-          description: Конвертация выполнена
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ConversionResponse'
-        '400':
-          description: Ошибка конвертации
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: null
+    $ref: ./paths/wallets-conversion.yaml#/paths/~1wallets~1conversion
   /wallets/auto-conversion:
-    post:
-      summary: Настройка авто-конвертации
-      operationId: setupAutoConversion
-      tags:
-      - Currency Conversion
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AutoConversionRequest'
-      responses:
-        '200':
-          description: Авто-конвертация настроена
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AutoConversionResponse'
-        '400':
-          description: Некорректные настройки
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: null
+    $ref: ./paths/wallets-auto-conversion.yaml#/paths/~1wallets~1auto-conversion
   /wallets/{walletId}/link:
-    post:
-      summary: Связывание кошельков
-      operationId: linkWallets
-      tags:
-      - Wallet Management
-      parameters:
-      - name: walletId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/LinkWalletsRequest'
-      responses:
-        '200':
-          description: Кошельки связаны
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LinkWalletsResponse'
-        '400':
-          description: Ошибка связывания
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: null
+    $ref: ./paths/wallets-{walletId}-link.yaml#/paths/~1wallets~1{walletId}~1link
   /wallets/{walletId}/security:
-    get:
-      summary: Настройки безопасности кошелька
-      operationId: getWalletSecurity
-      tags:
-      - Security
-      parameters:
-      - name: walletId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      responses:
-        '200':
-          description: Настройки безопасности
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WalletSecurityResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: null
-    put:
-      summary: Обновление настроек безопасности
-      operationId: updateWalletSecurity
-      tags:
-      - Security
-      parameters:
-      - name: walletId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateSecurityRequest'
-      responses:
-        '200':
-          description: Настройки обновлены
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WalletSecurityResponse'
-        '400':
-          description: Некорректные настройки
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: null
+    $ref: ./paths/wallets-{walletId}-security.yaml#/paths/~1wallets~1{walletId}~1security
   /players/{playerId}/wallets/summary:
-    get:
-      summary: Сводка по кошелькам игрока
-      operationId: getPlayerWalletsSummary
-      tags:
-      - Wallet Management
-      parameters:
-      - name: playerId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      responses:
-        '200':
-          description: Сводка по кошелькам
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PlayerWalletsSummaryResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: null
+    $ref: ./paths/players-{playerId}-wallets-summary.yaml#/paths/~1players~1{playerId}~1wallets~1summary
   /wallets/analytics/spending:
-    get:
-      summary: Аналитика расходов
-      operationId: getSpendingAnalytics
-      tags:
-      - Analytics
-      parameters:
-      - name: playerId
-        in: query
-        schema:
-          type: string
-          format: uuid
-      - name: period
-        in: query
-        schema:
-          type: string
-          enum:
-          - daily
-          - weekly
-          - monthly
-          - yearly
-          default: monthly
-      - name: category
-        in: query
-        schema:
-          type: string
-          enum:
-          - weapons
-          - armor
-          - cyberware
-          - consumables
-          - services
-          - misc
-      responses:
-        '200':
-          description: Аналитика расходов
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SpendingAnalyticsResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: null
+    $ref: ./paths/wallets-analytics-spending.yaml#/paths/~1wallets~1analytics~1spending
 components:
   schemas:
     CharacterEntity:
@@ -851,7 +147,7 @@ components:
       $ref: '#/components/schemas/HealthBatchResponse'
     WalletEntity:
       type: object
-      description: Сущность кошелька
+      description: null
       allOf:
       - $ref: '#/components/schemas/BaseEntity'
       - type: object
@@ -862,12 +158,12 @@ components:
         properties:
           ownerId:
             type: string
-            description: ID владельца кошелька
+            description: ID
             format: uuid
             example: 123e4567-e89b-12d3-a456-426614174000
           type:
             type: string
-            description: Тип кошелька
+            description: null
             enum:
             - primary
             - currency
@@ -877,7 +173,7 @@ components:
             example: primary
           currency:
             type: string
-            description: Валюта кошелька
+            description: null
             enum:
             - eddies
             - eurobucks
@@ -885,7 +181,7 @@ components:
             example: eddies
           balance:
             type: number
-            description: Текущий баланс
+            description: null
             minimum: 0
             example: 50000.5
           availableBalance:
@@ -903,17 +199,17 @@ components:
             example: active
           linkedWallets:
             type: array
-            description: Связанные кошельки
+            description: null
             items:
               type: string
               format: uuid
           autoConversionEnabled:
             type: boolean
-            description: Авто-конвертация включена
+            description: ''
             default: false
           autoConversionSettings:
             type: object
-            description: Настройки авто-конвертации
+            description: ''
             properties:
               targetCurrency:
                 type: string
@@ -929,7 +225,7 @@ components:
                 default: true
           securityLevel:
             type: string
-            description: Уровень безопасности
+            description: null
             enum:
             - standard
             - enhanced
@@ -937,7 +233,7 @@ components:
             example: standard
           dailyLimits:
             type: object
-            description: Дневные лимиты
+            description: null
             properties:
               withdrawal:
                 type: number
@@ -954,7 +250,7 @@ components:
           $ref: '#/components/schemas/OptimisticLock'
     WalletTransactionEntity:
       type: object
-      description: Транзакция кошелька
+      description: null
       allOf:
       - $ref: '#/components/schemas/BaseEntity'
       - type: object
@@ -966,11 +262,11 @@ components:
         properties:
           walletId:
             type: string
-            description: ID кошелька
+            description: ID
             format: uuid
           type:
             type: string
-            description: Тип транзакции
+            description: null
             enum:
             - deposit
             - withdraw
@@ -982,11 +278,11 @@ components:
             example: deposit
           amount:
             type: number
-            description: Сумма транзакции
+            description: null
             example: 1000.0
           currency:
             type: string
-            description: Валюта
+            description: null
             enum:
             - eddies
             - eurobucks
@@ -994,24 +290,24 @@ components:
             example: eddies
           balanceBefore:
             type: number
-            description: Баланс до транзакции
+            description: null
             minimum: 0
           balanceAfter:
             type: number
-            description: Баланс после транзакции
+            description: null
             minimum: 0
           description:
             type: string
-            description: Описание транзакции
+            description: null
             maxLength: 255
             example: Purchase of cyberware upgrade
           referenceId:
             type: string
-            description: Референсный ID (связанная транзакция)
+            description: ID ( )
             format: uuid
           category:
             type: string
-            description: Категория транзакции
+            description: null
             enum:
             - weapons
             - armor
@@ -1023,11 +319,11 @@ components:
             example: cyberware
           location:
             type: string
-            description: Локация транзакции
+            description: null
             maxLength: 100
           processedAt:
             type: string
-            description: Время обработки
+            description: null
             format: date-time
           $ref: '#/components/schemas/OptimisticLock'
     CreateWalletRequest:
@@ -1585,6 +881,7 @@ components:
               type: number
             comparisonToLastPeriod:
               type: number
+  responses: {}
   securitySchemes:
     BearerAuth:
       type: http

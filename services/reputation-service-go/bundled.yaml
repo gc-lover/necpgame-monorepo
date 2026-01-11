@@ -1,0 +1,3810 @@
+openapi: 3.0.3
+info:
+  title: Reputation Service API
+  description: '**Enterprise-grade Reputation Decay & Recovery API** for NECPGAME
+    MMOFPS RPG.
+
+
+    **Module Purpose:** Advanced reputation system with natural decay mechanics, multiple
+    recovery paths, and contextual modifiers for realistic social interactions.
+
+
+    **Architecture:** Event-driven microservice with Kafka integration, Redis caching,
+    and PostgreSQL persistence.
+
+
+    **Core Features:**
+
+    - Real-time reputation decay calculations
+
+    - Multiple recovery action types
+
+    - Context-aware modifiers (time, location, relationships)
+
+    - Bulk reputation operations for performance
+
+    - Comprehensive analytics and simulation tools
+
+    - Anti-cheat validation and fraud detection
+
+    - Cross-service integration with quests, events, and social systems
+
+
+    **Performance Targets:**
+
+    - Real-time updates: P99 <50ms for single reputation changes
+
+    - Bulk operations: 1000+ updates/sec with <200ms latency
+
+    - Decay calculations: Daily batch processing <10 minutes for 1M+ entities
+
+    - Recovery actions: <100ms response time for validation and application
+
+    - Cache hit rate: >95% for active reputation queries
+
+    - Storage efficiency: <50 bytes per reputation relationship
+
+
+    **BACKEND NOTE:** Implements complex decay algorithms with relationship strength
+    modifiers. Uses event sourcing for reputation history and audit trails.
+
+    '
+  version: 1.0.0
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  contact:
+    name: NECPGAME Reputation API Support
+    url: https://necpgame.com/support
+    email: api@reputation.necpgame.com
+servers:
+- url: http://localhost:8086/api/v1/reputation
+  description: Reputation Service Development Server
+- url: https://reputation.necpgame.com/api/v1
+  description: Reputation Service Production Server
+security:
+- BearerAuth: []
+tags:
+- name: Reputation Management
+  description: Core reputation CRUD operations
+- name: Reputation Decay
+  description: Decay mechanics and simulation
+- name: Reputation Recovery
+  description: Recovery actions and validation
+- name: Bulk Operations
+  description: High-performance bulk reputation operations
+- name: Analytics
+  description: Reputation analytics and reporting
+- name: System
+  description: Health checks and system operations
+paths:
+  /health:
+    get:
+      summary: Reputation service health check
+      operationId: reputationHealth
+      tags:
+      - System
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - status
+                - timestamp
+                properties:
+                  status:
+                    type: string
+                    enum:
+                    - ok
+                    - degraded
+                    - critical
+                    example: ok
+                    description: Current health status
+                  message:
+                    type: string
+                    example: Service is healthy
+                    description: Human-readable status message
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2024-01-15T10:30:00Z'
+                    description: Time when health check was performed
+                  version:
+                    type: string
+                    example: 1.0.0
+                    description: Service version
+                  uptime:
+                    type: integer
+                    example: 3600
+                    description: Service uptime in seconds
+                  checks:
+                    type: object
+                    description: Detailed health checks
+                    additionalProperties:
+                      type: object
+                      properties:
+                        status:
+                          type: string
+                          enum:
+                          - ok
+                          - degraded
+                          - critical
+                        message:
+                          type: string
+                        response_time:
+                          type: integer
+                          description: Response time in milliseconds
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/components/schemas/Error
+  /entities/{entity_id}/reputation:
+    get:
+      summary: Get reputation relationships for an entity
+      description: 'Retrieves all reputation relationships for a specific entity (player,
+        NPC, faction).
+
+
+        **BACKEND NOTE:** Supports filtering, pagination, and sorting for large reputation
+        networks.
+
+        Uses Redis cache for frequently accessed relationships.
+
+        '
+      operationId: getEntityReputation
+      tags:
+      - Reputation Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: entity_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Entity ID to get reputation for
+      - name: entity_type
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - player
+          - npc
+          - faction
+          - corporation
+        description: Type of the entity
+      - name: target_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - faction
+          - person
+          - corporation
+          - location
+          - event
+        description: Filter by target type
+      - name: min_value
+        in: query
+        schema:
+          type: number
+          format: float
+          minimum: -100.0
+          maximum: 100.0
+        description: Minimum reputation value filter
+      - name: max_value
+        in: query
+        schema:
+          type: number
+          format: float
+          minimum: -100.0
+          maximum: 100.0
+        description: Maximum reputation value filter
+      - name: tier
+        in: query
+        schema:
+          type: string
+          enum:
+          - hated
+          - hostile
+          - unfriendly
+          - neutral
+          - friendly
+          - liked
+          - respected
+          - revered
+          - legendary
+        description: Filter by reputation tier
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+        description: Page number for pagination
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Items per page
+      - name: sort_by
+        in: query
+        schema:
+          type: string
+          enum:
+          - value
+          - tier
+          - last_updated
+          - relationship_strength
+          default: value
+        description: Sort field
+      - name: sort_order
+        in: query
+        schema:
+          type: string
+          enum:
+          - asc
+          - desc
+          default: desc
+        description: Sort order
+      responses:
+        '200':
+          description: Reputation data retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - reputations
+                - pagination
+                properties:
+                  reputations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ReputationResponse'
+                    description: List of reputation entities
+                  pagination:
+                    type: object
+                    required:
+                    - page
+                    - limit
+                    - total
+                    - total_pages
+                    properties:
+                      page:
+                        type: integer
+                        minimum: 1
+                        description: Current page number
+                      limit:
+                        type: integer
+                        minimum: 1
+                        description: Items per page
+                      total:
+                        type: integer
+                        minimum: 0
+                        description: Total number of items
+                      total_pages:
+                        type: integer
+                        minimum: 1
+                        description: Total number of pages
+                      has_next:
+                        type: boolean
+                        description: Whether there is a next page
+                      has_prev:
+                        type: boolean
+                        description: Whether there is a previous page
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/components/schemas/Error
+        '404':
+          description: Entity not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/components/schemas/Error
+  /entities/{entity_id}/reputation/{target_id}:
+    get:
+      summary: Get specific reputation relationship
+      description: Retrieves detailed reputation information for a specific entity-target
+        relationship.
+      operationId: getSpecificReputation
+      tags:
+      - Reputation Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: entity_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Entity ID
+      - name: target_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Target entity ID
+      - name: entity_type
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - player
+          - npc
+          - faction
+          - corporation
+        description: Type of the entity
+      - name: target_type
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - faction
+          - person
+          - corporation
+          - location
+          - event
+        description: Type of the target entity
+      responses:
+        '200':
+          description: Reputation relationship retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - reputation
+                - metadata
+                properties:
+                  reputation:
+                    type: object
+                    required:
+                    - entity_id
+                    - entity_type
+                    - target_id
+                    - target_type
+                    - reputation_value
+                    - reputation_tier
+                    properties:
+                      entity_id:
+                        type: string
+                        format: uuid
+                        description: ID of the entity (player, NPC, faction) having
+                          the reputation
+                        example: 550e8400-e29b-41d4-a716-446655440000
+                      entity_type:
+                        type: string
+                        enum:
+                        - player
+                        - npc
+                        - faction
+                        - corporation
+                        description: Type of the entity having the reputation
+                        example: player
+                      target_id:
+                        type: string
+                        format: uuid
+                        description: ID of the target entity (faction, person, organization)
+                        example: 550e8400-e29b-41d4-a716-446655440001
+                      target_type:
+                        type: string
+                        enum:
+                        - faction
+                        - person
+                        - corporation
+                        - location
+                        - event
+                        description: Type of the target entity
+                        example: faction
+                      reputation_value:
+                        type: number
+                        format: float
+                        minimum: -100.0
+                        maximum: 100.0
+                        description: Current reputation value (-100 to +100)
+                        example: 75.5
+                      reputation_tier:
+                        type: string
+                        enum:
+                        - hated
+                        - hostile
+                        - unfriendly
+                        - neutral
+                        - friendly
+                        - liked
+                        - respected
+                        - revered
+                        - legendary
+                        description: Reputation tier based on value ranges
+                        example: respected
+                      last_updated:
+                        type: string
+                        format: date-time
+                        description: When reputation was last updated
+                        example: '2025-01-11T10:30:00Z'
+                      created_at:
+                        type: string
+                        format: date-time
+                        description: When reputation relationship was established
+                        example: '2025-01-01T00:00:00Z'
+                      relationship_strength:
+                        type: string
+                        enum:
+                        - weak
+                        - moderate
+                        - strong
+                        - unbreakable
+                        description: Strength of the relationship affecting decay
+                          rates
+                        example: strong
+                      decay_rate_modifier:
+                        type: number
+                        format: float
+                        minimum: 0.0
+                        maximum: 2.0
+                        description: Modifier for decay rate (0.5 = slower decay,
+                          1.5 = faster decay)
+                        example: 0.8
+                      recovery_multiplier:
+                        type: number
+                        format: float
+                        minimum: 0.0
+                        maximum: 3.0
+                        description: Multiplier for recovery effectiveness
+                        example: 1.2
+                      metadata:
+                        type: object
+                        description: Additional reputation-specific metadata
+                        additionalProperties: true
+                        example:
+                          last_interaction: '2025-01-10T15:45:00Z'
+                          interaction_count: 15
+                          favors_owed: 2
+                  metadata:
+                    type: object
+                    required:
+                    - decay_info
+                    - recovery_options
+                    properties:
+                      decay_info:
+                        type: object
+                        properties:
+                          next_decay_time:
+                            type: string
+                            format: date-time
+                            description: When next decay will occur
+                          decay_rate:
+                            type: number
+                            format: float
+                            description: Current decay rate per day
+                          days_since_last_interaction:
+                            type: integer
+                            minimum: 0
+                            description: Days since last interaction with target
+                        description: Information about reputation decay
+                      recovery_options:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            action_type:
+                              type: string
+                              enum:
+                              - quest_completion
+                              - gift_giving
+                              - event_participation
+                              - loyalty_display
+                              - crisis_intervention
+                              - personal_sacrifice
+                              - public_service
+                              - relationship_building
+                              - favor_returned
+                              - apology_offered
+                              description: Type of recovery action
+                            estimated_recovery:
+                              type: object
+                              properties:
+                                min_value:
+                                  type: number
+                                  format: float
+                                  minimum: 0.0
+                                max_value:
+                                  type: number
+                                  format: float
+                                  minimum: 0.0
+                                average_value:
+                                  type: number
+                                  format: float
+                                  minimum: 0.0
+                              description: Estimated recovery value range
+                            cooldown_remaining:
+                              type: integer
+                              minimum: 0
+                              description: Seconds remaining before action can be
+                                used again
+                            requirements_met:
+                              type: boolean
+                              description: Whether all requirements for this action
+                                are met
+                          description: Available recovery action
+                        description: Available recovery options for this reputation
+                      relationship_health:
+                        type: object
+                        properties:
+                          status:
+                            type: string
+                            enum:
+                            - critical
+                            - weak
+                            - stable
+                            - strong
+                            - excellent
+                            description: Overall relationship health status
+                          risk_level:
+                            type: string
+                            enum:
+                            - low
+                            - medium
+                            - high
+                            - critical
+                            description: Risk of reputation decay
+                          recommended_actions:
+                            type: array
+                            items:
+                              type: string
+                              example: Complete faction quest
+                            description: Recommended actions to maintain/improve reputation
+                        description: Overall relationship health assessment
+        '404':
+          description: Reputation relationship not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/components/schemas/Error
+  /reputation:
+    post:
+      summary: Update reputation relationship
+      description: 'Updates or creates a reputation relationship with validation and
+        decay calculations.
+
+
+        **BACKEND NOTE:** Handles both creation and updates. Applies decay calculations
+        if relationship already exists.
+
+        Triggers notifications and analytics events.
+
+        '
+      operationId: updateReputation
+      tags:
+      - Reputation Management
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - entity_id
+              - entity_type
+              - target_id
+              - target_type
+              - change_type
+              - change_value
+              properties:
+                entity_id:
+                  type: string
+                  format: uuid
+                  description: ID of the entity whose reputation is being updated
+                entity_type:
+                  type: string
+                  enum:
+                  - player
+                  - npc
+                  - faction
+                  - corporation
+                  description: Type of the entity
+                target_id:
+                  type: string
+                  format: uuid
+                  description: ID of the target entity
+                target_type:
+                  type: string
+                  enum:
+                  - faction
+                  - person
+                  - corporation
+                  - location
+                  - event
+                  description: Type of the target entity
+                change_type:
+                  type: string
+                  enum:
+                  - direct_action
+                  - quest_completion
+                  - event_participation
+                  - time_decay
+                  - relationship_decay
+                  - gift_received
+                  - betrayal
+                  - loyalty_display
+                  - crisis_intervention
+                  - sacrifice_made
+                  description: Type of reputation change
+                  example: quest_completion
+                change_value:
+                  type: number
+                  format: float
+                  minimum: -50.0
+                  maximum: 50.0
+                  description: Reputation change value (positive for increase, negative
+                    for decrease)
+                  example: 15.5
+                reason:
+                  type: string
+                  maxLength: 500
+                  description: Human-readable reason for the reputation change
+                  example: Completed faction quest 'Data Recovery'
+                context:
+                  type: object
+                  description: Additional context for the reputation change
+                  additionalProperties: true
+                  example:
+                    quest_id: quest-123
+                    location: Night City - Watson
+                    time_of_day: night
+                source_event_id:
+                  type: string
+                  format: uuid
+                  description: ID of the event that triggered this reputation change
+                  example: 550e8400-e29b-41d4-a716-446655440002
+      responses:
+        '200':
+          description: Reputation updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - success
+                - reputation_before
+                - reputation_after
+                - change_applied
+                properties:
+                  success:
+                    type: boolean
+                    description: Whether the update was successful
+                    example: true
+                  reputation_before:
+                    type: object
+                    required:
+                    - entity_id
+                    - entity_type
+                    - target_id
+                    - target_type
+                    - reputation_value
+                    - reputation_tier
+                    properties:
+                      entity_id:
+                        type: string
+                        format: uuid
+                        description: ID of the entity (player, NPC, faction) having
+                          the reputation
+                        example: 550e8400-e29b-41d4-a716-446655440000
+                      entity_type:
+                        type: string
+                        enum:
+                        - player
+                        - npc
+                        - faction
+                        - corporation
+                        description: Type of the entity having the reputation
+                        example: player
+                      target_id:
+                        type: string
+                        format: uuid
+                        description: ID of the target entity (faction, person, organization)
+                        example: 550e8400-e29b-41d4-a716-446655440001
+                      target_type:
+                        type: string
+                        enum:
+                        - faction
+                        - person
+                        - corporation
+                        - location
+                        - event
+                        description: Type of the target entity
+                        example: faction
+                      reputation_value:
+                        type: number
+                        format: float
+                        minimum: -100.0
+                        maximum: 100.0
+                        description: Current reputation value (-100 to +100)
+                        example: 75.5
+                      reputation_tier:
+                        type: string
+                        enum:
+                        - hated
+                        - hostile
+                        - unfriendly
+                        - neutral
+                        - friendly
+                        - liked
+                        - respected
+                        - revered
+                        - legendary
+                        description: Reputation tier based on value ranges
+                        example: respected
+                      last_updated:
+                        type: string
+                        format: date-time
+                        description: When reputation was last updated
+                        example: '2025-01-11T10:30:00Z'
+                      created_at:
+                        type: string
+                        format: date-time
+                        description: When reputation relationship was established
+                        example: '2025-01-01T00:00:00Z'
+                      relationship_strength:
+                        type: string
+                        enum:
+                        - weak
+                        - moderate
+                        - strong
+                        - unbreakable
+                        description: Strength of the relationship affecting decay
+                          rates
+                        example: strong
+                      decay_rate_modifier:
+                        type: number
+                        format: float
+                        minimum: 0.0
+                        maximum: 2.0
+                        description: Modifier for decay rate (0.5 = slower decay,
+                          1.5 = faster decay)
+                        example: 0.8
+                      recovery_multiplier:
+                        type: number
+                        format: float
+                        minimum: 0.0
+                        maximum: 3.0
+                        description: Multiplier for recovery effectiveness
+                        example: 1.2
+                      metadata:
+                        type: object
+                        description: Additional reputation-specific metadata
+                        additionalProperties: true
+                        example:
+                          last_interaction: '2025-01-10T15:45:00Z'
+                          interaction_count: 15
+                          favors_owed: 2
+                  reputation_after:
+                    type: object
+                    required:
+                    - entity_id
+                    - entity_type
+                    - target_id
+                    - target_type
+                    - reputation_value
+                    - reputation_tier
+                    properties:
+                      entity_id:
+                        type: string
+                        format: uuid
+                        description: ID of the entity (player, NPC, faction) having
+                          the reputation
+                        example: 550e8400-e29b-41d4-a716-446655440000
+                      entity_type:
+                        type: string
+                        enum:
+                        - player
+                        - npc
+                        - faction
+                        - corporation
+                        description: Type of the entity having the reputation
+                        example: player
+                      target_id:
+                        type: string
+                        format: uuid
+                        description: ID of the target entity (faction, person, organization)
+                        example: 550e8400-e29b-41d4-a716-446655440001
+                      target_type:
+                        type: string
+                        enum:
+                        - faction
+                        - person
+                        - corporation
+                        - location
+                        - event
+                        description: Type of the target entity
+                        example: faction
+                      reputation_value:
+                        type: number
+                        format: float
+                        minimum: -100.0
+                        maximum: 100.0
+                        description: Current reputation value (-100 to +100)
+                        example: 75.5
+                      reputation_tier:
+                        type: string
+                        enum:
+                        - hated
+                        - hostile
+                        - unfriendly
+                        - neutral
+                        - friendly
+                        - liked
+                        - respected
+                        - revered
+                        - legendary
+                        description: Reputation tier based on value ranges
+                        example: respected
+                      last_updated:
+                        type: string
+                        format: date-time
+                        description: When reputation was last updated
+                        example: '2025-01-11T10:30:00Z'
+                      created_at:
+                        type: string
+                        format: date-time
+                        description: When reputation relationship was established
+                        example: '2025-01-01T00:00:00Z'
+                      relationship_strength:
+                        type: string
+                        enum:
+                        - weak
+                        - moderate
+                        - strong
+                        - unbreakable
+                        description: Strength of the relationship affecting decay
+                          rates
+                        example: strong
+                      decay_rate_modifier:
+                        type: number
+                        format: float
+                        minimum: 0.0
+                        maximum: 2.0
+                        description: Modifier for decay rate (0.5 = slower decay,
+                          1.5 = faster decay)
+                        example: 0.8
+                      recovery_multiplier:
+                        type: number
+                        format: float
+                        minimum: 0.0
+                        maximum: 3.0
+                        description: Multiplier for recovery effectiveness
+                        example: 1.2
+                      metadata:
+                        type: object
+                        description: Additional reputation-specific metadata
+                        additionalProperties: true
+                        example:
+                          last_interaction: '2025-01-10T15:45:00Z'
+                          interaction_count: 15
+                          favors_owed: 2
+                  change_applied:
+                    type: object
+                    required:
+                    - change_value
+                    - final_value
+                    - tier_changed
+                    properties:
+                      change_value:
+                        type: number
+                        format: float
+                        description: Actual change value applied (may differ from
+                          requested due to caps/limits)
+                        example: 12.5
+                      final_value:
+                        type: number
+                        format: float
+                        description: Final reputation value after change
+                        example: 78.2
+                      tier_changed:
+                        type: boolean
+                        description: Whether reputation tier changed as result
+                        example: false
+                      new_tier:
+                        type: string
+                        enum:
+                        - hated
+                        - hostile
+                        - unfriendly
+                        - neutral
+                        - friendly
+                        - liked
+                        - respected
+                        - revered
+                        - legendary
+                        description: New reputation tier (if changed)
+                      notifications_sent:
+                        type: array
+                        items:
+                          type: string
+                          format: uuid
+                          description: IDs of players notified about this change
+                  processing_time_ms:
+                    type: integer
+                    minimum: 0
+                    description: Server processing time in milliseconds
+                    example: 45
+        '400':
+          description: Invalid update request
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/components/schemas/Error
+        '403':
+          description: Not authorized to update reputation
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/components/schemas/Error
+  /reputation/bulk:
+    post:
+      summary: Bulk reputation updates
+      description: 'Performs multiple reputation updates in a single operation for
+        performance.
+
+
+        **BACKEND NOTE:** Supports atomic operations. Critical for mass reputation
+        changes from events/quests.
+
+        Uses optimized batch processing with Redis pipeline operations.
+
+        '
+      operationId: bulkUpdateReputation
+      tags:
+      - Bulk Operations
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - updates
+              properties:
+                updates:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                    - entity_id
+                    - entity_type
+                    - target_id
+                    - target_type
+                    - change_type
+                    - change_value
+                    properties:
+                      entity_id:
+                        type: string
+                        format: uuid
+                        description: ID of the entity whose reputation is being updated
+                      entity_type:
+                        type: string
+                        enum:
+                        - player
+                        - npc
+                        - faction
+                        - corporation
+                        description: Type of the entity
+                      target_id:
+                        type: string
+                        format: uuid
+                        description: ID of the target entity
+                      target_type:
+                        type: string
+                        enum:
+                        - faction
+                        - person
+                        - corporation
+                        - location
+                        - event
+                        description: Type of the target entity
+                      change_type:
+                        type: string
+                        enum:
+                        - direct_action
+                        - quest_completion
+                        - event_participation
+                        - time_decay
+                        - relationship_decay
+                        - gift_received
+                        - betrayal
+                        - loyalty_display
+                        - crisis_intervention
+                        - sacrifice_made
+                        description: Type of reputation change
+                        example: quest_completion
+                      change_value:
+                        type: number
+                        format: float
+                        minimum: -50.0
+                        maximum: 50.0
+                        description: Reputation change value (positive for increase,
+                          negative for decrease)
+                        example: 15.5
+                      reason:
+                        type: string
+                        maxLength: 500
+                        description: Human-readable reason for the reputation change
+                        example: Completed faction quest 'Data Recovery'
+                      context:
+                        type: object
+                        description: Additional context for the reputation change
+                        additionalProperties: true
+                        example:
+                          quest_id: quest-123
+                          location: Night City - Watson
+                          time_of_day: night
+                      source_event_id:
+                        type: string
+                        format: uuid
+                        description: ID of the event that triggered this reputation
+                          change
+                        example: 550e8400-e29b-41d4-a716-446655440002
+                  minItems: 1
+                  maxItems: 100
+                  description: Array of reputation updates to process
+                options:
+                  type: object
+                  properties:
+                    atomic:
+                      type: boolean
+                      default: true
+                      description: Whether all updates should succeed or fail together
+                    skip_validation:
+                      type: boolean
+                      default: false
+                      description: Skip validation for performance (use with caution)
+                    notify_players:
+                      type: boolean
+                      default: true
+                      description: Send notifications to affected players
+      responses:
+        '200':
+          description: Bulk updates completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - success
+                - total_updates
+                - successful_updates
+                - failed_updates
+                properties:
+                  success:
+                    type: boolean
+                    description: Whether the bulk operation was successful (all updates
+                      succeeded if atomic=true)
+                  total_updates:
+                    type: integer
+                    minimum: 0
+                    description: Total number of updates requested
+                  successful_updates:
+                    type: integer
+                    minimum: 0
+                    description: Number of updates that succeeded
+                  failed_updates:
+                    type: integer
+                    minimum: 0
+                    description: Number of updates that failed
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                      - update_index
+                      - success
+                      properties:
+                        update_index:
+                          type: integer
+                          minimum: 0
+                          description: Index of the update in the original request
+                            array
+                        success:
+                          type: boolean
+                          description: Whether this specific update succeeded
+                        result:
+                          $ref: '#/components/schemas/ReputationUpdateResponse'
+                          description: Update result (present if success=true)
+                        error:
+                          type: object
+                          properties:
+                            code:
+                              type: string
+                              example: VALIDATION_ERROR
+                            message:
+                              type: string
+                              example: Invalid reputation value
+                          description: Error details (present if success=false)
+                  processing_time_ms:
+                    type: integer
+                    minimum: 0
+                    description: Total server processing time in milliseconds
+        '207':
+          description: Partial success - some updates failed
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - success
+                - total_updates
+                - successful_updates
+                - failed_updates
+                properties:
+                  success:
+                    type: boolean
+                    description: Whether the bulk operation was successful (all updates
+                      succeeded if atomic=true)
+                  total_updates:
+                    type: integer
+                    minimum: 0
+                    description: Total number of updates requested
+                  successful_updates:
+                    type: integer
+                    minimum: 0
+                    description: Number of updates that succeeded
+                  failed_updates:
+                    type: integer
+                    minimum: 0
+                    description: Number of updates that failed
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                      - update_index
+                      - success
+                      properties:
+                        update_index:
+                          type: integer
+                          minimum: 0
+                          description: Index of the update in the original request
+                            array
+                        success:
+                          type: boolean
+                          description: Whether this specific update succeeded
+                        result:
+                          $ref: '#/components/schemas/ReputationUpdateResponse'
+                          description: Update result (present if success=true)
+                        error:
+                          type: object
+                          properties:
+                            code:
+                              type: string
+                              example: VALIDATION_ERROR
+                            message:
+                              type: string
+                              example: Invalid reputation value
+                          description: Error details (present if success=false)
+                  processing_time_ms:
+                    type: integer
+                    minimum: 0
+                    description: Total server processing time in milliseconds
+        '400':
+          description: Invalid bulk request
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/components/schemas/Error
+  /reputation/recovery:
+    post:
+      summary: Perform reputation recovery action
+      description: 'Executes a reputation recovery action with validation and effectiveness
+        calculations.
+
+
+        **BACKEND NOTE:** Validates action requirements, calculates recovery value
+        based on context,
+
+        applies cooldowns, and triggers reputation updates.
+
+        '
+      operationId: performReputationRecovery
+      tags:
+      - Reputation Recovery
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - entity_id
+              - entity_type
+              - target_id
+              - target_type
+              - action_type
+              properties:
+                entity_id:
+                  type: string
+                  format: uuid
+                  description: ID of the entity performing recovery action
+                entity_type:
+                  type: string
+                  enum:
+                  - player
+                  - npc
+                  - faction
+                  - corporation
+                  description: Type of the entity
+                target_id:
+                  type: string
+                  format: uuid
+                  description: ID of the target entity to recover reputation with
+                target_type:
+                  type: string
+                  enum:
+                  - faction
+                  - person
+                  - corporation
+                  - location
+                  - event
+                  description: Type of the target entity
+                action_type:
+                  type: string
+                  enum:
+                  - quest_completion
+                  - gift_giving
+                  - event_participation
+                  - loyalty_display
+                  - crisis_intervention
+                  - personal_sacrifice
+                  - public_service
+                  - relationship_building
+                  - favor_returned
+                  - apology_offered
+                  description: Type of recovery action
+                action_parameters:
+                  type: object
+                  description: Action-specific parameters
+                  additionalProperties: true
+                  example:
+                    gift_id: item-123
+                    quest_id: quest-456
+                    sacrifice_value: 1000
+                location_context:
+                  type: object
+                  properties:
+                    location_id:
+                      type: string
+                      format: uuid
+                      description: Current location ID
+                    location_type:
+                      type: string
+                      enum:
+                      - home_territory
+                      - enemy_territory
+                      - neutral_zone
+                      description: Location context affecting recovery effectiveness
+                    time_of_day:
+                      type: string
+                      enum:
+                      - morning
+                      - afternoon
+                      - evening
+                      - night
+                      description: Time of day context
+                  description: Location and time context for the action
+                expected_recovery_range:
+                  type: object
+                  properties:
+                    min_value:
+                      type: number
+                      format: float
+                      minimum: 0.0
+                      description: Minimum expected recovery value
+                    max_value:
+                      type: number
+                      format: float
+                      minimum: 0.0
+                      description: Maximum expected recovery value
+                  description: Expected recovery value range for validation
+      responses:
+        '200':
+          description: Recovery action performed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - success
+                - action_performed
+                - recovery_applied
+                properties:
+                  success:
+                    type: boolean
+                    description: Whether the recovery action was successful
+                  action_performed:
+                    type: object
+                    required:
+                    - action_type
+                    - timestamp
+                    properties:
+                      action_type:
+                        type: string
+                        enum:
+                        - quest_completion
+                        - gift_giving
+                        - event_participation
+                        - loyalty_display
+                        - crisis_intervention
+                        - personal_sacrifice
+                        - public_service
+                        - relationship_building
+                        - favor_returned
+                        - apology_offered
+                        description: Type of recovery action performed
+                      timestamp:
+                        type: string
+                        format: date-time
+                        description: When the action was performed
+                      action_id:
+                        type: string
+                        format: uuid
+                        description: Unique ID for this action instance
+                  recovery_applied:
+                    type: object
+                    required:
+                    - reputation_before
+                    - reputation_after
+                    - recovery_value
+                    properties:
+                      reputation_before:
+                        type: object
+                        required:
+                        - entity_id
+                        - entity_type
+                        - target_id
+                        - target_type
+                        - reputation_value
+                        - reputation_tier
+                        properties:
+                          entity_id:
+                            type: string
+                            format: uuid
+                            description: ID of the entity (player, NPC, faction) having
+                              the reputation
+                            example: 550e8400-e29b-41d4-a716-446655440000
+                          entity_type:
+                            type: string
+                            enum:
+                            - player
+                            - npc
+                            - faction
+                            - corporation
+                            description: Type of the entity having the reputation
+                            example: player
+                          target_id:
+                            type: string
+                            format: uuid
+                            description: ID of the target entity (faction, person,
+                              organization)
+                            example: 550e8400-e29b-41d4-a716-446655440001
+                          target_type:
+                            type: string
+                            enum:
+                            - faction
+                            - person
+                            - corporation
+                            - location
+                            - event
+                            description: Type of the target entity
+                            example: faction
+                          reputation_value:
+                            type: number
+                            format: float
+                            minimum: -100.0
+                            maximum: 100.0
+                            description: Current reputation value (-100 to +100)
+                            example: 75.5
+                          reputation_tier:
+                            type: string
+                            enum:
+                            - hated
+                            - hostile
+                            - unfriendly
+                            - neutral
+                            - friendly
+                            - liked
+                            - respected
+                            - revered
+                            - legendary
+                            description: Reputation tier based on value ranges
+                            example: respected
+                          last_updated:
+                            type: string
+                            format: date-time
+                            description: When reputation was last updated
+                            example: '2025-01-11T10:30:00Z'
+                          created_at:
+                            type: string
+                            format: date-time
+                            description: When reputation relationship was established
+                            example: '2025-01-01T00:00:00Z'
+                          relationship_strength:
+                            type: string
+                            enum:
+                            - weak
+                            - moderate
+                            - strong
+                            - unbreakable
+                            description: Strength of the relationship affecting decay
+                              rates
+                            example: strong
+                          decay_rate_modifier:
+                            type: number
+                            format: float
+                            minimum: 0.0
+                            maximum: 2.0
+                            description: Modifier for decay rate (0.5 = slower decay,
+                              1.5 = faster decay)
+                            example: 0.8
+                          recovery_multiplier:
+                            type: number
+                            format: float
+                            minimum: 0.0
+                            maximum: 3.0
+                            description: Multiplier for recovery effectiveness
+                            example: 1.2
+                          metadata:
+                            type: object
+                            description: Additional reputation-specific metadata
+                            additionalProperties: true
+                            example:
+                              last_interaction: '2025-01-10T15:45:00Z'
+                              interaction_count: 15
+                              favors_owed: 2
+                      reputation_after:
+                        type: object
+                        required:
+                        - entity_id
+                        - entity_type
+                        - target_id
+                        - target_type
+                        - reputation_value
+                        - reputation_tier
+                        properties:
+                          entity_id:
+                            type: string
+                            format: uuid
+                            description: ID of the entity (player, NPC, faction) having
+                              the reputation
+                            example: 550e8400-e29b-41d4-a716-446655440000
+                          entity_type:
+                            type: string
+                            enum:
+                            - player
+                            - npc
+                            - faction
+                            - corporation
+                            description: Type of the entity having the reputation
+                            example: player
+                          target_id:
+                            type: string
+                            format: uuid
+                            description: ID of the target entity (faction, person,
+                              organization)
+                            example: 550e8400-e29b-41d4-a716-446655440001
+                          target_type:
+                            type: string
+                            enum:
+                            - faction
+                            - person
+                            - corporation
+                            - location
+                            - event
+                            description: Type of the target entity
+                            example: faction
+                          reputation_value:
+                            type: number
+                            format: float
+                            minimum: -100.0
+                            maximum: 100.0
+                            description: Current reputation value (-100 to +100)
+                            example: 75.5
+                          reputation_tier:
+                            type: string
+                            enum:
+                            - hated
+                            - hostile
+                            - unfriendly
+                            - neutral
+                            - friendly
+                            - liked
+                            - respected
+                            - revered
+                            - legendary
+                            description: Reputation tier based on value ranges
+                            example: respected
+                          last_updated:
+                            type: string
+                            format: date-time
+                            description: When reputation was last updated
+                            example: '2025-01-11T10:30:00Z'
+                          created_at:
+                            type: string
+                            format: date-time
+                            description: When reputation relationship was established
+                            example: '2025-01-01T00:00:00Z'
+                          relationship_strength:
+                            type: string
+                            enum:
+                            - weak
+                            - moderate
+                            - strong
+                            - unbreakable
+                            description: Strength of the relationship affecting decay
+                              rates
+                            example: strong
+                          decay_rate_modifier:
+                            type: number
+                            format: float
+                            minimum: 0.0
+                            maximum: 2.0
+                            description: Modifier for decay rate (0.5 = slower decay,
+                              1.5 = faster decay)
+                            example: 0.8
+                          recovery_multiplier:
+                            type: number
+                            format: float
+                            minimum: 0.0
+                            maximum: 3.0
+                            description: Multiplier for recovery effectiveness
+                            example: 1.2
+                          metadata:
+                            type: object
+                            description: Additional reputation-specific metadata
+                            additionalProperties: true
+                            example:
+                              last_interaction: '2025-01-10T15:45:00Z'
+                              interaction_count: 15
+                              favors_owed: 2
+                      recovery_value:
+                        type: number
+                        format: float
+                        description: Actual recovery value applied
+                        example: 15.5
+                  cooldown_applied:
+                    type: object
+                    properties:
+                      action_type:
+                        type: string
+                        description: Action type that entered cooldown
+                      cooldown_duration_seconds:
+                        type: integer
+                        minimum: 0
+                        description: Cooldown duration in seconds
+                      cooldown_expires_at:
+                        type: string
+                        format: date-time
+                        description: When cooldown expires
+                    description: Cooldown information (present if action has cooldown)
+                  notifications_triggered:
+                    type: array
+                    items:
+                      type: string
+                      example: recovery_success_notification
+                    description: Types of notifications sent to the player
+        '400':
+          description: Invalid recovery request or requirements not met
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/components/schemas/Error
+        '429':
+          description: Action on cooldown
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/components/schemas/Error
+  /reputation/simulate-decay:
+    post:
+      summary: Simulate reputation decay over time
+      description: 'Simulates how reputation will decay over a specified period without
+        actually applying changes.
+
+
+        **BACKEND NOTE:** Useful for UI previews, player planning, and balance testing.
+
+        Considers activity levels and relationship strengths in calculations.
+
+        '
+      operationId: simulateReputationDecay
+      tags:
+      - Reputation Decay
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - entity_id
+              - entity_type
+              - simulation_days
+              properties:
+                entity_id:
+                  type: string
+                  format: uuid
+                  description: ID of the entity to simulate decay for
+                entity_type:
+                  type: string
+                  enum:
+                  - player
+                  - npc
+                  - faction
+                  - corporation
+                  description: Type of the entity
+                simulation_days:
+                  type: integer
+                  minimum: 1
+                  maximum: 365
+                  description: Number of days to simulate decay
+                include_recovery_actions:
+                  type: boolean
+                  default: false
+                  description: Whether to include potential recovery actions in simulation
+                activity_level:
+                  type: string
+                  enum:
+                  - inactive
+                  - casual
+                  - active
+                  - hardcore
+                  default: active
+                  description: Assumed player activity level for simulation
+      responses:
+        '200':
+          description: Decay simulation completed
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - simulation_period_days
+                - reputation_changes
+                - final_state
+                properties:
+                  simulation_period_days:
+                    type: integer
+                    minimum: 1
+                    description: Number of days simulated
+                  reputation_changes:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                      - day
+                      - reputation_value
+                      - change_reason
+                      properties:
+                        day:
+                          type: integer
+                          minimum: 0
+                          description: Day number in simulation (0 = starting day)
+                        reputation_value:
+                          type: number
+                          format: float
+                          description: Reputation value at end of this day
+                        change_reason:
+                          type: string
+                          enum:
+                          - natural_decay
+                          - recovery_action
+                          - relationship_decay
+                          description: Reason for the reputation change
+                        change_value:
+                          type: number
+                          format: float
+                          description: Change value for this day
+                        tier_at_end_of_day:
+                          type: string
+                          enum:
+                          - hated
+                          - hostile
+                          - unfriendly
+                          - neutral
+                          - friendly
+                          - liked
+                          - respected
+                          - revered
+                          - legendary
+                          description: Reputation tier at end of this day
+                    description: Daily reputation changes during simulation
+                  final_state:
+                    type: object
+                    required:
+                    - entity_id
+                    - entity_type
+                    - target_id
+                    - target_type
+                    - reputation_value
+                    - reputation_tier
+                    properties:
+                      entity_id:
+                        type: string
+                        format: uuid
+                        description: ID of the entity (player, NPC, faction) having
+                          the reputation
+                        example: 550e8400-e29b-41d4-a716-446655440000
+                      entity_type:
+                        type: string
+                        enum:
+                        - player
+                        - npc
+                        - faction
+                        - corporation
+                        description: Type of the entity having the reputation
+                        example: player
+                      target_id:
+                        type: string
+                        format: uuid
+                        description: ID of the target entity (faction, person, organization)
+                        example: 550e8400-e29b-41d4-a716-446655440001
+                      target_type:
+                        type: string
+                        enum:
+                        - faction
+                        - person
+                        - corporation
+                        - location
+                        - event
+                        description: Type of the target entity
+                        example: faction
+                      reputation_value:
+                        type: number
+                        format: float
+                        minimum: -100.0
+                        maximum: 100.0
+                        description: Current reputation value (-100 to +100)
+                        example: 75.5
+                      reputation_tier:
+                        type: string
+                        enum:
+                        - hated
+                        - hostile
+                        - unfriendly
+                        - neutral
+                        - friendly
+                        - liked
+                        - respected
+                        - revered
+                        - legendary
+                        description: Reputation tier based on value ranges
+                        example: respected
+                      last_updated:
+                        type: string
+                        format: date-time
+                        description: When reputation was last updated
+                        example: '2025-01-11T10:30:00Z'
+                      created_at:
+                        type: string
+                        format: date-time
+                        description: When reputation relationship was established
+                        example: '2025-01-01T00:00:00Z'
+                      relationship_strength:
+                        type: string
+                        enum:
+                        - weak
+                        - moderate
+                        - strong
+                        - unbreakable
+                        description: Strength of the relationship affecting decay
+                          rates
+                        example: strong
+                      decay_rate_modifier:
+                        type: number
+                        format: float
+                        minimum: 0.0
+                        maximum: 2.0
+                        description: Modifier for decay rate (0.5 = slower decay,
+                          1.5 = faster decay)
+                        example: 0.8
+                      recovery_multiplier:
+                        type: number
+                        format: float
+                        minimum: 0.0
+                        maximum: 3.0
+                        description: Multiplier for recovery effectiveness
+                        example: 1.2
+                      metadata:
+                        type: object
+                        description: Additional reputation-specific metadata
+                        additionalProperties: true
+                        example:
+                          last_interaction: '2025-01-10T15:45:00Z'
+                          interaction_count: 15
+                          favors_owed: 2
+                  recovery_opportunities:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        day:
+                          type: integer
+                          minimum: 0
+                          description: Day when recovery opportunity occurs
+                        action_type:
+                          type: string
+                          enum:
+                          - quest_completion
+                          - gift_giving
+                          - event_participation
+                          - loyalty_display
+                          - crisis_intervention
+                          - personal_sacrifice
+                          - public_service
+                          - relationship_building
+                          - favor_returned
+                          - apology_offered
+                          description: Type of recovery action available
+                        estimated_recovery:
+                          type: number
+                          format: float
+                          minimum: 0.0
+                          description: Estimated recovery value
+                    description: Potential recovery opportunities identified during
+                      simulation (if requested)
+                  summary:
+                    type: object
+                    properties:
+                      total_decay:
+                        type: number
+                        format: float
+                        description: Total reputation lost to decay
+                      tier_changes:
+                        type: integer
+                        minimum: 0
+                        description: Number of tier changes during simulation
+                      critical_thresholds_reached:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            day:
+                              type: integer
+                              minimum: 0
+                            threshold:
+                              type: string
+                              example: neutral
+                            crossed_direction:
+                              type: string
+                              enum:
+                              - up
+                              - down
+                          description: Critical reputation thresholds reached
+                    description: Simulation summary statistics
+        '400':
+          description: Invalid simulation request
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/components/schemas/Error
+  /entities/{entity_id}/recovery-options:
+    get:
+      summary: Get available reputation recovery options
+      description: Retrieves available recovery actions for improving reputation with
+        specific targets.
+      operationId: getRecoveryOptions
+      tags:
+      - Reputation Recovery
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: entity_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Entity ID to get recovery options for
+      - name: entity_type
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - player
+          - npc
+          - faction
+          - corporation
+        description: Type of the entity
+      - name: target_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Specific target to get recovery options for (optional)
+      - name: target_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - faction
+          - person
+          - corporation
+          - location
+          - event
+        description: Type of target
+      responses:
+        '200':
+          description: Recovery options retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  entity_id:
+                    type: string
+                    format: uuid
+                  recovery_options:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        target_id:
+                          type: string
+                          format: uuid
+                        target_type:
+                          type: string
+                          enum:
+                          - faction
+                          - person
+                          - corporation
+                          - location
+                          - event
+                        available_actions:
+                          type: array
+                          items:
+                            type: object
+                            required:
+                            - action_type
+                            - base_recovery_value
+                            - cooldown_hours
+                            properties:
+                              action_type:
+                                type: string
+                                enum:
+                                - quest_completion
+                                - gift_giving
+                                - event_participation
+                                - loyalty_display
+                                - crisis_intervention
+                                - personal_sacrifice
+                                - public_service
+                                - relationship_building
+                                - favor_returned
+                                - apology_offered
+                                description: Type of recovery action
+                                example: quest_completion
+                              base_recovery_value:
+                                type: number
+                                format: float
+                                minimum: 0.0
+                                maximum: 50.0
+                                description: Base reputation recovery value
+                                example: 8.5
+                              cooldown_hours:
+                                type: integer
+                                minimum: 0
+                                maximum: 168
+                                description: Hours before this action can be used
+                                  again for the same target
+                                example: 24
+                              requirements:
+                                type: object
+                                description: Requirements to perform this action
+                                additionalProperties: true
+                                example:
+                                  minimum_level: 10
+                                  required_items:
+                                  - gift_item_id
+                                  location_restriction: target_territory
+                              modifiers:
+                                type: object
+                                description: Contextual modifiers for recovery effectiveness
+                                additionalProperties:
+                                  type: number
+                                  format: float
+                                example:
+                                  home_territory: 1.5
+                                  enemy_territory: 0.7
+                                  group_activity: 2.0
+                                  personal_sacrifice: 1.8
+                              success_probability:
+                                type: number
+                                format: float
+                                minimum: 0.0
+                                maximum: 1.0
+                                description: Probability of successful recovery (affects
+                                  UI display)
+                                example: 0.85
+        '404':
+          description: Entity not found
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/components/schemas/Error
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: JWT Bearer token authentication
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+      - status
+      - timestamp
+      properties:
+        status:
+          type: string
+          enum:
+          - ok
+          - degraded
+          - critical
+          example: ok
+          description: Current health status
+        message:
+          type: string
+          example: Service is healthy
+          description: Human-readable status message
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-01-15T10:30:00Z'
+          description: Time when health check was performed
+        version:
+          type: string
+          example: 1.0.0
+          description: Service version
+        uptime:
+          type: integer
+          example: 3600
+          description: Service uptime in seconds
+        checks:
+          type: object
+          description: Detailed health checks
+          additionalProperties:
+            type: object
+            properties:
+              status:
+                type: string
+                enum:
+                - ok
+                - degraded
+                - critical
+              message:
+                type: string
+              response_time:
+                type: integer
+                description: Response time in milliseconds
+    DetailedHealthResponse:
+      allOf:
+      - $ref: '#/components/schemas/HealthResponse'
+      - type: object
+        properties:
+          dependencies:
+            type: object
+            description: Health status of service dependencies
+            properties:
+              database:
+                $ref: '#/components/schemas/HealthResponse'
+              redis:
+                $ref: '#/components/schemas/HealthResponse'
+              external_services:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      example: payment-service
+                    status:
+                      type: string
+                      enum:
+                      - ok
+                      - degraded
+                      - critical
+                    response_time:
+                      type: integer
+          metrics:
+            type: object
+            description: Service performance metrics
+            properties:
+              active_connections:
+                type: integer
+                example: 150
+              requests_per_second:
+                type: number
+                example: 45.2
+              average_response_time:
+                type: integer
+                example: 25
+              error_rate:
+                type: number
+                example: 0.001
+    HealthBatchRequest:
+      type: object
+      properties:
+        services:
+          type: array
+          items:
+            type: string
+            example: database
+          description: List of services to check
+        timeout:
+          type: integer
+          minimum: 1
+          maximum: 30
+          default: 5
+          description: Timeout for each health check in seconds
+    HealthBatchResponse:
+      type: object
+      properties:
+        overall_status:
+          type: string
+          enum:
+          - ok
+          - degraded
+          - critical
+          example: ok
+          description: Overall health status across all checked services
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-01-15T10:30:00Z'
+        results:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/HealthResponse'
+          description: Health results for each service
+    ReputationListResponse:
+      type: object
+      required:
+      - reputations
+      - pagination
+      properties:
+        reputations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReputationResponse'
+          description: List of reputation entities
+        pagination:
+          type: object
+          required:
+          - page
+          - limit
+          - total
+          - total_pages
+          properties:
+            page:
+              type: integer
+              minimum: 1
+              description: Current page number
+            limit:
+              type: integer
+              minimum: 1
+              description: Items per page
+            total:
+              type: integer
+              minimum: 0
+              description: Total number of items
+            total_pages:
+              type: integer
+              minimum: 1
+              description: Total number of pages
+            has_next:
+              type: boolean
+              description: Whether there is a next page
+            has_prev:
+              type: boolean
+              description: Whether there is a previous page
+    ReputationResponse:
+      type: object
+      required:
+      - reputation
+      - metadata
+      properties:
+        reputation:
+          type: object
+          required:
+          - entity_id
+          - entity_type
+          - target_id
+          - target_type
+          - reputation_value
+          - reputation_tier
+          properties:
+            entity_id:
+              type: string
+              format: uuid
+              description: ID of the entity (player, NPC, faction) having the reputation
+              example: 550e8400-e29b-41d4-a716-446655440000
+            entity_type:
+              type: string
+              enum:
+              - player
+              - npc
+              - faction
+              - corporation
+              description: Type of the entity having the reputation
+              example: player
+            target_id:
+              type: string
+              format: uuid
+              description: ID of the target entity (faction, person, organization)
+              example: 550e8400-e29b-41d4-a716-446655440001
+            target_type:
+              type: string
+              enum:
+              - faction
+              - person
+              - corporation
+              - location
+              - event
+              description: Type of the target entity
+              example: faction
+            reputation_value:
+              type: number
+              format: float
+              minimum: -100.0
+              maximum: 100.0
+              description: Current reputation value (-100 to +100)
+              example: 75.5
+            reputation_tier:
+              type: string
+              enum:
+              - hated
+              - hostile
+              - unfriendly
+              - neutral
+              - friendly
+              - liked
+              - respected
+              - revered
+              - legendary
+              description: Reputation tier based on value ranges
+              example: respected
+            last_updated:
+              type: string
+              format: date-time
+              description: When reputation was last updated
+              example: '2025-01-11T10:30:00Z'
+            created_at:
+              type: string
+              format: date-time
+              description: When reputation relationship was established
+              example: '2025-01-01T00:00:00Z'
+            relationship_strength:
+              type: string
+              enum:
+              - weak
+              - moderate
+              - strong
+              - unbreakable
+              description: Strength of the relationship affecting decay rates
+              example: strong
+            decay_rate_modifier:
+              type: number
+              format: float
+              minimum: 0.0
+              maximum: 2.0
+              description: Modifier for decay rate (0.5 = slower decay, 1.5 = faster
+                decay)
+              example: 0.8
+            recovery_multiplier:
+              type: number
+              format: float
+              minimum: 0.0
+              maximum: 3.0
+              description: Multiplier for recovery effectiveness
+              example: 1.2
+            metadata:
+              type: object
+              description: Additional reputation-specific metadata
+              additionalProperties: true
+              example:
+                last_interaction: '2025-01-10T15:45:00Z'
+                interaction_count: 15
+                favors_owed: 2
+        metadata:
+          type: object
+          required:
+          - decay_info
+          - recovery_options
+          properties:
+            decay_info:
+              type: object
+              properties:
+                next_decay_time:
+                  type: string
+                  format: date-time
+                  description: When next decay will occur
+                decay_rate:
+                  type: number
+                  format: float
+                  description: Current decay rate per day
+                days_since_last_interaction:
+                  type: integer
+                  minimum: 0
+                  description: Days since last interaction with target
+              description: Information about reputation decay
+            recovery_options:
+              type: array
+              items:
+                type: object
+                properties:
+                  action_type:
+                    type: string
+                    enum:
+                    - quest_completion
+                    - gift_giving
+                    - event_participation
+                    - loyalty_display
+                    - crisis_intervention
+                    - personal_sacrifice
+                    - public_service
+                    - relationship_building
+                    - favor_returned
+                    - apology_offered
+                    description: Type of recovery action
+                  estimated_recovery:
+                    type: object
+                    properties:
+                      min_value:
+                        type: number
+                        format: float
+                        minimum: 0.0
+                      max_value:
+                        type: number
+                        format: float
+                        minimum: 0.0
+                      average_value:
+                        type: number
+                        format: float
+                        minimum: 0.0
+                    description: Estimated recovery value range
+                  cooldown_remaining:
+                    type: integer
+                    minimum: 0
+                    description: Seconds remaining before action can be used again
+                  requirements_met:
+                    type: boolean
+                    description: Whether all requirements for this action are met
+                description: Available recovery action
+              description: Available recovery options for this reputation
+            relationship_health:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                  - critical
+                  - weak
+                  - stable
+                  - strong
+                  - excellent
+                  description: Overall relationship health status
+                risk_level:
+                  type: string
+                  enum:
+                  - low
+                  - medium
+                  - high
+                  - critical
+                  description: Risk of reputation decay
+                recommended_actions:
+                  type: array
+                  items:
+                    type: string
+                    example: Complete faction quest
+                  description: Recommended actions to maintain/improve reputation
+              description: Overall relationship health assessment
+    ReputationUpdateResponse:
+      type: object
+      required:
+      - success
+      - reputation_before
+      - reputation_after
+      - change_applied
+      properties:
+        success:
+          type: boolean
+          description: Whether the update was successful
+          example: true
+        reputation_before:
+          type: object
+          required:
+          - entity_id
+          - entity_type
+          - target_id
+          - target_type
+          - reputation_value
+          - reputation_tier
+          properties:
+            entity_id:
+              type: string
+              format: uuid
+              description: ID of the entity (player, NPC, faction) having the reputation
+              example: 550e8400-e29b-41d4-a716-446655440000
+            entity_type:
+              type: string
+              enum:
+              - player
+              - npc
+              - faction
+              - corporation
+              description: Type of the entity having the reputation
+              example: player
+            target_id:
+              type: string
+              format: uuid
+              description: ID of the target entity (faction, person, organization)
+              example: 550e8400-e29b-41d4-a716-446655440001
+            target_type:
+              type: string
+              enum:
+              - faction
+              - person
+              - corporation
+              - location
+              - event
+              description: Type of the target entity
+              example: faction
+            reputation_value:
+              type: number
+              format: float
+              minimum: -100.0
+              maximum: 100.0
+              description: Current reputation value (-100 to +100)
+              example: 75.5
+            reputation_tier:
+              type: string
+              enum:
+              - hated
+              - hostile
+              - unfriendly
+              - neutral
+              - friendly
+              - liked
+              - respected
+              - revered
+              - legendary
+              description: Reputation tier based on value ranges
+              example: respected
+            last_updated:
+              type: string
+              format: date-time
+              description: When reputation was last updated
+              example: '2025-01-11T10:30:00Z'
+            created_at:
+              type: string
+              format: date-time
+              description: When reputation relationship was established
+              example: '2025-01-01T00:00:00Z'
+            relationship_strength:
+              type: string
+              enum:
+              - weak
+              - moderate
+              - strong
+              - unbreakable
+              description: Strength of the relationship affecting decay rates
+              example: strong
+            decay_rate_modifier:
+              type: number
+              format: float
+              minimum: 0.0
+              maximum: 2.0
+              description: Modifier for decay rate (0.5 = slower decay, 1.5 = faster
+                decay)
+              example: 0.8
+            recovery_multiplier:
+              type: number
+              format: float
+              minimum: 0.0
+              maximum: 3.0
+              description: Multiplier for recovery effectiveness
+              example: 1.2
+            metadata:
+              type: object
+              description: Additional reputation-specific metadata
+              additionalProperties: true
+              example:
+                last_interaction: '2025-01-10T15:45:00Z'
+                interaction_count: 15
+                favors_owed: 2
+        reputation_after:
+          type: object
+          required:
+          - entity_id
+          - entity_type
+          - target_id
+          - target_type
+          - reputation_value
+          - reputation_tier
+          properties:
+            entity_id:
+              type: string
+              format: uuid
+              description: ID of the entity (player, NPC, faction) having the reputation
+              example: 550e8400-e29b-41d4-a716-446655440000
+            entity_type:
+              type: string
+              enum:
+              - player
+              - npc
+              - faction
+              - corporation
+              description: Type of the entity having the reputation
+              example: player
+            target_id:
+              type: string
+              format: uuid
+              description: ID of the target entity (faction, person, organization)
+              example: 550e8400-e29b-41d4-a716-446655440001
+            target_type:
+              type: string
+              enum:
+              - faction
+              - person
+              - corporation
+              - location
+              - event
+              description: Type of the target entity
+              example: faction
+            reputation_value:
+              type: number
+              format: float
+              minimum: -100.0
+              maximum: 100.0
+              description: Current reputation value (-100 to +100)
+              example: 75.5
+            reputation_tier:
+              type: string
+              enum:
+              - hated
+              - hostile
+              - unfriendly
+              - neutral
+              - friendly
+              - liked
+              - respected
+              - revered
+              - legendary
+              description: Reputation tier based on value ranges
+              example: respected
+            last_updated:
+              type: string
+              format: date-time
+              description: When reputation was last updated
+              example: '2025-01-11T10:30:00Z'
+            created_at:
+              type: string
+              format: date-time
+              description: When reputation relationship was established
+              example: '2025-01-01T00:00:00Z'
+            relationship_strength:
+              type: string
+              enum:
+              - weak
+              - moderate
+              - strong
+              - unbreakable
+              description: Strength of the relationship affecting decay rates
+              example: strong
+            decay_rate_modifier:
+              type: number
+              format: float
+              minimum: 0.0
+              maximum: 2.0
+              description: Modifier for decay rate (0.5 = slower decay, 1.5 = faster
+                decay)
+              example: 0.8
+            recovery_multiplier:
+              type: number
+              format: float
+              minimum: 0.0
+              maximum: 3.0
+              description: Multiplier for recovery effectiveness
+              example: 1.2
+            metadata:
+              type: object
+              description: Additional reputation-specific metadata
+              additionalProperties: true
+              example:
+                last_interaction: '2025-01-10T15:45:00Z'
+                interaction_count: 15
+                favors_owed: 2
+        change_applied:
+          type: object
+          required:
+          - change_value
+          - final_value
+          - tier_changed
+          properties:
+            change_value:
+              type: number
+              format: float
+              description: Actual change value applied (may differ from requested
+                due to caps/limits)
+              example: 12.5
+            final_value:
+              type: number
+              format: float
+              description: Final reputation value after change
+              example: 78.2
+            tier_changed:
+              type: boolean
+              description: Whether reputation tier changed as result
+              example: false
+            new_tier:
+              type: string
+              enum:
+              - hated
+              - hostile
+              - unfriendly
+              - neutral
+              - friendly
+              - liked
+              - respected
+              - revered
+              - legendary
+              description: New reputation tier (if changed)
+            notifications_sent:
+              type: array
+              items:
+                type: string
+                format: uuid
+                description: IDs of players notified about this change
+        processing_time_ms:
+          type: integer
+          minimum: 0
+          description: Server processing time in milliseconds
+          example: 45
+    BulkReputationUpdateResponse:
+      type: object
+      required:
+      - success
+      - total_updates
+      - successful_updates
+      - failed_updates
+      properties:
+        success:
+          type: boolean
+          description: Whether the bulk operation was successful (all updates succeeded
+            if atomic=true)
+        total_updates:
+          type: integer
+          minimum: 0
+          description: Total number of updates requested
+        successful_updates:
+          type: integer
+          minimum: 0
+          description: Number of updates that succeeded
+        failed_updates:
+          type: integer
+          minimum: 0
+          description: Number of updates that failed
+        results:
+          type: array
+          items:
+            type: object
+            required:
+            - update_index
+            - success
+            properties:
+              update_index:
+                type: integer
+                minimum: 0
+                description: Index of the update in the original request array
+              success:
+                type: boolean
+                description: Whether this specific update succeeded
+              result:
+                $ref: '#/components/schemas/ReputationUpdateResponse'
+                description: Update result (present if success=true)
+              error:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: VALIDATION_ERROR
+                  message:
+                    type: string
+                    example: Invalid reputation value
+                description: Error details (present if success=false)
+        processing_time_ms:
+          type: integer
+          minimum: 0
+          description: Total server processing time in milliseconds
+    ReputationRecoveryResponse:
+      type: object
+      required:
+      - success
+      - action_performed
+      - recovery_applied
+      properties:
+        success:
+          type: boolean
+          description: Whether the recovery action was successful
+        action_performed:
+          type: object
+          required:
+          - action_type
+          - timestamp
+          properties:
+            action_type:
+              type: string
+              enum:
+              - quest_completion
+              - gift_giving
+              - event_participation
+              - loyalty_display
+              - crisis_intervention
+              - personal_sacrifice
+              - public_service
+              - relationship_building
+              - favor_returned
+              - apology_offered
+              description: Type of recovery action performed
+            timestamp:
+              type: string
+              format: date-time
+              description: When the action was performed
+            action_id:
+              type: string
+              format: uuid
+              description: Unique ID for this action instance
+        recovery_applied:
+          type: object
+          required:
+          - reputation_before
+          - reputation_after
+          - recovery_value
+          properties:
+            reputation_before:
+              type: object
+              required:
+              - entity_id
+              - entity_type
+              - target_id
+              - target_type
+              - reputation_value
+              - reputation_tier
+              properties:
+                entity_id:
+                  type: string
+                  format: uuid
+                  description: ID of the entity (player, NPC, faction) having the
+                    reputation
+                  example: 550e8400-e29b-41d4-a716-446655440000
+                entity_type:
+                  type: string
+                  enum:
+                  - player
+                  - npc
+                  - faction
+                  - corporation
+                  description: Type of the entity having the reputation
+                  example: player
+                target_id:
+                  type: string
+                  format: uuid
+                  description: ID of the target entity (faction, person, organization)
+                  example: 550e8400-e29b-41d4-a716-446655440001
+                target_type:
+                  type: string
+                  enum:
+                  - faction
+                  - person
+                  - corporation
+                  - location
+                  - event
+                  description: Type of the target entity
+                  example: faction
+                reputation_value:
+                  type: number
+                  format: float
+                  minimum: -100.0
+                  maximum: 100.0
+                  description: Current reputation value (-100 to +100)
+                  example: 75.5
+                reputation_tier:
+                  type: string
+                  enum:
+                  - hated
+                  - hostile
+                  - unfriendly
+                  - neutral
+                  - friendly
+                  - liked
+                  - respected
+                  - revered
+                  - legendary
+                  description: Reputation tier based on value ranges
+                  example: respected
+                last_updated:
+                  type: string
+                  format: date-time
+                  description: When reputation was last updated
+                  example: '2025-01-11T10:30:00Z'
+                created_at:
+                  type: string
+                  format: date-time
+                  description: When reputation relationship was established
+                  example: '2025-01-01T00:00:00Z'
+                relationship_strength:
+                  type: string
+                  enum:
+                  - weak
+                  - moderate
+                  - strong
+                  - unbreakable
+                  description: Strength of the relationship affecting decay rates
+                  example: strong
+                decay_rate_modifier:
+                  type: number
+                  format: float
+                  minimum: 0.0
+                  maximum: 2.0
+                  description: Modifier for decay rate (0.5 = slower decay, 1.5 =
+                    faster decay)
+                  example: 0.8
+                recovery_multiplier:
+                  type: number
+                  format: float
+                  minimum: 0.0
+                  maximum: 3.0
+                  description: Multiplier for recovery effectiveness
+                  example: 1.2
+                metadata:
+                  type: object
+                  description: Additional reputation-specific metadata
+                  additionalProperties: true
+                  example:
+                    last_interaction: '2025-01-10T15:45:00Z'
+                    interaction_count: 15
+                    favors_owed: 2
+            reputation_after:
+              type: object
+              required:
+              - entity_id
+              - entity_type
+              - target_id
+              - target_type
+              - reputation_value
+              - reputation_tier
+              properties:
+                entity_id:
+                  type: string
+                  format: uuid
+                  description: ID of the entity (player, NPC, faction) having the
+                    reputation
+                  example: 550e8400-e29b-41d4-a716-446655440000
+                entity_type:
+                  type: string
+                  enum:
+                  - player
+                  - npc
+                  - faction
+                  - corporation
+                  description: Type of the entity having the reputation
+                  example: player
+                target_id:
+                  type: string
+                  format: uuid
+                  description: ID of the target entity (faction, person, organization)
+                  example: 550e8400-e29b-41d4-a716-446655440001
+                target_type:
+                  type: string
+                  enum:
+                  - faction
+                  - person
+                  - corporation
+                  - location
+                  - event
+                  description: Type of the target entity
+                  example: faction
+                reputation_value:
+                  type: number
+                  format: float
+                  minimum: -100.0
+                  maximum: 100.0
+                  description: Current reputation value (-100 to +100)
+                  example: 75.5
+                reputation_tier:
+                  type: string
+                  enum:
+                  - hated
+                  - hostile
+                  - unfriendly
+                  - neutral
+                  - friendly
+                  - liked
+                  - respected
+                  - revered
+                  - legendary
+                  description: Reputation tier based on value ranges
+                  example: respected
+                last_updated:
+                  type: string
+                  format: date-time
+                  description: When reputation was last updated
+                  example: '2025-01-11T10:30:00Z'
+                created_at:
+                  type: string
+                  format: date-time
+                  description: When reputation relationship was established
+                  example: '2025-01-01T00:00:00Z'
+                relationship_strength:
+                  type: string
+                  enum:
+                  - weak
+                  - moderate
+                  - strong
+                  - unbreakable
+                  description: Strength of the relationship affecting decay rates
+                  example: strong
+                decay_rate_modifier:
+                  type: number
+                  format: float
+                  minimum: 0.0
+                  maximum: 2.0
+                  description: Modifier for decay rate (0.5 = slower decay, 1.5 =
+                    faster decay)
+                  example: 0.8
+                recovery_multiplier:
+                  type: number
+                  format: float
+                  minimum: 0.0
+                  maximum: 3.0
+                  description: Multiplier for recovery effectiveness
+                  example: 1.2
+                metadata:
+                  type: object
+                  description: Additional reputation-specific metadata
+                  additionalProperties: true
+                  example:
+                    last_interaction: '2025-01-10T15:45:00Z'
+                    interaction_count: 15
+                    favors_owed: 2
+            recovery_value:
+              type: number
+              format: float
+              description: Actual recovery value applied
+              example: 15.5
+        cooldown_applied:
+          type: object
+          properties:
+            action_type:
+              type: string
+              description: Action type that entered cooldown
+            cooldown_duration_seconds:
+              type: integer
+              minimum: 0
+              description: Cooldown duration in seconds
+            cooldown_expires_at:
+              type: string
+              format: date-time
+              description: When cooldown expires
+          description: Cooldown information (present if action has cooldown)
+        notifications_triggered:
+          type: array
+          items:
+            type: string
+            example: recovery_success_notification
+          description: Types of notifications sent to the player
+    ReputationDecaySimulationResponse:
+      type: object
+      required:
+      - simulation_period_days
+      - reputation_changes
+      - final_state
+      properties:
+        simulation_period_days:
+          type: integer
+          minimum: 1
+          description: Number of days simulated
+        reputation_changes:
+          type: array
+          items:
+            type: object
+            required:
+            - day
+            - reputation_value
+            - change_reason
+            properties:
+              day:
+                type: integer
+                minimum: 0
+                description: Day number in simulation (0 = starting day)
+              reputation_value:
+                type: number
+                format: float
+                description: Reputation value at end of this day
+              change_reason:
+                type: string
+                enum:
+                - natural_decay
+                - recovery_action
+                - relationship_decay
+                description: Reason for the reputation change
+              change_value:
+                type: number
+                format: float
+                description: Change value for this day
+              tier_at_end_of_day:
+                type: string
+                enum:
+                - hated
+                - hostile
+                - unfriendly
+                - neutral
+                - friendly
+                - liked
+                - respected
+                - revered
+                - legendary
+                description: Reputation tier at end of this day
+          description: Daily reputation changes during simulation
+        final_state:
+          type: object
+          required:
+          - entity_id
+          - entity_type
+          - target_id
+          - target_type
+          - reputation_value
+          - reputation_tier
+          properties:
+            entity_id:
+              type: string
+              format: uuid
+              description: ID of the entity (player, NPC, faction) having the reputation
+              example: 550e8400-e29b-41d4-a716-446655440000
+            entity_type:
+              type: string
+              enum:
+              - player
+              - npc
+              - faction
+              - corporation
+              description: Type of the entity having the reputation
+              example: player
+            target_id:
+              type: string
+              format: uuid
+              description: ID of the target entity (faction, person, organization)
+              example: 550e8400-e29b-41d4-a716-446655440001
+            target_type:
+              type: string
+              enum:
+              - faction
+              - person
+              - corporation
+              - location
+              - event
+              description: Type of the target entity
+              example: faction
+            reputation_value:
+              type: number
+              format: float
+              minimum: -100.0
+              maximum: 100.0
+              description: Current reputation value (-100 to +100)
+              example: 75.5
+            reputation_tier:
+              type: string
+              enum:
+              - hated
+              - hostile
+              - unfriendly
+              - neutral
+              - friendly
+              - liked
+              - respected
+              - revered
+              - legendary
+              description: Reputation tier based on value ranges
+              example: respected
+            last_updated:
+              type: string
+              format: date-time
+              description: When reputation was last updated
+              example: '2025-01-11T10:30:00Z'
+            created_at:
+              type: string
+              format: date-time
+              description: When reputation relationship was established
+              example: '2025-01-01T00:00:00Z'
+            relationship_strength:
+              type: string
+              enum:
+              - weak
+              - moderate
+              - strong
+              - unbreakable
+              description: Strength of the relationship affecting decay rates
+              example: strong
+            decay_rate_modifier:
+              type: number
+              format: float
+              minimum: 0.0
+              maximum: 2.0
+              description: Modifier for decay rate (0.5 = slower decay, 1.5 = faster
+                decay)
+              example: 0.8
+            recovery_multiplier:
+              type: number
+              format: float
+              minimum: 0.0
+              maximum: 3.0
+              description: Multiplier for recovery effectiveness
+              example: 1.2
+            metadata:
+              type: object
+              description: Additional reputation-specific metadata
+              additionalProperties: true
+              example:
+                last_interaction: '2025-01-10T15:45:00Z'
+                interaction_count: 15
+                favors_owed: 2
+        recovery_opportunities:
+          type: array
+          items:
+            type: object
+            properties:
+              day:
+                type: integer
+                minimum: 0
+                description: Day when recovery opportunity occurs
+              action_type:
+                type: string
+                enum:
+                - quest_completion
+                - gift_giving
+                - event_participation
+                - loyalty_display
+                - crisis_intervention
+                - personal_sacrifice
+                - public_service
+                - relationship_building
+                - favor_returned
+                - apology_offered
+                description: Type of recovery action available
+              estimated_recovery:
+                type: number
+                format: float
+                minimum: 0.0
+                description: Estimated recovery value
+          description: Potential recovery opportunities identified during simulation
+            (if requested)
+        summary:
+          type: object
+          properties:
+            total_decay:
+              type: number
+              format: float
+              description: Total reputation lost to decay
+            tier_changes:
+              type: integer
+              minimum: 0
+              description: Number of tier changes during simulation
+            critical_thresholds_reached:
+              type: array
+              items:
+                type: object
+                properties:
+                  day:
+                    type: integer
+                    minimum: 0
+                  threshold:
+                    type: string
+                    example: neutral
+                  crossed_direction:
+                    type: string
+                    enum:
+                    - up
+                    - down
+                description: Critical reputation thresholds reached
+          description: Simulation summary statistics
+    Reputation:
+      type: object
+      required:
+      - entity_id
+      - entity_type
+      - target_id
+      - target_type
+      - reputation_value
+      - reputation_tier
+      properties:
+        entity_id:
+          type: string
+          format: uuid
+          description: ID of the entity (player, NPC, faction) having the reputation
+          example: 550e8400-e29b-41d4-a716-446655440000
+        entity_type:
+          type: string
+          enum:
+          - player
+          - npc
+          - faction
+          - corporation
+          description: Type of the entity having the reputation
+          example: player
+        target_id:
+          type: string
+          format: uuid
+          description: ID of the target entity (faction, person, organization)
+          example: 550e8400-e29b-41d4-a716-446655440001
+        target_type:
+          type: string
+          enum:
+          - faction
+          - person
+          - corporation
+          - location
+          - event
+          description: Type of the target entity
+          example: faction
+        reputation_value:
+          type: number
+          format: float
+          minimum: -100.0
+          maximum: 100.0
+          description: Current reputation value (-100 to +100)
+          example: 75.5
+        reputation_tier:
+          type: string
+          enum:
+          - hated
+          - hostile
+          - unfriendly
+          - neutral
+          - friendly
+          - liked
+          - respected
+          - revered
+          - legendary
+          description: Reputation tier based on value ranges
+          example: respected
+        last_updated:
+          type: string
+          format: date-time
+          description: When reputation was last updated
+          example: '2025-01-11T10:30:00Z'
+        created_at:
+          type: string
+          format: date-time
+          description: When reputation relationship was established
+          example: '2025-01-01T00:00:00Z'
+        relationship_strength:
+          type: string
+          enum:
+          - weak
+          - moderate
+          - strong
+          - unbreakable
+          description: Strength of the relationship affecting decay rates
+          example: strong
+        decay_rate_modifier:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 2.0
+          description: Modifier for decay rate (0.5 = slower decay, 1.5 = faster decay)
+          example: 0.8
+        recovery_multiplier:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 3.0
+          description: Multiplier for recovery effectiveness
+          example: 1.2
+        metadata:
+          type: object
+          description: Additional reputation-specific metadata
+          additionalProperties: true
+          example:
+            last_interaction: '2025-01-10T15:45:00Z'
+            interaction_count: 15
+            favors_owed: 2
+    ReputationUpdateRequest:
+      type: object
+      required:
+      - entity_id
+      - entity_type
+      - target_id
+      - target_type
+      - change_type
+      - change_value
+      properties:
+        entity_id:
+          type: string
+          format: uuid
+          description: ID of the entity whose reputation is being updated
+        entity_type:
+          type: string
+          enum:
+          - player
+          - npc
+          - faction
+          - corporation
+          description: Type of the entity
+        target_id:
+          type: string
+          format: uuid
+          description: ID of the target entity
+        target_type:
+          type: string
+          enum:
+          - faction
+          - person
+          - corporation
+          - location
+          - event
+          description: Type of the target entity
+        change_type:
+          type: string
+          enum:
+          - direct_action
+          - quest_completion
+          - event_participation
+          - time_decay
+          - relationship_decay
+          - gift_received
+          - betrayal
+          - loyalty_display
+          - crisis_intervention
+          - sacrifice_made
+          description: Type of reputation change
+          example: quest_completion
+        change_value:
+          type: number
+          format: float
+          minimum: -50.0
+          maximum: 50.0
+          description: Reputation change value (positive for increase, negative for
+            decrease)
+          example: 15.5
+        reason:
+          type: string
+          maxLength: 500
+          description: Human-readable reason for the reputation change
+          example: Completed faction quest 'Data Recovery'
+        context:
+          type: object
+          description: Additional context for the reputation change
+          additionalProperties: true
+          example:
+            quest_id: quest-123
+            location: Night City - Watson
+            time_of_day: night
+        source_event_id:
+          type: string
+          format: uuid
+          description: ID of the event that triggered this reputation change
+          example: 550e8400-e29b-41d4-a716-446655440002
+    ReputationDecayConfig:
+      type: object
+      required:
+      - relationship_type
+      - base_decay_rate
+      - decay_interval_hours
+      properties:
+        relationship_type:
+          type: string
+          enum:
+          - faction
+          - personal
+          - npc
+          - business
+          description: Type of relationship this config applies to
+          example: faction
+        base_decay_rate:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 10.0
+          description: Base decay rate as percentage per interval
+          example: 1.5
+        decay_interval_hours:
+          type: integer
+          minimum: 1
+          maximum: 720
+          description: Hours between decay calculations
+          example: 24
+        modifiers:
+          type: object
+          properties:
+            relationship_strength_modifier:
+              type: object
+              additionalProperties:
+                type: number
+                format: float
+              description: Decay modifiers by relationship strength
+              example:
+                weak: 1.2
+                moderate: 1.0
+                strong: 0.8
+                unbreakable: 0.5
+            activity_modifier:
+              type: object
+              additionalProperties:
+                type: number
+                format: float
+              description: Decay modifiers by player activity
+              example:
+                inactive: 1.5
+                casual: 1.2
+                active: 1.0
+                hardcore: 0.8
+            time_modifier:
+              type: object
+              additionalProperties:
+                type: number
+                format: float
+              description: Decay modifiers by time factors
+              example:
+                morning: 0.9
+                night: 1.1
+                holiday: 0.5
+        minimum_reputation:
+          type: number
+          format: float
+          minimum: -100.0
+          maximum: 0.0
+          description: Minimum reputation value before decay stops
+          example: -50.0
+        grace_period_days:
+          type: integer
+          minimum: 0
+          maximum: 365
+          description: Days without interaction before decay starts
+          example: 7
+    ReputationRecoveryAction:
+      type: object
+      required:
+      - action_type
+      - base_recovery_value
+      - cooldown_hours
+      properties:
+        action_type:
+          type: string
+          enum:
+          - quest_completion
+          - gift_giving
+          - event_participation
+          - loyalty_display
+          - crisis_intervention
+          - personal_sacrifice
+          - public_service
+          - relationship_building
+          - favor_returned
+          - apology_offered
+          description: Type of recovery action
+          example: quest_completion
+        base_recovery_value:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 50.0
+          description: Base reputation recovery value
+          example: 8.5
+        cooldown_hours:
+          type: integer
+          minimum: 0
+          maximum: 168
+          description: Hours before this action can be used again for the same target
+          example: 24
+        requirements:
+          type: object
+          description: Requirements to perform this action
+          additionalProperties: true
+          example:
+            minimum_level: 10
+            required_items:
+            - gift_item_id
+            location_restriction: target_territory
+        modifiers:
+          type: object
+          description: Contextual modifiers for recovery effectiveness
+          additionalProperties:
+            type: number
+            format: float
+          example:
+            home_territory: 1.5
+            enemy_territory: 0.7
+            group_activity: 2.0
+            personal_sacrifice: 1.8
+        success_probability:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Probability of successful recovery (affects UI display)
+          example: 0.85
+    BulkReputationUpdateRequest:
+      type: object
+      required:
+      - updates
+      properties:
+        updates:
+          type: array
+          items:
+            $ref: ./reputation-schemas.yaml#/components/schemas/ReputationUpdateRequest
+          minItems: 1
+          maxItems: 100
+          description: Array of reputation updates to process
+        options:
+          type: object
+          properties:
+            atomic:
+              type: boolean
+              default: true
+              description: Whether all updates should succeed or fail together
+            skip_validation:
+              type: boolean
+              default: false
+              description: Skip validation for performance (use with caution)
+            notify_players:
+              type: boolean
+              default: true
+              description: Send notifications to affected players
+    GetReputationRequest:
+      type: object
+      required:
+      - entity_id
+      - entity_type
+      properties:
+        entity_id:
+          type: string
+          format: uuid
+          description: ID of the entity to get reputation for
+        entity_type:
+          type: string
+          enum:
+          - player
+          - npc
+          - faction
+          - corporation
+          description: Type of the entity
+        target_filters:
+          type: object
+          properties:
+            target_type:
+              type: string
+              enum:
+              - faction
+              - person
+              - corporation
+              - location
+              - event
+              description: Filter by target type
+            min_value:
+              type: number
+              format: float
+              minimum: -100.0
+              maximum: 100.0
+              description: Minimum reputation value filter
+            max_value:
+              type: number
+              format: float
+              minimum: -100.0
+              maximum: 100.0
+              description: Maximum reputation value filter
+            tier:
+              type: string
+              enum:
+              - hated
+              - hostile
+              - unfriendly
+              - neutral
+              - friendly
+              - liked
+              - respected
+              - revered
+              - legendary
+              description: Filter by reputation tier
+            relationship_strength:
+              type: string
+              enum:
+              - weak
+              - moderate
+              - strong
+              - unbreakable
+              description: Filter by relationship strength
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+              minimum: 1
+              default: 1
+              description: Page number
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 100
+              default: 20
+              description: Items per page
+        sort_by:
+          type: string
+          enum:
+          - value
+          - tier
+          - last_updated
+          - relationship_strength
+          default: value
+          description: Sort field
+        sort_order:
+          type: string
+          enum:
+          - asc
+          - desc
+          default: desc
+          description: Sort order
+    ReputationRecoveryRequest:
+      type: object
+      required:
+      - entity_id
+      - entity_type
+      - target_id
+      - target_type
+      - action_type
+      properties:
+        entity_id:
+          type: string
+          format: uuid
+          description: ID of the entity performing recovery action
+        entity_type:
+          type: string
+          enum:
+          - player
+          - npc
+          - faction
+          - corporation
+          description: Type of the entity
+        target_id:
+          type: string
+          format: uuid
+          description: ID of the target entity to recover reputation with
+        target_type:
+          type: string
+          enum:
+          - faction
+          - person
+          - corporation
+          - location
+          - event
+          description: Type of the target entity
+        action_type:
+          type: string
+          enum:
+          - quest_completion
+          - gift_giving
+          - event_participation
+          - loyalty_display
+          - crisis_intervention
+          - personal_sacrifice
+          - public_service
+          - relationship_building
+          - favor_returned
+          - apology_offered
+          description: Type of recovery action
+        action_parameters:
+          type: object
+          description: Action-specific parameters
+          additionalProperties: true
+          example:
+            gift_id: item-123
+            quest_id: quest-456
+            sacrifice_value: 1000
+        location_context:
+          type: object
+          properties:
+            location_id:
+              type: string
+              format: uuid
+              description: Current location ID
+            location_type:
+              type: string
+              enum:
+              - home_territory
+              - enemy_territory
+              - neutral_zone
+              description: Location context affecting recovery effectiveness
+            time_of_day:
+              type: string
+              enum:
+              - morning
+              - afternoon
+              - evening
+              - night
+              description: Time of day context
+          description: Location and time context for the action
+        expected_recovery_range:
+          type: object
+          properties:
+            min_value:
+              type: number
+              format: float
+              minimum: 0.0
+              description: Minimum expected recovery value
+            max_value:
+              type: number
+              format: float
+              minimum: 0.0
+              description: Maximum expected recovery value
+          description: Expected recovery value range for validation
+    ReputationDecaySimulationRequest:
+      type: object
+      required:
+      - entity_id
+      - entity_type
+      - simulation_days
+      properties:
+        entity_id:
+          type: string
+          format: uuid
+          description: ID of the entity to simulate decay for
+        entity_type:
+          type: string
+          enum:
+          - player
+          - npc
+          - faction
+          - corporation
+          description: Type of the entity
+        simulation_days:
+          type: integer
+          minimum: 1
+          maximum: 365
+          description: Number of days to simulate decay
+        include_recovery_actions:
+          type: boolean
+          default: false
+          description: Whether to include potential recovery actions in simulation
+        activity_level:
+          type: string
+          enum:
+          - inactive
+          - casual
+          - active
+          - hardcore
+          default: active
+          description: Assumed player activity level for simulation

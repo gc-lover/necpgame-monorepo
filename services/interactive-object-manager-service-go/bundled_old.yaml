@@ -1,0 +1,2693 @@
+openapi: 3.0.3
+info:
+  title: AI Enemy Coordinator Service API
+  description: '**Enterprise-grade API for AI Enemy Coordination**
+
+
+    ## Domain Purpose
+
+    Central orchestration service managing AI enemy lifecycle, state coordination,
+    and task distribution across zones.
+
+    Provides unified interface for AI enemy spawning, lifecycle management, and performance
+    monitoring.
+
+
+    ## Performance Targets
+
+    - P99 Latency: <50ms for all endpoints (critical for real-time coordination)
+
+    - Memory per Zone: <50MB for 500+ concurrent AI entities
+
+    - Concurrent Operations: 1000+ guild wars, 500+ AI entities per zone
+
+    - Uptime: 99.9% SLA (mission-critical for gameplay)
+
+
+    ## Domain Inheritance (SOLID/DRY)
+
+    This service inherits from game-entities.yaml providing:
+
+    - Consistent base entity structure (id, timestamps, version) - НЕ ДУБЛИРУЕМ!
+
+    - Game-specific business entities through `allOf` pattern
+
+    - Optimistic locking for concurrent operations (version field)
+
+    - Strict typing with validation rules (min/max, patterns, enums)
+
+
+    **SOLID/DRY Principle:**
+
+    - ✅ Наследуем базовые поля через `$ref` и `allOf`
+
+    - ✅ Добавляем только уникальные поля сервиса
+
+    - ❌ НЕ дублируем общие поля (id, created_at, updated_at, version)
+
+    - ❌ НЕ переопределяем базовые структуры
+
+    '
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Team
+    email: api@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+- url: https://api.necpgame.com/v1/ai-enemy-coordinator
+  description: Production environment
+- url: https://staging-api.necpgame.com/v1/ai-enemy-coordinator
+  description: Staging environment
+- url: http://localhost:8080/api/v1/ai-enemy-coordinator
+  description: Local development
+security:
+- BearerAuth: []
+tags:
+- name: AI Enemy Coordination
+  description: Core AI enemy orchestration operations
+- name: Zone Management
+  description: Zone-based AI enemy lifecycle management
+- name: Performance Monitoring
+  description: AI enemy performance metrics and monitoring
+- name: Health Monitoring
+  description: Service health and performance monitoring
+- name: Administration
+  description: Administrative operations
+components:
+  schemas:
+    AiEnemyEntity:
+      description: AI enemy entity inheriting base structure from GameEntity
+      allOf:
+      - type: object
+        required:
+        - id
+        - created_at
+        - updated_at
+        properties:
+          id:
+            type: string
+            format: uuid
+            description: Unique identifier for game entity
+            example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+          created_at:
+            type: string
+            format: date-time
+            description: Entity creation timestamp
+            example: '2024-01-15T10:30:00Z'
+          updated_at:
+            type: string
+            format: date-time
+            description: Last modification timestamp
+            example: '2024-01-15T14:20:00Z'
+          version:
+            type: integer
+            minimum: 1
+            description: Optimistic locking version for concurrent operations
+            example: 1
+      - type: object
+        required:
+        - enemy_type
+        - zone_id
+        - position
+        properties:
+          zone_name:
+            type: string
+            maxLength: 100
+            description: Human-readable zone name
+            example: Night City - Watson District
+          enemy_type:
+            type: string
+            enum:
+            - elite_mercenary_boss
+            - cyberpsychic_elite
+            - corporate_elite_squad
+            - regular_enemy
+            description: Type of AI enemy
+            example: elite_mercenary_boss
+          behavior_state:
+            type: string
+            enum:
+            - idle
+            - patrol
+            - combat
+            - flee
+            - dead
+            description: Current AI behavior state
+            example: patrol
+          health:
+            type: integer
+            minimum: 0
+            description: Current health points
+            example: 100
+          max_health:
+            type: integer
+            minimum: 1
+            description: Maximum health points
+            example: 100
+          target_player_id:
+            type: string
+            format: uuid
+            description: ID of targeted player (nullable)
+            example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+          level:
+            type: integer
+            minimum: 1
+            maximum: 100
+            description: AI enemy level
+            example: 25
+          is_active:
+            type: boolean
+            description: Whether enemy is currently active
+            example: true
+    ZoneCoordinationEntity:
+      description: Zone-based AI coordination entity
+      allOf:
+      - type: object
+        required:
+        - id
+        - created_at
+        - updated_at
+        properties:
+          id:
+            type: string
+            format: uuid
+            description: Unique identifier for game entity
+            example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+          created_at:
+            type: string
+            format: date-time
+            description: Entity creation timestamp
+            example: '2024-01-15T10:30:00Z'
+          updated_at:
+            type: string
+            format: date-time
+            description: Last modification timestamp
+            example: '2024-01-15T14:20:00Z'
+          version:
+            type: integer
+            minimum: 1
+            description: Optimistic locking version for concurrent operations
+            example: 1
+      - type: object
+        required:
+        - zone_id
+        - ai_density
+        - performance_metrics
+        properties:
+          zone_id:
+            type: string
+            format: uuid
+            description: Zone identifier
+            example: a1b2c3d4-1234-5678-9abc-def012345678
+          zone_name:
+            type: string
+            maxLength: 100
+            description: Human-readable zone name
+            example: Night City - Watson District
+          ai_density:
+            type: integer
+            minimum: 0
+            maximum: 1000
+            description: Current number of active AI enemies in zone
+            example: 150
+          performance_metrics:
+            $ref: '#/components/schemas/ZonePerformanceMetrics'
+    ZonePerformanceMetrics:
+      type: object
+      required:
+      - memory_usage_mb
+      - cpu_usage_percent
+      - active_enemies
+      - response_time_ms
+      properties:
+        memory_usage_mb:
+          type: number
+          format: float
+          minimum: 0
+          description: Memory usage in megabytes
+          example: 45.2
+        cpu_usage_percent:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: CPU usage percentage
+          example: 67.8
+        active_enemies:
+          type: integer
+          minimum: 0
+          description: Number of active enemies
+          example: 150
+        response_time_ms:
+          type: number
+          format: float
+          minimum: 0
+          description: Average response time in milliseconds
+          example: 12.5
+        zone_uptime_seconds:
+          type: integer
+          minimum: 0
+          description: Zone uptime in seconds
+          example: 3600
+    AiSpawnRequest:
+      type: object
+      required:
+      - zone_id
+      - enemy_type
+      - spawn_position
+      - spawn_parameters
+      properties:
+        zone_id:
+          type: string
+          format: uuid
+          description: Target zone for spawning
+          example: a1b2c3d4-1234-5678-9abc-def012345678
+        enemy_type:
+          type: string
+          enum:
+          - elite_mercenary_boss
+          - cyberpsychic_elite
+          - corporate_elite_squad
+          - regular_enemy
+          description: Type of enemy to spawn
+          example: regular_enemy
+        spawn_position:
+          type: object
+          required:
+          - x
+          - y
+          - z
+          properties:
+            x:
+              type: number
+              format: float
+              description: X coordinate
+              example: 123.45
+            y:
+              type: number
+              format: float
+              description: Y coordinate
+              example: 67.89
+            z:
+              type: number
+              format: float
+              description: Z coordinate
+              example: 0.0
+        spawn_parameters:
+          type: object
+          properties:
+            level:
+              type: integer
+              minimum: 1
+              maximum: 100
+              description: Enemy level
+              example: 25
+            behavior_profile:
+              type: string
+              maxLength: 50
+              description: Behavior profile to use
+              example: aggressive_patrol
+            respawn_on_death:
+              type: boolean
+              description: Whether to respawn enemy after death
+              example: true
+    AiCoordinationResponse:
+      type: object
+      required:
+      - enemy_id
+      - coordination_status
+      - zone_metrics
+      properties:
+        enemy_id:
+          type: string
+          format: uuid
+          description: Spawned enemy identifier
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        coordination_status:
+          type: string
+          enum:
+          - spawned
+          - failed
+          - queued
+          description: Result of coordination request
+          example: spawned
+        zone_metrics:
+          $ref: '#/components/schemas/ZonePerformanceMetrics'
+    AiEnemyListResponse:
+      type: object
+      required:
+      - enemies
+      - total_count
+      - pagination
+      properties:
+        enemies:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiEnemyEntity'
+          description: List of AI enemy entities
+        total_count:
+          type: integer
+          minimum: 0
+          description: Total number of enemies matching the filter
+          example: 150
+        pagination:
+          type: object
+          required:
+          - has_more
+          - next_cursor
+          properties:
+            has_more:
+              type: boolean
+              description: Whether there are more results available
+              example: true
+            next_cursor:
+              type: string
+              description: Cursor for next page of results
+              example: eyJwYWdlIjoxLCJsaW1pdCI6NTB9
+    BaseEntity:
+      type: object
+      required:
+      - id
+      - created_at
+      - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: '2024-01-15T10:30:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: Last modification timestamp
+          example: '2024-01-15T14:20:00Z'
+    OptimisticLock:
+      type: object
+      properties:
+        version:
+          type: integer
+          minimum: 1
+          description: Version for optimistic locking
+          example: 1
+    GameEntity:
+      type: object
+      required:
+      - id
+      - created_at
+      - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for game entity
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        created_at:
+          type: string
+          format: date-time
+          description: Entity creation timestamp
+          example: '2024-01-15T10:30:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: Last modification timestamp
+          example: '2024-01-15T14:20:00Z'
+        version:
+          type: integer
+          minimum: 1
+          description: Optimistic locking version for concurrent operations
+          example: 1
+    CharacterEntity:
+      allOf:
+      - $ref: '#/components/schemas/GameEntity'
+      - type: object
+        required:
+        - level
+        - experience
+        - stats
+        properties:
+          level:
+            type: integer
+            minimum: 1
+            maximum: 100
+            description: Character level
+            example: 25
+          experience:
+            type: integer
+            minimum: 0
+            description: Current experience points
+            example: 15420
+          stats:
+            $ref: '#/components/schemas/CharacterStats'
+          cyberware_level:
+            type: integer
+            minimum: 0
+            maximum: 20
+            description: Cyberware enhancement level
+            example: 8
+          reputation:
+            type: integer
+            minimum: -1000
+            maximum: 1000
+            description: Faction reputation score
+            example: 450
+    CharacterStats:
+      type: object
+      required:
+      - health
+      - stamina
+      - strength
+      - agility
+      - intelligence
+      - charisma
+      properties:
+        health:
+          type: integer
+          minimum: 0
+          maximum: 1000
+          description: Current health points
+          example: 850
+        max_health:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          description: Maximum health points
+          example: 900
+        stamina:
+          type: integer
+          minimum: 0
+          maximum: 500
+          description: Current stamina points
+          example: 320
+        max_stamina:
+          type: integer
+          minimum: 1
+          maximum: 500
+          description: Maximum stamina points
+          example: 350
+        strength:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Physical strength attribute
+          example: 75
+        agility:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Speed and reflexes attribute
+          example: 68
+        intelligence:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Mental acuity attribute
+          example: 82
+        charisma:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Social influence attribute
+          example: 45
+        perception:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Awareness and detection attribute
+          example: 71
+        luck:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Fortune and probability modifier
+          example: 33
+    CombatActionEntity:
+      allOf:
+      - $ref: '#/components/schemas/GameEntity'
+      - type: object
+        required:
+        - action_type
+        - source_character_id
+        - target_character_id
+        - damage_dealt
+        properties:
+          action_type:
+            type: string
+            enum:
+            - attack
+            - defend
+            - ability
+            - item
+            - flee
+            description: Type of combat action
+            example: attack
+          source_character_id:
+            type: string
+            format: uuid
+            description: Character performing the action
+            example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+          target_character_id:
+            type: string
+            format: uuid
+            description: Character receiving the action
+            example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+          damage_dealt:
+            type: integer
+            minimum: 0
+            description: Damage points inflicted
+            example: 145
+          accuracy_roll:
+            type: integer
+            minimum: 0
+            maximum: 100
+            description: Accuracy percentage for the action
+            example: 87
+          critical_hit:
+            type: boolean
+            description: Whether this was a critical hit
+            example: false
+          status_effects:
+            type: array
+            items:
+              $ref: '#/components/schemas/StatusEffect'
+            description: Status effects applied by this action
+    StatusEffect:
+      type: object
+      required:
+      - effect_type
+      - duration
+      - potency
+      properties:
+        effect_type:
+          type: string
+          enum:
+          - poison
+          - bleed
+          - stun
+          - buff_strength
+          - buff_agility
+          - heal_over_time
+          - damage_over_time
+          description: Type of status effect
+          example: buff_strength
+        duration:
+          type: integer
+          minimum: 0
+          description: Effect duration in combat rounds
+          example: 3
+        potency:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Effect strength percentage
+          example: 25
+        source:
+          type: string
+          enum:
+          - ability
+          - item
+          - environment
+          - cyberware
+          description: Source of the effect
+          example: ability
+    AbilityEntity:
+      allOf:
+      - $ref: '#/components/schemas/GameEntity'
+      - type: object
+        required:
+        - name
+        - ability_type
+        - cooldown
+        - mana_cost
+        properties:
+          name:
+            type: string
+            minLength: 1
+            maxLength: 50
+            description: Ability name
+            example: Neural Overload
+          ability_type:
+            type: string
+            enum:
+            - offensive
+            - defensive
+            - healing
+            - utility
+            - passive
+            description: Category of ability
+            example: offensive
+          cooldown:
+            type: integer
+            minimum: 0
+            description: Cooldown in combat rounds
+            example: 3
+          mana_cost:
+            type: integer
+            minimum: 0
+            description: Mana/stamina cost to use
+            example: 45
+          damage_type:
+            type: string
+            enum:
+            - physical
+            - energy
+            - chemical
+            - cyber
+            - elemental
+            description: Type of damage dealt
+            example: cyber
+          range:
+            type: integer
+            minimum: 0
+            description: Ability range in game units
+            example: 25
+          area_effect:
+            type: boolean
+            description: Whether ability affects multiple targets
+            example: false
+    InventoryItemEntity:
+      allOf:
+      - $ref: '#/components/schemas/GameEntity'
+      - type: object
+        required:
+        - item_id
+        - quantity
+        - durability
+        properties:
+          item_id:
+            type: string
+            format: uuid
+            description: Reference to item definition
+            example: b2c3d4e5-f6g7-8901-bcde-f23456789012
+          quantity:
+            type: integer
+            minimum: 1
+            description: Number of items in stack
+            example: 5
+          durability:
+            type: integer
+            minimum: 0
+            maximum: 100
+            description: Item condition percentage
+            example: 87
+          equipped:
+            type: boolean
+            description: Whether item is currently equipped
+            example: true
+          enhancement_level:
+            type: integer
+            minimum: 0
+            maximum: 10
+            description: Item enhancement/modification level
+            example: 2
+    QuestEntity:
+      allOf:
+      - $ref: '#/components/schemas/GameEntity'
+      - type: object
+      - type: object
+        required:
+        - title
+        - description
+        - quest_type
+        - status
+        - objectives
+        properties:
+          title:
+            type: string
+            minLength: 1
+            maxLength: 100
+            description: Quest title
+            example: Corporate Espionage
+          description:
+            type: string
+            minLength: 1
+            maxLength: 1000
+            description: Detailed quest description
+            example: Infiltrate Arasaka corporation headquarters and extract sensitive
+              data...
+          quest_type:
+            type: string
+            enum:
+            - main_story
+            - side_quest
+            - daily
+            - event
+            - faction
+            description: Category of quest
+            example: faction
+          status:
+            type: string
+            enum:
+            - available
+            - active
+            - completed
+            - failed
+            - expired
+            description: Current quest status
+            example: active
+          objectives:
+            type: array
+            items:
+              $ref: '#/components/schemas/QuestObjective'
+            minItems: 1
+            description: Quest completion objectives
+          rewards:
+            $ref: '#/components/schemas/QuestRewards'
+          time_limit:
+            type: integer
+            minimum: 0
+            description: Time limit in hours (0 = no limit)
+            example: 168
+          faction_id:
+            type: string
+            format: uuid
+            description: Associated faction
+            example: c3d4e5f6-g7h8-9012-cdef-345678901234
+    QuestObjective:
+      type: object
+      required:
+      - description
+      - objective_type
+      - current_progress
+      - target_progress
+      properties:
+        description:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Objective description
+          example: Hack 3 corporate terminals
+        objective_type:
+          type: string
+          enum:
+          - kill
+          - collect
+          - deliver
+          - explore
+          - interact
+          - hack
+          - craft
+          description: Type of objective
+          example: hack
+        current_progress:
+          type: integer
+          minimum: 0
+          description: Current completion progress
+          example: 2
+        target_progress:
+          type: integer
+          minimum: 1
+          description: Required completion target
+          example: 3
+    QuestRewards:
+      type: object
+      properties:
+        experience:
+          type: integer
+          minimum: 0
+          description: Experience points reward
+          example: 2500
+        currency:
+          type: integer
+          minimum: 0
+          description: Currency reward
+          example: 15000
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InventoryItemEntity'
+          description: Item rewards
+        reputation:
+          type: integer
+          minimum: -1000
+          maximum: 1000
+          description: Faction reputation change
+          example: 150
+    HealthResponse:
+      type: object
+      required:
+      - status
+      - timestamp
+      properties:
+        status:
+          type: string
+          enum:
+          - ok
+          - degraded
+          - critical
+          example: ok
+          description: Current health status
+        message:
+          type: string
+          example: Service is healthy
+          description: Human-readable status message
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-01-15T10:30:00Z'
+          description: Time when health check was performed
+        version:
+          type: string
+          example: 1.0.0
+          description: Service version
+        uptime:
+          type: integer
+          example: 3600
+          description: Service uptime in seconds
+        checks:
+          type: object
+          description: Detailed health checks
+          additionalProperties:
+            type: object
+            properties:
+              status:
+                type: string
+                enum:
+                - ok
+                - degraded
+                - critical
+              message:
+                type: string
+              response_time:
+                type: integer
+                description: Response time in milliseconds
+    DetailedHealthResponse:
+      allOf:
+      - $ref: '#/components/schemas/HealthResponse'
+      - type: object
+        properties:
+          dependencies:
+            type: object
+            description: Health status of service dependencies
+            properties:
+              database:
+                $ref: '#/components/schemas/HealthResponse'
+              redis:
+                $ref: '#/components/schemas/HealthResponse'
+              external_services:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      example: payment-service
+                    status:
+                      type: string
+                      enum:
+                      - ok
+                      - degraded
+                      - critical
+                    response_time:
+                      type: integer
+          metrics:
+            type: object
+            description: Service performance metrics
+            properties:
+              active_connections:
+                type: integer
+                example: 150
+              requests_per_second:
+                type: number
+                example: 45.2
+              average_response_time:
+                type: integer
+                example: 25
+              error_rate:
+                type: number
+                example: 0.001
+    HealthBatchRequest:
+      type: object
+      properties:
+        services:
+          type: array
+          items:
+            type: string
+            example: database
+          description: List of services to check
+        timeout:
+          type: integer
+          minimum: 1
+          maximum: 30
+          default: 5
+          description: Timeout for each health check in seconds
+    HealthBatchResponse:
+      type: object
+      properties:
+        overall_status:
+          type: string
+          enum:
+          - ok
+          - degraded
+          - critical
+          example: ok
+          description: Overall health status across all checked services
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-01-15T10:30:00Z'
+        results:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/HealthResponse'
+          description: Health results for each service
+    InfrastructureEntity:
+      type: object
+      required:
+      - id
+      - created_at
+      - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for infrastructure entity
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        created_at:
+          type: string
+          format: date-time
+          description: Entity creation timestamp
+          example: '2024-01-15T10:30:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: Last modification timestamp
+          example: '2024-01-15T14:20:00Z'
+        version:
+          type: integer
+          minimum: 1
+          description: Optimistic locking version for concurrent operations
+          example: 1
+    ErrorResponse:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: integer
+          minimum: 100
+          maximum: 599
+          example: 400
+        message:
+          type: string
+          example: Bad request
+        details:
+          type: object
+          description: Additional error details
+    UserAccountEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - username
+        - email
+        - account_status
+        - registration_method
+        properties:
+          username:
+            type: string
+            minLength: 3
+            maxLength: 30
+            pattern: ^[a-zA-Z0-9_-]+$
+            description: Unique username for login
+            example: nightrunner2077
+          email:
+            type: string
+            format: email
+            description: Primary email address
+            example: nightrunner@necpgame.com
+          email_verified:
+            type: boolean
+            description: Whether email is verified
+            example: true
+          email_verification_token:
+            type: string
+            description: Token for email verification
+            example: abc123def456
+          password_hash:
+            type: string
+            description: Bcrypt password hash
+            example: $2b$10$...
+          account_status:
+            type: string
+            enum:
+            - active
+            - suspended
+            - banned
+            - pending_verification
+            - deactivated
+            description: Account status
+            example: active
+          registration_method:
+            type: string
+            enum:
+            - email_password
+            - google_oauth
+            - discord_oauth
+            - steam_oauth
+            - guest
+            description: How user registered
+            example: email_password
+          registration_ip:
+            type: string
+            description: IP address used during registration
+            example: 192.168.1.100
+          last_login_ip:
+            type: string
+            description: IP address of last login
+            example: 10.0.0.50
+          last_login_at:
+            type: string
+            format: date-time
+            description: Timestamp of last successful login
+            example: '2024-01-15T14:20:00Z'
+          login_count:
+            type: integer
+            minimum: 0
+            description: Total number of logins
+            example: 147
+          failed_login_attempts:
+            type: integer
+            minimum: 0
+            description: Recent failed login attempts
+            example: 0
+          account_locked_until:
+            type: string
+            format: date-time
+            description: When account lock expires
+            example: '2024-01-15T16:00:00Z'
+          two_factor_enabled:
+            type: boolean
+            description: Whether 2FA is enabled
+            example: true
+          two_factor_secret:
+            type: string
+            description: TOTP secret for 2FA
+            example: JBSWY3DPEHPK3PXP
+          recovery_email:
+            type: string
+            format: email
+            description: Backup email for account recovery
+            example: backup@necpgame.com
+          preferred_language:
+            type: string
+            enum:
+            - en
+            - es
+            - zh
+            - ja
+            - ru
+            - de
+            - fr
+            - pl
+            - ko
+            - pt
+            description: User's preferred language
+            example: en
+    SessionEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - user_id
+        - session_token
+        - ip_address
+        - user_agent
+        - expires_at
+        properties:
+          user_id:
+            type: string
+            format: uuid
+            description: User this session belongs to
+            example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+          session_token:
+            type: string
+            minLength: 32
+            maxLength: 128
+            description: Unique session identifier/token
+            example: abc123def456ghi789jkl012mno345pqr678stu901vwx
+          refresh_token:
+            type: string
+            minLength: 32
+            maxLength: 128
+            description: Token for refreshing session
+            example: yz234abc567def890ghi123jkl456mno789pqr012stu
+          ip_address:
+            type: string
+            description: Client IP address
+            example: 192.168.1.100
+          user_agent:
+            type: string
+            description: Client user agent string
+            example: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
+          device_fingerprint:
+            type: string
+            description: Unique device identifier
+            example: fp_abcdef1234567890
+          location:
+            type: string
+            description: Approximate location based on IP
+            example: New York, US
+          expires_at:
+            type: string
+            format: date-time
+            description: When session expires
+            example: '2024-01-15T16:20:00Z'
+          is_active:
+            type: boolean
+            description: Whether session is currently active
+            example: true
+          last_activity_at:
+            type: string
+            format: date-time
+            description: Last user activity in this session
+            example: '2024-01-15T15:45:00Z'
+          security_level:
+            type: string
+            enum:
+            - standard
+            - elevated
+            - maximum
+            description: Security level of session
+            example: standard
+          session_metadata:
+            type: object
+            description: Additional session data
+            properties:
+              game_version:
+                type: string
+                description: Client game version
+                example: 1.2.3
+              platform:
+                type: string
+                enum:
+                - windows
+                - macos
+                - linux
+                - ios
+                - android
+                - web
+                description: Client platform
+                example: windows
+              vpn_detected:
+                type: boolean
+                description: Whether VPN usage was detected
+                example: false
+    AuditLogEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - event_type
+        - actor_id
+        - resource_type
+        - action
+        - severity
+        properties:
+          event_type:
+            type: string
+            enum:
+            - user_action
+            - system_event
+            - security_event
+            - admin_action
+            - api_call
+            description: Category of audit event
+            example: user_action
+          actor_id:
+            type: string
+            format: uuid
+            description: User/system that performed the action
+            example: b2c3d4e5-f6g7-8901-bcde-f23456789012
+          actor_type:
+            type: string
+            enum:
+            - user
+            - system
+            - admin
+            - api_client
+            description: Type of actor
+            example: user
+          resource_type:
+            type: string
+            enum:
+            - user
+            - session
+            - character
+            - guild
+            - item
+            - transaction
+            - quest
+            - chat
+            - file
+            description: Type of resource affected
+            example: character
+          resource_id:
+            type: string
+            format: uuid
+            description: Specific resource that was affected
+            example: c3d4e5f6-g7h8-9012-cdef-345678901234
+          action:
+            type: string
+            enum:
+            - create
+            - read
+            - update
+            - delete
+            - login
+            - logout
+            - ban
+            - unban
+            - transfer
+            - execute
+            description: Action performed
+            example: update
+          old_values:
+            type: object
+            description: Previous state of modified fields
+            example:
+              level: 24
+              experience: 12000
+          new_values:
+            type: object
+            description: New state of modified fields
+            example:
+              level: 25
+              experience: 12500
+          severity:
+            type: string
+            enum:
+            - low
+            - medium
+            - high
+            - critical
+            description: Security/impact severity
+            example: low
+          ip_address:
+            type: string
+            description: IP address of the actor
+            example: 192.168.1.100
+          user_agent:
+            type: string
+            description: User agent of the actor
+            example: NECPGAME Client v1.2.3
+          location:
+            type: string
+            description: Approximate location
+            example: Night City, NC
+          success:
+            type: boolean
+            description: Whether the action succeeded
+            example: true
+          error_message:
+            type: string
+            description: Error message if action failed
+            example: Insufficient permissions
+          metadata:
+            type: object
+            description: Additional audit data
+            properties:
+              request_id:
+                type: string
+                description: Unique request identifier
+                example: req_abc123def456
+              session_id:
+                type: string
+                format: uuid
+                description: Associated session ID
+                example: d4e5f6g7-h8i9-0123-def0-456789012345
+              api_endpoint:
+                type: string
+                description: API endpoint called
+                example: /api/v1/characters/upgrade
+              response_time_ms:
+                type: integer
+                description: API response time
+                example: 45
+    ApiKeyEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - owner_id
+        - name
+        - key_hash
+        - permissions
+        - status
+        properties:
+          owner_id:
+            type: string
+            format: uuid
+            description: User or service that owns this API key
+            example: e5f6g7h8-i9j0-1234-ef01-567890123456
+          name:
+            type: string
+            minLength: 1
+            maxLength: 50
+            description: Human-readable name for the key
+            example: Mobile App Key
+          description:
+            type: string
+            maxLength: 200
+            description: Description of key usage
+            example: API key for mobile application authentication
+          key_hash:
+            type: string
+            description: SHA-256 hash of the actual API key
+            example: a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3
+          key_prefix:
+            type: string
+            minLength: 8
+            maxLength: 8
+            description: First 8 characters of API key for identification
+            example: ncp_1a2b
+          permissions:
+            type: array
+            items:
+              type: string
+              enum:
+              - read_user
+              - write_user
+              - read_character
+              - write_character
+              - read_inventory
+              - write_inventory
+              - admin
+            description: Granted permissions
+            example:
+            - read_user
+            - read_character
+            - read_inventory
+          status:
+            type: string
+            enum:
+            - active
+            - suspended
+            - revoked
+            - expired
+            description: API key status
+            example: active
+          expires_at:
+            type: string
+            format: date-time
+            description: When key expires (null = never)
+            example: '2025-01-15T10:30:00Z'
+          last_used_at:
+            type: string
+            format: date-time
+            description: Last time key was used
+            example: '2024-01-15T14:20:00Z'
+          usage_count:
+            type: integer
+            minimum: 0
+            description: Total API calls made with this key
+            example: 15420
+          rate_limit:
+            type: integer
+            minimum: 1
+            description: Requests per minute allowed
+            example: 60
+          allowed_ips:
+            type: array
+            items:
+              type: string
+            description: IP addresses allowed to use this key
+            example:
+            - 192.168.1.0/24
+            - 10.0.0.1
+          metadata:
+            type: object
+            description: Additional key metadata
+            properties:
+              created_by:
+                type: string
+                format: uuid
+                description: User who created this key
+                example: f6g7h8i9-j0k1-2345-f012-678901234567
+              application:
+                type: string
+                description: Application using this key
+                example: NECPGAME Mobile App
+              environment:
+                type: string
+                enum:
+                - development
+                - staging
+                - production
+                description: Environment this key is for
+                example: production
+    ConfigurationEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - config_key
+        - config_value
+        - config_type
+        - environment
+        properties:
+          config_key:
+            type: string
+            minLength: 1
+            maxLength: 100
+            pattern: ^[a-zA-Z0-9_\-\.]+$
+            description: Configuration key
+            example: game.max_players_per_server
+          config_value:
+            type: string
+            description: Configuration value (stored as string)
+            example: '1000'
+          config_type:
+            type: string
+            enum:
+            - string
+            - integer
+            - float
+            - boolean
+            - json
+            description: Data type of the value
+            example: integer
+          environment:
+            type: string
+            enum:
+            - development
+            - staging
+            - production
+            - all
+            description: Environment this config applies to
+            example: production
+          description:
+            type: string
+            maxLength: 500
+            description: Description of what this config controls
+            example: Maximum number of players allowed per game server
+          default_value:
+            type: string
+            description: Default value if not set
+            example: '500'
+          validation_rules:
+            type: object
+            description: Validation rules for the value
+            properties:
+              min_value:
+                type: number
+                description: Minimum allowed value
+                example: 1
+              max_value:
+                type: number
+                description: Maximum allowed value
+                example: 10000
+              allowed_values:
+                type: array
+                items:
+                  type: string
+                description: List of allowed values
+                example:
+                - '100'
+                - '500'
+                - '1000'
+                - '2000'
+          is_encrypted:
+            type: boolean
+            description: Whether value is encrypted
+            example: false
+          last_modified_by:
+            type: string
+            format: uuid
+            description: User who last modified this config
+            example: g7h8i9j0-k1l2-3456-0123-456789012345
+          requires_restart:
+            type: boolean
+            description: Whether server restart is required after change
+            example: true
+    ServiceHealthEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - service_name
+        - status
+        - response_time_ms
+        - timestamp
+        properties:
+          service_name:
+            type: string
+            minLength: 1
+            maxLength: 50
+            description: Name of the service being monitored
+            example: auth-service
+          status:
+            type: string
+            enum:
+            - healthy
+            - degraded
+            - unhealthy
+            - down
+            - maintenance
+            description: Current health status
+            example: healthy
+          response_time_ms:
+            type: integer
+            minimum: 0
+            description: Response time in milliseconds
+            example: 45
+          timestamp:
+            type: string
+            format: date-time
+            description: When this health check was performed
+            example: '2024-01-15T15:30:00Z'
+          uptime_seconds:
+            type: integer
+            minimum: 0
+            description: Service uptime in seconds
+            example: 86400
+          memory_usage_mb:
+            type: integer
+            minimum: 0
+            description: Current memory usage in MB
+            example: 256
+          memory_usage_percent:
+            type: number
+            minimum: 0
+            maximum: 100
+            description: Memory usage percentage
+            example: 23.5
+          cpu_usage_percent:
+            type: number
+            minimum: 0
+            maximum: 100
+            description: CPU usage percentage
+            example: 15.2
+          active_connections:
+            type: integer
+            minimum: 0
+            description: Number of active connections
+            example: 1250
+          queue_depth:
+            type: integer
+            minimum: 0
+            description: Number of queued requests
+            example: 5
+          error_rate_percent:
+            type: number
+            minimum: 0
+            maximum: 100
+            description: Error rate percentage
+            example: 0.1
+          version:
+            type: string
+            description: Service version
+            example: 1.2.3
+          environment:
+            type: string
+            enum:
+            - development
+            - staging
+            - production
+            description: Deployment environment
+            example: production
+          checks:
+            type: array
+            items:
+              $ref: '#/components/schemas/HealthCheck'
+            description: Detailed health checks
+    HealthCheck:
+      type: object
+      required:
+      - check_name
+      - status
+      - response_time_ms
+      properties:
+        check_name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Name of the health check
+          example: database_connection
+        status:
+          type: string
+          enum:
+          - pass
+          - warn
+          - fail
+          description: Health check result
+          example: pass
+        response_time_ms:
+          type: integer
+          minimum: 0
+          description: Check response time
+          example: 12
+        message:
+          type: string
+          maxLength: 200
+          description: Check result message
+          example: Database connection successful
+        details:
+          type: object
+          description: Additional check details
+          example:
+            connection_pool_size: 10
+            active_connections: 3
+    NotificationQueueEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - notification_type
+        - recipient_id
+        - content
+        - priority
+        - status
+        properties:
+          notification_type:
+            type: string
+            enum:
+            - email
+            - push
+            - in_game
+            - sms
+            - webhook
+            description: Type of notification
+            example: email
+          recipient_id:
+            type: string
+            format: uuid
+            description: User receiving the notification
+            example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+          recipient_contact:
+            type: string
+            description: Contact info (email, phone, etc.)
+            example: user@necpgame.com
+          content:
+            type: object
+            description: Notification content
+            required:
+            - subject
+            - body
+            properties:
+              subject:
+                type: string
+                minLength: 1
+                maxLength: 100
+                description: Notification subject/title
+                example: Quest Completed!
+              body:
+                type: string
+                minLength: 1
+                maxLength: 2000
+                description: Notification body/content
+                example: Congratulations! You have completed the 'Corporate Espionage'
+                  quest.
+              template_id:
+                type: string
+                description: Template used for notification
+                example: quest_completion_v2
+          priority:
+            type: string
+            enum:
+            - low
+            - normal
+            - high
+            - critical
+            description: Notification priority
+            example: normal
+          status:
+            type: string
+            enum:
+            - queued
+            - processing
+            - sent
+            - delivered
+            - failed
+            - cancelled
+            description: Delivery status
+            example: queued
+          scheduled_for:
+            type: string
+            format: date-time
+            description: When to send notification (null = immediate)
+            example: '2024-01-15T16:00:00Z'
+          sent_at:
+            type: string
+            format: date-time
+            description: When notification was sent
+            example: '2024-01-15T15:45:00Z'
+          delivered_at:
+            type: string
+            format: date-time
+            description: When notification was delivered
+            example: '2024-01-15T15:45:02Z'
+          retry_count:
+            type: integer
+            minimum: 0
+            description: Number of delivery attempts
+            example: 0
+          max_retries:
+            type: integer
+            minimum: 0
+            maximum: 5
+            description: Maximum retry attempts
+            example: 3
+          error_message:
+            type: string
+            description: Delivery error message
+            example: SMTP server timeout
+          metadata:
+            type: object
+            description: Additional notification data
+            properties:
+              campaign_id:
+                type: string
+                description: Marketing campaign ID
+                example: quest_reminder_2024
+              source_service:
+                type: string
+                description: Service that triggered notification
+                example: quest-service
+              user_preferences:
+                type: object
+                description: User's notification preferences
+                example:
+                  email_enabled: true
+                  push_enabled: false
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: '**JWT Bearer Authentication**
+
+
+        Use JWT tokens obtained from `/auth/login` or `/auth/refresh`.
+
+
+        **Token Format:** `Authorization: Bearer <jwt_token>`
+
+
+        **Token Expiration:** 15 minutes for access tokens, 7 days for refresh tokens
+
+
+        **Security Features:**
+
+        - RS256 signature verification
+
+        - Token blacklisting on logout
+
+        - Rate limiting per user
+
+        - Geographic restrictions (optional)
+
+        '
+paths:
+  /health:
+    get:
+      operationId: AiEnemyCoordinatorHealthCheck
+      summary: Basic health check for AI Enemy Coordinator
+      description: Returns service health status and basic AI coordination metrics
+      tags:
+      - Health Monitoring
+      responses:
+        '200':
+          description: Service is healthy with AI coordination metrics
+          content:
+            application/json:
+              schema:
+                allOf:
+                - type: object
+                  required:
+                  - status
+                  - timestamp
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                      - ok
+                      - degraded
+                      - critical
+                      example: ok
+                      description: Current health status
+                    message:
+                      type: string
+                      example: Service is healthy
+                      description: Human-readable status message
+                    timestamp:
+                      type: string
+                      format: date-time
+                      example: '2024-01-15T10:30:00Z'
+                      description: Time when health check was performed
+                    version:
+                      type: string
+                      example: 1.0.0
+                      description: Service version
+                    uptime:
+                      type: integer
+                      example: 3600
+                      description: Service uptime in seconds
+                    checks:
+                      type: object
+                      description: Detailed health checks
+                      additionalProperties:
+                        type: object
+                        properties:
+                          status:
+                            type: string
+                            enum:
+                            - ok
+                            - degraded
+                            - critical
+                          message:
+                            type: string
+                          response_time:
+                            type: integer
+                            description: Response time in milliseconds
+                - type: object
+                  properties:
+                    active_zones:
+                      type: integer
+                      description: Number of active zones with AI coordination
+                      example: 25
+                    total_ai_enemies:
+                      type: integer
+                      description: Total active AI enemies across all zones
+                      example: 1250
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                description: Service unavailable - system is under maintenance or
+                  overloaded
+                headers:
+                  Retry-After:
+                    schema:
+                      type: integer
+                      example: 300
+                      description: Seconds until service is available again
+                content:
+                  application/json:
+                    schema:
+                      type: object
+                      required:
+                      - code
+                      - message
+                      properties:
+                        code:
+                          type: integer
+                          minimum: 100
+                          maximum: 599
+                          example: 400
+                        message:
+                          type: string
+                          example: Bad request
+                        details:
+                          type: object
+                          description: Additional error details
+  /health/detailed:
+    get:
+      operationId: AiEnemyCoordinatorDetailedHealthCheck
+      summary: Detailed health check with AI coordination metrics
+      description: Returns comprehensive health status including AI enemy performance
+        metrics and zone coordination stats
+      tags:
+      - Health Monitoring
+      responses:
+        '200':
+          description: Detailed health information with AI metrics
+          content:
+            application/json:
+              schema:
+                allOf:
+                - allOf:
+                  - $ref: '#/components/schemas/HealthResponse'
+                  - type: object
+                    properties:
+                      dependencies:
+                        type: object
+                        description: Health status of service dependencies
+                        properties:
+                          database:
+                            $ref: '#/components/schemas/HealthResponse'
+                          redis:
+                            $ref: '#/components/schemas/HealthResponse'
+                          external_services:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                name:
+                                  type: string
+                                  example: payment-service
+                                status:
+                                  type: string
+                                  enum:
+                                  - ok
+                                  - degraded
+                                  - critical
+                                response_time:
+                                  type: integer
+                      metrics:
+                        type: object
+                        description: Service performance metrics
+                        properties:
+                          active_connections:
+                            type: integer
+                            example: 150
+                          requests_per_second:
+                            type: number
+                            example: 45.2
+                          average_response_time:
+                            type: integer
+                            example: 25
+                          error_rate:
+                            type: number
+                            example: 0.001
+                - type: object
+                  properties:
+                    ai_coordination_metrics:
+                      type: object
+                      properties:
+                        active_zones:
+                          type: integer
+                          description: Number of zones with active AI coordination
+                          example: 25
+                        total_enemies:
+                          type: integer
+                          description: Total active AI enemies
+                          example: 1250
+                        zones_at_capacity:
+                          type: integer
+                          description: Number of zones at AI density capacity
+                          example: 3
+                        average_response_time_ms:
+                          type: number
+                          format: float
+                          description: Average AI coordination response time
+                          example: 12.5
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                description: Service unavailable - system is under maintenance or
+                  overloaded
+                headers:
+                  Retry-After:
+                    schema:
+                      type: integer
+                      example: 300
+                      description: Seconds until service is available again
+                content:
+                  application/json:
+                    schema:
+                      type: object
+                      required:
+                      - code
+                      - message
+                      properties:
+                        code:
+                          type: integer
+                          minimum: 100
+                          maximum: 599
+                          example: 400
+                        message:
+                          type: string
+                          example: Bad request
+                        details:
+                          type: object
+                          description: Additional error details
+  /ai-enemies:
+    post:
+      operationId: SpawnAiEnemy
+      summary: Spawn new AI enemy in zone
+      description: 'Spawn a new AI enemy in the specified zone with given parameters.
+
+
+        **Performance Notes:**
+
+        - Atomic operation with zone capacity validation
+
+        - Immediate response with enemy ID for real-time gameplay
+
+        - Background processing for behavior initialization
+
+        '
+      tags:
+      - AI Enemy Coordination
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiSpawnRequest'
+      responses:
+        '201':
+          description: AI enemy successfully spawned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiCoordinationResponse'
+        '400':
+          description: Bad request - validation failed or malformed data
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                example: application/json
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        '429':
+          description: Zone at AI density capacity
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Zone at maximum AI density capacity
+                  zone_capacity:
+                    type: integer
+                    example: 500
+                  retry_after_seconds:
+                    type: integer
+                    example: 30
+    get:
+      operationId: ListAiEnemies
+      summary: List AI enemies with zone-based filtering
+      description: 'Retrieve paginated list of AI enemies with advanced zone-based
+        filtering.
+
+
+        **Performance Notes:**
+
+        - Spatial index optimized for zone queries
+
+        - Cursor-based pagination for large result sets
+
+        - Real-time state updates included
+
+        '
+      tags:
+      - AI Enemy Coordination
+      parameters:
+      - name: zone_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter by specific zone
+      - name: enemy_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - elite_mercenary_boss
+          - cyberpsychic_elite
+          - corporate_elite_squad
+          - regular_enemy
+        description: Filter by enemy type
+      - name: behavior_state
+        in: query
+        schema:
+          type: string
+          enum:
+          - idle
+          - patrol
+          - combat
+          - flee
+          - dead
+        description: Filter by behavior state
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Number of enemies to return
+      responses:
+        '200':
+          description: List of AI enemies
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - enemies
+                - total_count
+                - has_more
+                properties:
+                  enemies:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AiEnemyEntity'
+                  total_count:
+                    type: integer
+                    description: Total number of enemies matching criteria
+                    example: 150
+                  has_more:
+                    type: boolean
+                    description: Whether more results are available
+                    example: true
+                  next_cursor:
+                    type: string
+                    description: Cursor for next page
+                    example: eyJpZCI6ImY0N2FjMTBiLTU4Y2MtNDM3Mi1hNTY3LTBlMDJiMmMzZDM3OSJ9
+  /ai-enemies/{enemy_id}:
+    get:
+      operationId: GetAiEnemy
+      summary: Get detailed AI enemy information
+      description: Retrieve complete AI enemy state including position, behavior,
+        and combat stats
+      tags:
+      - AI Enemy Coordination
+      parameters:
+      - name: enemy_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: AI enemy identifier
+      responses:
+        '200':
+          description: AI enemy details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiEnemyEntity'
+        '404':
+          description: Not found - requested resource does not exist
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+    put:
+      operationId: UpdateAiEnemy
+      summary: Update AI enemy state
+      description: Update AI enemy properties with optimistic locking
+      tags:
+      - AI Enemy Coordination
+      parameters:
+      - name: enemy_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: AI enemy identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - version
+              properties:
+                version:
+                  type: integer
+                  description: Current version for optimistic locking
+                  example: 1
+                health:
+                  type: integer
+                  minimum: 0
+                  description: Updated health value
+                  example: 75
+                behavior_state:
+                  type: string
+                  enum:
+                  - idle
+                  - patrol
+                  - combat
+                  - flee
+                  - dead
+                  description: New behavior state
+                  example: combat
+                target_player_id:
+                  type: string
+                  format: uuid
+                  description: New target player ID
+                  example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+      responses:
+        '200':
+          description: AI enemy updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiEnemyEntity'
+        '409':
+          description: Version conflict - concurrent modification
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Version conflict - enemy was modified by another request
+                  current_version:
+                    type: integer
+                    example: 2
+    delete:
+      operationId: DespawnAiEnemy
+      summary: Despawn AI enemy
+      description: Remove AI enemy from zone with cleanup
+      tags:
+      - AI Enemy Coordination
+      parameters:
+      - name: enemy_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: AI enemy identifier
+      responses:
+        '204':
+          description: AI enemy successfully despawned
+        '404':
+          description: Not found - requested resource does not exist
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+  /zones/{zone_id}/coordination:
+    get:
+      operationId: GetZoneCoordinationStatus
+      summary: Get zone AI coordination status
+      description: Retrieve current AI coordination metrics and capacity for specific
+        zone
+      tags:
+      - Zone Management
+      parameters:
+      - name: zone_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Zone identifier
+      responses:
+        '200':
+          description: Zone coordination status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ZoneCoordinationEntity'
+        '404':
+          description: Zone not found or not active
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Zone not found or inactive
+  /zones/{zone_id}/ai-density:
+    put:
+      operationId: AdjustZoneAiDensity
+      summary: Adjust AI density for zone
+      description: Modify maximum AI enemy capacity for zone based on performance
+        metrics
+      tags:
+      - Zone Management
+      parameters:
+      - name: zone_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Zone identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - target_density
+              - reason
+              properties:
+                target_density:
+                  type: integer
+                  minimum: 0
+                  maximum: 1000
+                  description: Target number of AI enemies for zone
+                  example: 200
+                reason:
+                  type: string
+                  enum:
+                  - performance_optimization
+                  - player_load
+                  - event_activation
+                  - emergency_reduction
+                  description: Reason for density adjustment
+                  example: performance_optimization
+                gradual_adjustment:
+                  type: boolean
+                  description: Whether to adjust gradually over time
+                  example: true
+      responses:
+        '200':
+          description: AI density adjustment initiated
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - adjustment_id
+                - estimated_completion_time
+                properties:
+                  adjustment_id:
+                    type: string
+                    format: uuid
+                    description: Unique identifier for this adjustment
+                    example: a1b2c3d4-1234-5678-9abc-def012345678
+                  estimated_completion_time:
+                    type: integer
+                    description: Estimated completion time in seconds
+                    example: 300
+                  current_density:
+                    type: integer
+                    description: Current AI density
+                    example: 150
+                  target_density:
+                    type: integer
+                    description: Target AI density
+                    example: 200
+  /performance/metrics:
+    get:
+      operationId: GetAiPerformanceMetrics
+      summary: Get AI coordination performance metrics
+      description: Retrieve comprehensive performance metrics for AI coordination
+        system
+      tags:
+      - Performance Monitoring
+      parameters:
+      - name: time_range
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1m
+          - 5m
+          - 15m
+          - 1h
+          - 24h
+          default: 5m
+        description: Time range for metrics
+      responses:
+        '200':
+          description: AI performance metrics
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - timestamp
+                - global_metrics
+                - zone_metrics
+                properties:
+                  timestamp:
+                    type: string
+                    format: date-time
+                    description: Metrics collection timestamp
+                    example: '2024-01-15T14:30:00Z'
+                  global_metrics:
+                    type: object
+                    properties:
+                      total_active_enemies:
+                        type: integer
+                        description: Total active AI enemies across all zones
+                        example: 1250
+                      average_response_time_ms:
+                        type: number
+                        format: float
+                        description: Average coordination response time
+                        example: 12.5
+                      zones_at_capacity:
+                        type: integer
+                        description: Number of zones at maximum capacity
+                        example: 3
+                      spawn_failure_rate:
+                        type: number
+                        format: float
+                        description: Percentage of failed spawn attempts
+                        example: 0.05
+                  zone_metrics:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ZoneCoordinationEntity'
+    OK:
+      description: Operation completed successfully
+      headers:
+        Content-Type:
+          schema:
+            type: string
+            example: application/json
+        ETag:
+          schema:
+            type: string
+            description: Entity version for optimistic locking
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - success
+            - message
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: Operation completed successfully
+              data:
+                type: object
+                description: Response data payload
+    Created:
+      description: Resource created successfully
+      headers:
+        Content-Type:
+          schema:
+            type: string
+            example: application/json
+        Location:
+          schema:
+            type: string
+            description: URL of the created resource
+        ETag:
+          schema:
+            type: string
+            description: Entity version for optimistic locking
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - success
+            - message
+            - id
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: Resource created successfully
+              id:
+                type: string
+                format: uuid
+                description: ID of the created resource
+                example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+              data:
+                type: object
+                description: Created resource data
+    BadRequest:
+      description: Bad request - validation failed or malformed data
+      headers:
+        Content-Type:
+          schema:
+            type: string
+            example: application/json
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                minimum: 100
+                maximum: 599
+                example: 400
+              message:
+                type: string
+                example: Bad request
+              details:
+                type: object
+                description: Additional error details
+    Unauthorized:
+      description: Unauthorized - authentication required or invalid token
+      headers:
+        WWW-Authenticate:
+          schema:
+            type: string
+            example: Bearer realm="NECPGAME API"
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                minimum: 100
+                maximum: 599
+                example: 400
+              message:
+                type: string
+                example: Bad request
+              details:
+                type: object
+                description: Additional error details
+    NotFound:
+      description: Not found - requested resource does not exist
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                minimum: 100
+                maximum: 599
+                example: 400
+              message:
+                type: string
+                example: Bad request
+              details:
+                type: object
+                description: Additional error details
+    Conflict:
+      description: Conflict - resource has been modified by another request
+    InternalServerError:
+      description: Internal server error - unexpected system error occurred
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                minimum: 100
+                maximum: 599
+                example: 400
+              message:
+                type: string
+                example: Bad request
+              details:
+                type: object
+                description: Additional error details
+  schemas: null
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: '**JWT Bearer Authentication**
+
+
+        Use JWT tokens obtained from `/auth/login` or `/auth/refresh`.
+
+
+        **Token Format:** `Authorization: Bearer <jwt_token>`
+
+
+        **Token Expiration:** 15 minutes for access tokens, 7 days for refresh tokens
+
+
+        **Security Features:**
+
+        - RS256 signature verification
+
+        - Token blacklisting on logout
+
+        - Rate limiting per user
+
+        - Geographic restrictions (optional)
+
+        '
+x-domain-inheritance:
+  inherits-from: common/schemas/game-entities.yaml
+  additional-schemas: Service-specific extensions only
+  no-duplication: All common fields (id, timestamps, version) inherited, not redefined
+  pattern: allOf with $ref to domain entities + service-specific properties only

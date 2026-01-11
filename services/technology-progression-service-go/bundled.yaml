@@ -1,50 +1,46 @@
 openapi: 3.0.3
 info:
-  title: Technology Progression Service API
-  description: |
-    **Enterprise-Grade Technology Progression API for NECPGAME**
+  title: Technology Progression domain API
+  description: 'Technology Progression domain API for NECPGAME.
 
-    Timeline-based technology unlocking system for Cyberpunk 2020-2093 lore integration.
 
-    ## Key Features
+    This domain manages technology unlocking based on league timeline (2020-2093).
 
-    - **Timeline-based unlocking** (2020-2093) aligned with Cyberpunk lore
-    - **Multi-condition requirements** (time, quests, reputation, events)
-    - **Real-time availability checks** for inventory/character systems
-    - **Notification system** for technology unlocks
-    - **Integration APIs** for League, Inventory, Character, Quest, World services
+    Technologies are unlocked automatically by time, quests, and reputation requirements.
 
-    ## Domain Purpose
 
-    Manages technology progression based on league timeline, ensuring players experience
-    the natural technological advancement of the Cyberpunk universe.
+    **Key Features:**
 
-    ## Performance Targets
+    - Timeline-based technology unlocking (2020-2093)
 
-    - P99 Latency: <50ms for availability checks
-    - Memory: <15KB per technology list request
-    - Concurrent users: 100,000+ simultaneous checks
-    - Data consistency: Real-time sync with league progression
+    - Quest and reputation requirements for advanced tech
 
-    ## Enterprise Architecture
+    - Integration with League, Inventory, Character, Quest, World services
 
-    - **Microservice domain:** progression-domain (technology systems)
-    - **Data source:** PostgreSQL with league timeline data
-    - **Caching:** Redis for technology availability states
-    - **Integration:** REST APIs with other progression services
-    - **Security:** JWT authentication with technology access control
+    - Visual indicators for locked/unlocked technologies
+
+
+    **Performance Notes:**
+
+    - Uses optimized queries with time-based filtering
+
+    - Cached technology availability checks
+
+    - Struct alignment optimization for memory efficiency
+
+    '
   version: 1.0.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
   contact:
     name: NECPGAME API Support
     url: https://necpgame.com/support
     email: api@necpgame.com
-  license:
-    name: MIT
-    url: https://opensource.org/licenses/MIT
 servers:
-- url: http://localhost:8160
-  description: Local development server
-- url: https://api.necpgame.com/technology-progression/v1
+- url: http://localhost:8080/api/v1
+  description: Development server
+- url: https://api.necpgame.com/api/v1
   description: Production server
 security:
 - BearerAuth: []
@@ -56,7 +52,7 @@ tags:
 - name: Timeline Integration
   description: League timeline integration
 paths:
-  /health:
+  /api/v1/technology-progression/health:
     get:
       summary: Technology progression domain health check
       operationId: technologyProgressionHealthCheck
@@ -90,15 +86,30 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-
-  /health/batch:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+  /api/v1/technology-progression/health/batch:
     post:
       summary: Batch health check for multiple domains
       operationId: batchHealthCheck
       tags:
       - System
-      description: 'Performance optimization: Check multiple domain health in single request'
+      description: 'Performance optimization: Check multiple domain health in single
+        request'
       requestBody:
         required: true
         content:
@@ -106,7 +117,7 @@ paths:
             schema:
               type: object
               required:
-                - domains
+              - domains
               properties:
                 domains:
                   type: array
@@ -133,17 +144,33 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-
-  /technologies:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+  /api/v1/technology-progression/technologies:
     get:
       summary: Get available technologies for current league year
       operationId: getAvailableTechnologies
       tags:
       - Technology Management
-      description: |
-        Returns all technologies available for the current league year.
+      description: 'Returns all technologies available for the current league year.
+
         Filters out locked technologies based on timeline, quests, and reputation.
+
+        '
       parameters:
       - name: character_id
         in: query
@@ -164,7 +191,29 @@ paths:
         required: false
         schema:
           type: string
-          enum: [cyberware, ai, cyberdeck, ice, neurointerface, biotech, vr, braindance, net, nanotechnology, synthetic_organs, cyberweapons, full_cyber, autonomous_vehicles, blackwall, soulkiller, netwatch, full_integration, relic, synthetic_persons, space_tech, quantum_computing]
+          enum:
+          - cyberware
+          - ai
+          - cyberdeck
+          - ice
+          - neurointerface
+          - biotech
+          - vr
+          - braindance
+          - net
+          - nanotechnology
+          - synthetic_organs
+          - cyberweapons
+          - full_cyber
+          - autonomous_vehicles
+          - blackwall
+          - soulkiller
+          - netwatch
+          - full_integration
+          - relic
+          - synthetic_persons
+          - space_tech
+          - quantum_computing
         description: Filter by technology category
       responses:
         '200':
@@ -187,9 +236,23 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-
-  /technologies/{technology_id}/check:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+  /api/v1/technology-progression/technologies/{technology_id}/check:
     get:
       summary: Check technology availability
       operationId: checkTechnologyAvailability
@@ -222,9 +285,23 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-
-  /timeline:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+  /api/v1/technology-progression/timeline:
     get:
       summary: Get technology timeline for current league
       operationId: getTechnologyTimeline
@@ -260,9 +337,23 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-
-  /notifications:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+  /api/v1/technology-progression/notifications:
     get:
       summary: Get technology unlock notifications
       operationId: getTechnologyNotifications
@@ -298,194 +389,84 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   schemas:
     HealthResponse:
       type: object
       required:
-        - status
-        - timestamp
+      - status
+      - timestamp
       properties:
         status:
           type: string
           enum:
-            - healthy
-            - degraded
-            - unhealthy
-          example: healthy
-          maxLength: 255
-        domain:
+          - ok
+          - degraded
+          - critical
+          example: ok
+          description: Current health status
+        message:
           type: string
-          example: service-name
-          maxLength: 255
+          example: Service is healthy
+          description: Human-readable status message
         timestamp:
           type: string
           format: date-time
-          example: "2025-12-28T10:00:00Z"
-          maxLength: 255
+          example: '2024-01-15T10:30:00Z'
+          description: Time when health check was performed
         version:
           type: string
-          example: "1.0.0"
-          maxLength: 50
-        uptime_seconds:
+          example: 1.0.0
+          description: Service version
+        uptime:
           type: integer
           example: 3600
-          minimum: 0
-        active_connections:
-          type: integer
-          example: 1500
-          minimum: 0
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
-    Error:
-      type: object
-      required:
-        - code
-        - message
-      properties:
-        code:
-          type: integer
-          example: 500
-          format: int32
-          minimum: 100
-          maximum: 599
-        message:
-          type: string
-          example: "Internal server error"
-          maxLength: 1000
-        details:
+          description: Service uptime in seconds
+        checks:
           type: object
-          description: "Additional error details"
-      description: "Standard error response format"
-
-    Technology:
-      type: object
-      required:
-        - id
-        - name
-        - description
-        - category
-        - unlock_year
-        - unlock_phase
-        - availability_status
-      properties:
-        id:
-          type: string
-          description: Unique technology identifier
-          example: "cyberware-basic"
-          maxLength: 100
-        name:
-          type: string
-          description: Human-readable technology name
-          example: "Кибернетические имплантаты (базовые)"
-          maxLength: 255
-        description:
-          type: string
-          description: Detailed technology description
-          example: "Киберпротезы, базовые нейроинтерфейсы, простые кибернетические модификации"
-          maxLength: 2000
-        category:
-          type: string
-          enum: [cyberware, ai, cyberdeck, ice, neurointerface, biotech, vr, braindance, net, nanotechnology, synthetic_organs, cyberweapons, full_cyber, autonomous_vehicles, blackwall, soulkiller, netwatch, full_integration, relic, synthetic_persons, space_tech, quantum_computing]
-          description: Technology category
-          example: "cyberware"
-        unlock_year:
-          type: integer
-          description: Year when technology becomes available
-          minimum: 2020
-          maximum: 2093
-          example: 2020
-        unlock_phase:
-          type: string
-          enum: [Start, Rise, Peak, Fall, End]
-          description: League phase when technology unlocks
-          example: "Start"
-        availability_status:
-          type: string
-          enum: [available, locked, upcoming]
-          description: Current availability status for the player
-          example: "available"
-        unlock_conditions:
-          type: array
-          items:
-            $ref: '#/components/schemas/UnlockCondition'
-          description: Conditions required to unlock this technology
-        availability:
-          $ref: '#/components/schemas/TechnologyAvailability'
-        examples:
-          type: array
-          items:
-            type: string
-          description: Specific examples of this technology
-          example: ["Базовые киберруки", "Простые нейроинтерфейсы"]
-        lore_context:
-          type: string
-          description: Lore context explaining this technology
-          maxLength: 1000
-          example: "Первое поколение кибернетики, доступное широкой публике после корпорационных войн"
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
-    UnlockCondition:
-      type: object
-      required:
-        - type
-        - condition
-      properties:
-        type:
-          type: string
-          enum: [time, quest, reputation, event]
-          description: Type of unlock condition
-          example: "time"
-        condition:
-          type: string
-          description: Condition expression
-          example: "league_year >= 2020"
-        description:
-          type: string
-          description: Human-readable condition description
-          maxLength: 255
-          example: "Достигнуть 2020 года в лиге"
-
-    TechnologyAvailability:
-      type: object
-      properties:
-        vendors:
-          type: string
-          enum: [all, elite_vendors, medical_vendors, tech_vendors, corporate_only, entertainment_vendors]
-          description: Available through vendor types
-          example: "all"
-        corporations:
-          type: array
-          items:
-            type: string
-          description: Corporations that provide this technology
-          example: ["Arasaka", "Militech", "Biotechnica"]
-        black_market:
-          type: boolean
-          description: Available on black market
-          example: false
-        restrictions:
-          type: array
-          items:
-            type: string
-          description: Special restrictions or requirements
-          example: ["Требуется лицензия", "Ограничено репутацией"]
-
+          description: Detailed health checks
+          additionalProperties:
+            type: object
+            properties:
+              status:
+                type: string
+                enum:
+                - ok
+                - degraded
+                - critical
+              message:
+                type: string
+              response_time:
+                type: integer
+                description: Response time in milliseconds
     TechnologyListResponse:
       type: object
       required:
-        - technologies
-        - current_league_year
-        - total_available
-        - total_locked
+      - technologies
+      - current_league_year
+      - total_available
+      - total_locked
       properties:
         technologies:
           type: array
@@ -512,32 +493,36 @@ components:
           type: integer
           description: Number of technologies unlocking in next year
           example: 8
-
     TechnologyAvailabilityResponse:
       type: object
       required:
-        - technology_id
-        - available
-        - availability_status
+      - technology_id
+      - available
+      - availability_status
       properties:
         technology_id:
           type: string
           description: Technology identifier
-          example: "cyberware-basic"
+          example: cyberware-basic
         available:
           type: boolean
           description: Whether technology is available for the character
           example: true
         availability_status:
           type: string
-          enum: [available, locked_time, locked_quest, locked_reputation, locked_event]
+          enum:
+          - available
+          - locked_time
+          - locked_quest
+          - locked_reputation
+          - locked_event
           description: Detailed availability status
-          example: "available"
+          example: available
         reason:
           type: string
           description: Reason why technology is locked (if applicable)
           maxLength: 500
-          example: "Требуется завершить квест 'Neurointerface Revolution'"
+          example: Требуется завершить квест 'Neurointerface Revolution'
         unlock_requirements:
           type: array
           items:
@@ -546,13 +531,12 @@ components:
         estimated_unlock_time:
           type: string
           description: Estimated time until unlock (if locked by time)
-          example: "2 года 3 месяца"
-
+          example: 2 года 3 месяца
     TechnologyTimelineResponse:
       type: object
       required:
-        - current_year
-        - timeline
+      - current_year
+      - timeline
       properties:
         current_year:
           type: integer
@@ -563,38 +547,11 @@ components:
           items:
             $ref: '#/components/schemas/TimelineEntry'
           description: Technology unlocks by year
-
-    TimelineEntry:
-      type: object
-      required:
-        - year
-        - phase
-        - technologies
-      properties:
-        year:
-          type: integer
-          description: League year
-          example: 2030
-        phase:
-          type: string
-          enum: [Start, Rise, Peak, Fall, End]
-          description: League phase
-          example: "Rise"
-        technologies:
-          type: array
-          items:
-            $ref: '#/components/schemas/Technology'
-          description: Technologies unlocking this year
-        total_technologies:
-          type: integer
-          description: Total technologies in this year
-          example: 8
-
     TechnologyNotificationsResponse:
       type: object
       required:
-        - notifications
-        - total_count
+      - notifications
+      - total_count
       properties:
         notifications:
           type: array
@@ -605,54 +562,913 @@ components:
           type: integer
           description: Total number of notifications
           example: 25
-
-    TechnologyNotification:
+    InfrastructureEntity:
       type: object
       required:
-        - id
-        - technology_id
-        - technology_name
-        - unlocked_at
-        - unlock_reason
+      - id
+      - created_at
+      - updated_at
       properties:
         id:
           type: string
           format: uuid
-          description: Notification unique identifier
-          example: "123e4567-e89b-12d3-a456-426614174000"
-        technology_id:
-          type: string
-          description: Technology that was unlocked
-          example: "neurointerface-advanced"
-        technology_name:
-          type: string
-          description: Human-readable technology name
-          example: "Продвинутые нейроинтерфейсы"
-        unlocked_at:
+          description: Unique identifier for infrastructure entity
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        created_at:
           type: string
           format: date-time
-          description: When technology was unlocked
-          example: "2025-12-28T10:00:00Z"
-        unlock_reason:
+          description: Entity creation timestamp
+          example: '2024-01-15T10:30:00Z'
+        updated_at:
           type: string
-          enum: [time_progression, quest_completion, reputation_achieved, event_triggered]
-          description: Reason for unlock
-          example: "time_progression"
-        character_id:
+          format: date-time
+          description: Last modification timestamp
+          example: '2024-01-15T14:20:00Z'
+        version:
+          type: integer
+          minimum: 1
+          description: Optimistic locking version for concurrent operations
+          example: 1
+    ErrorResponse:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: integer
+          minimum: 100
+          maximum: 599
+          example: 400
+        message:
+          type: string
+          example: Bad request
+        details:
+          type: object
+          description: Additional error details
+    HealthBatchRequest:
+      type: object
+      properties:
+        services:
+          type: array
+          items:
+            type: string
+          description: List of services to check
+    HealthBatchResponse:
+      type: object
+      properties:
+        results:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/HealthResponse'
+    BaseEntity:
+      type: object
+      required:
+      - id
+      - created_at
+      - updated_at
+      properties:
+        id:
           type: string
           format: uuid
-          description: Character that unlocked the technology
-          example: "123e4567-e89b-12d3-a456-426614174000"
-        additional_info:
-          type: object
-          description: Additional context about the unlock
-          properties:
-            quest_name:
+          description: Unique identifier
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: '2024-01-15T10:30:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: Last modification timestamp
+          example: '2024-01-15T14:20:00Z'
+    OptimisticLock:
+      type: object
+      properties:
+        version:
+          type: integer
+          minimum: 1
+          description: Version for optimistic locking
+          example: 1
+    UserAccountEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - username
+        - email
+        - account_status
+        - registration_method
+        properties:
+          username:
+            type: string
+            minLength: 3
+            maxLength: 30
+            pattern: ^[a-zA-Z0-9_-]+$
+            description: Unique username for login
+            example: nightrunner2077
+          email:
+            type: string
+            format: email
+            description: Primary email address
+            example: nightrunner@necpgame.com
+          email_verified:
+            type: boolean
+            description: Whether email is verified
+            example: true
+          email_verification_token:
+            type: string
+            description: Token for email verification
+            example: abc123def456
+          password_hash:
+            type: string
+            description: Bcrypt password hash
+            example: $2b$10$...
+          account_status:
+            type: string
+            enum:
+            - active
+            - suspended
+            - banned
+            - pending_verification
+            - deactivated
+            description: Account status
+            example: active
+          registration_method:
+            type: string
+            enum:
+            - email_password
+            - google_oauth
+            - discord_oauth
+            - steam_oauth
+            - guest
+            description: How user registered
+            example: email_password
+          registration_ip:
+            type: string
+            description: IP address used during registration
+            example: 192.168.1.100
+          last_login_ip:
+            type: string
+            description: IP address of last login
+            example: 10.0.0.50
+          last_login_at:
+            type: string
+            format: date-time
+            description: Timestamp of last successful login
+            example: '2024-01-15T14:20:00Z'
+          login_count:
+            type: integer
+            minimum: 0
+            description: Total number of logins
+            example: 147
+          failed_login_attempts:
+            type: integer
+            minimum: 0
+            description: Recent failed login attempts
+            example: 0
+          account_locked_until:
+            type: string
+            format: date-time
+            description: When account lock expires
+            example: '2024-01-15T16:00:00Z'
+          two_factor_enabled:
+            type: boolean
+            description: Whether 2FA is enabled
+            example: true
+          two_factor_secret:
+            type: string
+            description: TOTP secret for 2FA
+            example: JBSWY3DPEHPK3PXP
+          recovery_email:
+            type: string
+            format: email
+            description: Backup email for account recovery
+            example: backup@necpgame.com
+          preferred_language:
+            type: string
+            enum:
+            - en
+            - es
+            - zh
+            - ja
+            - ru
+            - de
+            - fr
+            - pl
+            - ko
+            - pt
+            description: User's preferred language
+            example: en
+    SessionEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - user_id
+        - session_token
+        - ip_address
+        - user_agent
+        - expires_at
+        properties:
+          user_id:
+            type: string
+            format: uuid
+            description: User this session belongs to
+            example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+          session_token:
+            type: string
+            minLength: 32
+            maxLength: 128
+            description: Unique session identifier/token
+            example: abc123def456ghi789jkl012mno345pqr678stu901vwx
+          refresh_token:
+            type: string
+            minLength: 32
+            maxLength: 128
+            description: Token for refreshing session
+            example: yz234abc567def890ghi123jkl456mno789pqr012stu
+          ip_address:
+            type: string
+            description: Client IP address
+            example: 192.168.1.100
+          user_agent:
+            type: string
+            description: Client user agent string
+            example: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
+          device_fingerprint:
+            type: string
+            description: Unique device identifier
+            example: fp_abcdef1234567890
+          location:
+            type: string
+            description: Approximate location based on IP
+            example: New York, US
+          expires_at:
+            type: string
+            format: date-time
+            description: When session expires
+            example: '2024-01-15T16:20:00Z'
+          is_active:
+            type: boolean
+            description: Whether session is currently active
+            example: true
+          last_activity_at:
+            type: string
+            format: date-time
+            description: Last user activity in this session
+            example: '2024-01-15T15:45:00Z'
+          security_level:
+            type: string
+            enum:
+            - standard
+            - elevated
+            - maximum
+            description: Security level of session
+            example: standard
+          session_metadata:
+            type: object
+            description: Additional session data
+            properties:
+              game_version:
+                type: string
+                description: Client game version
+                example: 1.2.3
+              platform:
+                type: string
+                enum:
+                - windows
+                - macos
+                - linux
+                - ios
+                - android
+                - web
+                description: Client platform
+                example: windows
+              vpn_detected:
+                type: boolean
+                description: Whether VPN usage was detected
+                example: false
+    AuditLogEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - event_type
+        - actor_id
+        - resource_type
+        - action
+        - severity
+        properties:
+          event_type:
+            type: string
+            enum:
+            - user_action
+            - system_event
+            - security_event
+            - admin_action
+            - api_call
+            description: Category of audit event
+            example: user_action
+          actor_id:
+            type: string
+            format: uuid
+            description: User/system that performed the action
+            example: b2c3d4e5-f6g7-8901-bcde-f23456789012
+          actor_type:
+            type: string
+            enum:
+            - user
+            - system
+            - admin
+            - api_client
+            description: Type of actor
+            example: user
+          resource_type:
+            type: string
+            enum:
+            - user
+            - session
+            - character
+            - guild
+            - item
+            - transaction
+            - quest
+            - chat
+            - file
+            description: Type of resource affected
+            example: character
+          resource_id:
+            type: string
+            format: uuid
+            description: Specific resource that was affected
+            example: c3d4e5f6-g7h8-9012-cdef-345678901234
+          action:
+            type: string
+            enum:
+            - create
+            - read
+            - update
+            - delete
+            - login
+            - logout
+            - ban
+            - unban
+            - transfer
+            - execute
+            description: Action performed
+            example: update
+          old_values:
+            type: object
+            description: Previous state of modified fields
+            example:
+              level: 24
+              experience: 12000
+          new_values:
+            type: object
+            description: New state of modified fields
+            example:
+              level: 25
+              experience: 12500
+          severity:
+            type: string
+            enum:
+            - low
+            - medium
+            - high
+            - critical
+            description: Security/impact severity
+            example: low
+          ip_address:
+            type: string
+            description: IP address of the actor
+            example: 192.168.1.100
+          user_agent:
+            type: string
+            description: User agent of the actor
+            example: NECPGAME Client v1.2.3
+          location:
+            type: string
+            description: Approximate location
+            example: Night City, NC
+          success:
+            type: boolean
+            description: Whether the action succeeded
+            example: true
+          error_message:
+            type: string
+            description: Error message if action failed
+            example: Insufficient permissions
+          metadata:
+            type: object
+            description: Additional audit data
+            properties:
+              request_id:
+                type: string
+                description: Unique request identifier
+                example: req_abc123def456
+              session_id:
+                type: string
+                format: uuid
+                description: Associated session ID
+                example: d4e5f6g7-h8i9-0123-def0-456789012345
+              api_endpoint:
+                type: string
+                description: API endpoint called
+                example: /api/v1/characters/upgrade
+              response_time_ms:
+                type: integer
+                description: API response time
+                example: 45
+    ApiKeyEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - owner_id
+        - name
+        - key_hash
+        - permissions
+        - status
+        properties:
+          owner_id:
+            type: string
+            format: uuid
+            description: User or service that owns this API key
+            example: e5f6g7h8-i9j0-1234-ef01-567890123456
+          name:
+            type: string
+            minLength: 1
+            maxLength: 50
+            description: Human-readable name for the key
+            example: Mobile App Key
+          description:
+            type: string
+            maxLength: 200
+            description: Description of key usage
+            example: API key for mobile application authentication
+          key_hash:
+            type: string
+            description: SHA-256 hash of the actual API key
+            example: a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3
+          key_prefix:
+            type: string
+            minLength: 8
+            maxLength: 8
+            description: First 8 characters of API key for identification
+            example: ncp_1a2b
+          permissions:
+            type: array
+            items:
               type: string
-              description: Name of completed quest (if applicable)
-              example: "Neurointerface Revolution"
-            reputation_gained:
-              type: integer
-              description: Reputation points gained (if applicable)
-              example: 50
-      description: "BACKEND NOTE: Fields ordered for struct alignment optimization."
+              enum:
+              - read_user
+              - write_user
+              - read_character
+              - write_character
+              - read_inventory
+              - write_inventory
+              - admin
+            description: Granted permissions
+            example:
+            - read_user
+            - read_character
+            - read_inventory
+          status:
+            type: string
+            enum:
+            - active
+            - suspended
+            - revoked
+            - expired
+            description: API key status
+            example: active
+          expires_at:
+            type: string
+            format: date-time
+            description: When key expires (null = never)
+            example: '2025-01-15T10:30:00Z'
+          last_used_at:
+            type: string
+            format: date-time
+            description: Last time key was used
+            example: '2024-01-15T14:20:00Z'
+          usage_count:
+            type: integer
+            minimum: 0
+            description: Total API calls made with this key
+            example: 15420
+          rate_limit:
+            type: integer
+            minimum: 1
+            description: Requests per minute allowed
+            example: 60
+          allowed_ips:
+            type: array
+            items:
+              type: string
+            description: IP addresses allowed to use this key
+            example:
+            - 192.168.1.0/24
+            - 10.0.0.1
+          metadata:
+            type: object
+            description: Additional key metadata
+            properties:
+              created_by:
+                type: string
+                format: uuid
+                description: User who created this key
+                example: f6g7h8i9-j0k1-2345-f012-678901234567
+              application:
+                type: string
+                description: Application using this key
+                example: NECPGAME Mobile App
+              environment:
+                type: string
+                enum:
+                - development
+                - staging
+                - production
+                description: Environment this key is for
+                example: production
+    ConfigurationEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - config_key
+        - config_value
+        - config_type
+        - environment
+        properties:
+          config_key:
+            type: string
+            minLength: 1
+            maxLength: 100
+            pattern: ^[a-zA-Z0-9_\-\.]+$
+            description: Configuration key
+            example: game.max_players_per_server
+          config_value:
+            type: string
+            description: Configuration value (stored as string)
+            example: '1000'
+          config_type:
+            type: string
+            enum:
+            - string
+            - integer
+            - float
+            - boolean
+            - json
+            description: Data type of the value
+            example: integer
+          environment:
+            type: string
+            enum:
+            - development
+            - staging
+            - production
+            - all
+            description: Environment this config applies to
+            example: production
+          description:
+            type: string
+            maxLength: 500
+            description: Description of what this config controls
+            example: Maximum number of players allowed per game server
+          default_value:
+            type: string
+            description: Default value if not set
+            example: '500'
+          validation_rules:
+            type: object
+            description: Validation rules for the value
+            properties:
+              min_value:
+                type: number
+                description: Minimum allowed value
+                example: 1
+              max_value:
+                type: number
+                description: Maximum allowed value
+                example: 10000
+              allowed_values:
+                type: array
+                items:
+                  type: string
+                description: List of allowed values
+                example:
+                - '100'
+                - '500'
+                - '1000'
+                - '2000'
+          is_encrypted:
+            type: boolean
+            description: Whether value is encrypted
+            example: false
+          last_modified_by:
+            type: string
+            format: uuid
+            description: User who last modified this config
+            example: g7h8i9j0-k1l2-3456-0123-456789012345
+          requires_restart:
+            type: boolean
+            description: Whether server restart is required after change
+            example: true
+    ServiceHealthEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - service_name
+        - status
+        - response_time_ms
+        - timestamp
+        properties:
+          service_name:
+            type: string
+            minLength: 1
+            maxLength: 50
+            description: Name of the service being monitored
+            example: auth-service
+          status:
+            type: string
+            enum:
+            - healthy
+            - degraded
+            - unhealthy
+            - down
+            - maintenance
+            description: Current health status
+            example: healthy
+          response_time_ms:
+            type: integer
+            minimum: 0
+            description: Response time in milliseconds
+            example: 45
+          timestamp:
+            type: string
+            format: date-time
+            description: When this health check was performed
+            example: '2024-01-15T15:30:00Z'
+          uptime_seconds:
+            type: integer
+            minimum: 0
+            description: Service uptime in seconds
+            example: 86400
+          memory_usage_mb:
+            type: integer
+            minimum: 0
+            description: Current memory usage in MB
+            example: 256
+          memory_usage_percent:
+            type: number
+            minimum: 0
+            maximum: 100
+            description: Memory usage percentage
+            example: 23.5
+          cpu_usage_percent:
+            type: number
+            minimum: 0
+            maximum: 100
+            description: CPU usage percentage
+            example: 15.2
+          active_connections:
+            type: integer
+            minimum: 0
+            description: Number of active connections
+            example: 1250
+          queue_depth:
+            type: integer
+            minimum: 0
+            description: Number of queued requests
+            example: 5
+          error_rate_percent:
+            type: number
+            minimum: 0
+            maximum: 100
+            description: Error rate percentage
+            example: 0.1
+          version:
+            type: string
+            description: Service version
+            example: 1.2.3
+          environment:
+            type: string
+            enum:
+            - development
+            - staging
+            - production
+            description: Deployment environment
+            example: production
+          checks:
+            type: array
+            items:
+              $ref: '#/components/schemas/HealthCheck'
+            description: Detailed health checks
+    HealthCheck:
+      type: object
+      required:
+      - check_name
+      - status
+      - response_time_ms
+      properties:
+        check_name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Name of the health check
+          example: database_connection
+        status:
+          type: string
+          enum:
+          - pass
+          - warn
+          - fail
+          description: Health check result
+          example: pass
+        response_time_ms:
+          type: integer
+          minimum: 0
+          description: Check response time
+          example: 12
+        message:
+          type: string
+          maxLength: 200
+          description: Check result message
+          example: Database connection successful
+        details:
+          type: object
+          description: Additional check details
+          example:
+            connection_pool_size: 10
+            active_connections: 3
+    NotificationQueueEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - notification_type
+        - recipient_id
+        - content
+        - priority
+        - status
+        properties:
+          notification_type:
+            type: string
+            enum:
+            - email
+            - push
+            - in_game
+            - sms
+            - webhook
+            description: Type of notification
+            example: email
+          recipient_id:
+            type: string
+            format: uuid
+            description: User receiving the notification
+            example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+          recipient_contact:
+            type: string
+            description: Contact info (email, phone, etc.)
+            example: user@necpgame.com
+          content:
+            type: object
+            description: Notification content
+            required:
+            - subject
+            - body
+            properties:
+              subject:
+                type: string
+                minLength: 1
+                maxLength: 100
+                description: Notification subject/title
+                example: Quest Completed!
+              body:
+                type: string
+                minLength: 1
+                maxLength: 2000
+                description: Notification body/content
+                example: Congratulations! You have completed the 'Corporate Espionage'
+                  quest.
+              template_id:
+                type: string
+                description: Template used for notification
+                example: quest_completion_v2
+          priority:
+            type: string
+            enum:
+            - low
+            - normal
+            - high
+            - critical
+            description: Notification priority
+            example: normal
+          status:
+            type: string
+            enum:
+            - queued
+            - processing
+            - sent
+            - delivered
+            - failed
+            - cancelled
+            description: Delivery status
+            example: queued
+          scheduled_for:
+            type: string
+            format: date-time
+            description: When to send notification (null = immediate)
+            example: '2024-01-15T16:00:00Z'
+          sent_at:
+            type: string
+            format: date-time
+            description: When notification was sent
+            example: '2024-01-15T15:45:00Z'
+          delivered_at:
+            type: string
+            format: date-time
+            description: When notification was delivered
+            example: '2024-01-15T15:45:02Z'
+          retry_count:
+            type: integer
+            minimum: 0
+            description: Number of delivery attempts
+            example: 0
+          max_retries:
+            type: integer
+            minimum: 0
+            maximum: 5
+            description: Maximum retry attempts
+            example: 3
+          error_message:
+            type: string
+            description: Delivery error message
+            example: SMTP server timeout
+          metadata:
+            type: object
+            description: Additional notification data
+            properties:
+              campaign_id:
+                type: string
+                description: Marketing campaign ID
+                example: quest_reminder_2024
+              source_service:
+                type: string
+                description: Service that triggered notification
+                example: quest-service
+              user_preferences:
+                type: object
+                description: User's notification preferences
+                example:
+                  email_enabled: true
+                  push_enabled: false
+    DetailedHealthResponse:
+      allOf:
+      - $ref: '#/components/schemas/HealthResponse'
+      - type: object
+        properties:
+          dependencies:
+            type: object
+            description: Health status of service dependencies
+            properties:
+              database:
+                $ref: '#/components/schemas/HealthResponse'
+              redis:
+                $ref: '#/components/schemas/HealthResponse'
+              external_services:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      example: payment-service
+                    status:
+                      type: string
+                      enum:
+                      - ok
+                      - degraded
+                      - critical
+                    response_time:
+                      type: integer
+          metrics:
+            type: object
+            description: Service performance metrics
+            properties:
+              active_connections:
+                type: integer
+                example: 150
+              requests_per_second:
+                type: number
+                example: 45.2
+              average_response_time:
+                type: integer
+                example: 25
+              error_rate:
+                type: number
+                example: 0.001

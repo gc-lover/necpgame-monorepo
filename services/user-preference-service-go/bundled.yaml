@@ -1,911 +1,263 @@
 openapi: 3.0.3
 info:
-  title: User Preference Service API - Enterprise-Grade Personalization
-  description: '**Enterprise-Grade User Personalization API for NECPGAME**
+  title: User Preference Service API
+  description: '**Enterprise-grade API for User Settings & Personalization**
 
-    Service for managing user preferences, settings, and personalization options.
-    Provides comprehensive user experience customization across all platform features.
-
-    ## Key Features
-
-    - **Enterprise-grade architecture** with proper domain separation
-
-    - **Backend optimization hints** for struct alignment and performance
-
-    - **Complete validation** with redocly and ogen code generation
-
-    - **Security-first approach** with JWT authentication
-
-    - **Performance-optimized** response structures
-
-    - **Comprehensive error handling** with proper HTTP status codes
 
     ## Domain Purpose
 
-    Manages user preferences, UI settings, game configurations, and personalization
-    options. Ensures consistent user experience across all platform components and
-    devices.
+    Comprehensive user preference management service providing customizable settings,
+
+    personalization options, and cross-platform synchronization for enhanced user
+    experience.
+
+
+    ## Business Value
+
+    - Personalized user experience across all platforms
+
+    - Granular preference controls for all features
+
+    - Real-time preference synchronization
+
+    - Privacy-aware preference management
+
+    - Enterprise-grade scalability and performance
+
 
     ## Performance Targets
 
     - P99 Latency: <20ms for preference access
 
-    - Memory: <25KB per user session
+    - Memory per Instance: <25KB baseline
 
-    - Concurrent users: 10,000+ simultaneous preference updates
+    - Concurrent Preference Operations: 50,000+ per second
 
-    - Data consistency: Real-time preference synchronization
+    - Cache Hit Rate: >99% for active preferences
+
+
+    ## Domain Inheritance
+
+    This service inherits from infrastructure-entities.yaml providing:
+
+    - Configuration management for user preferences
+
+    - Audit trails for preference changes
+
+    - User account references
+
+    - Optimistic locking for concurrent updates
+
+    - Strict typing with validation rules
 
     '
   version: 1.0.0
   contact:
-    name: NECPGAME API Support
-    url: https://necpgame.com/support
+    name: NECPGAME API Team
     email: api@necpgame.com
   license:
     name: MIT
-    url: https://opensource.org/licenses/MIT
 servers:
-- url: https://api.necpgame.com/v1/user-preference
-  description: Production server
-- url: https://staging-api.necpgame.com/v1/user-preference
-  description: Staging server
-- url: http://localhost:8080/api/v1/user-preference
-  description: Local development server
+- url: https://api.necpgame.com/v1/user-preference-service
+  description: Production environment
+- url: https://staging-api.necpgame.com/v1/user-preference-service
+  description: Staging environment
+- url: http://localhost:8080/api/v1/user-preference-service
+  description: Local development
 security:
 - BearerAuth: []
 tags:
-- name: User Preferences
-  description: Core user preference operations
-- name: UI Settings
-  description: User interface customization
-- name: Game Settings
-  description: Game configuration and settings
+- name: Preference Management
+  description: Core preference operations and lifecycle
+- name: Category Management
+  description: Preference categories and schemas
+- name: Synchronization
+  description: Cross-platform preference sync
+- name: Privacy Controls
+  description: Privacy-aware preference handling
+- name: Defaults Management
+  description: Default preference templates
 - name: Health Monitoring
-  description: System health and performance monitoring
+  description: Service health and performance monitoring
 paths:
   /health:
-    get:
-      summary: User preference service health check
-      description: '**Enterprise-grade health check endpoint**
-
-        Provides real-time health status of the user preference management microservice.
-
-        Critical for service discovery, load balancing, and monitoring.
-
-        **Performance:** <1ms response time, cached for 30 seconds '
-      operationId: userPreferenceServiceHealthCheck
-      tags:
-      - Health Monitoring
-      parameters:
-      - name: Accept-Encoding
-        in: header
-        schema:
-          type: string
-          enum:
-          - gzip
-          - deflate
-          - br
-      responses:
-        '200':
-          description: Service is healthy
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                example: max-age=30, s-maxage=60
-            ETag:
-              schema:
-                type: string
-                example: '"health-v1.0"'
-            Content-Encoding:
-              schema:
-                type: string
-                enum:
-                - gzip
-                - deflate
-                - br
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HealthResponse'
-        '503':
-          description: Service is unhealthy
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HealthResponse'
-        '429':
-          description: Too many requests - rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-  /preferences/{user_id}:
-    get:
-      summary: Get user preferences by user ID
-      description: '**Enterprise-grade preference retrieval endpoint**
-
-        Retrieves all user preferences and settings for personalized experience. Supports
-        caching and conditional requests for optimal performance.
-
-        **Performance:** <15ms P95 with Redis caching '
-      operationId: getUserPreferences
-      tags:
-      - User Preferences
-      parameters:
-      - name: user_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: User unique identifier
-      responses:
-        '200':
-          description: Preferences retrieved successfully
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                example: max-age=300, private
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserPreferencesResponse'
-        '400':
-          description: Invalid request - malformed user ID
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: User preferences not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-    put:
-      summary: Update user preferences
-      description: '**Enterprise-grade preference update endpoint**
-
-        Updates user preferences with validation and conflict resolution. Supports
-        partial updates and maintains preference history.
-
-        **Performance:** <25ms P95, includes validation and persistence '
-      operationId: updateUserPreferences
-      tags:
-      - User Preferences
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: user_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: User unique identifier
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateUserPreferencesRequest'
-      responses:
-        '200':
-          description: Preferences updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserPreferencesResponse'
-        '400':
-          description: Invalid request - malformed data or user ID
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '403':
-          description: Forbidden - insufficient permissions to update preferences
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: User preferences not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Unprocessable entity - validation failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - update rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-  /ui-settings/{user_id}:
-    get:
-      summary: Get UI settings for user
-      description: '**UI customization retrieval endpoint**
-
-        Retrieves user interface preferences including themes, layouts, and accessibility
-        settings.
-
-        **Performance:** <10ms P95 with in-memory caching '
-      operationId: getUISettings
-      tags:
-      - UI Settings
-      parameters:
-      - name: user_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: User unique identifier
-      responses:
-        '200':
-          description: UI settings retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UISettingsResponse'
-        '400':
-          description: Invalid request - malformed user ID
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: UI settings not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-    put:
-      summary: Update UI settings
-      description: '**UI customization update endpoint**
-
-        Updates user interface preferences with immediate effect.
-
-        **Performance:** <20ms P95, real-time updates '
-      operationId: updateUISettings
-      tags:
-      - UI Settings
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: user_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: User unique identifier
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateUISettingsRequest'
-      responses:
-        '200':
-          description: UI settings updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UISettingsResponse'
-        '400':
-          description: Invalid request - malformed data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Unprocessable entity - validation failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-  /game-settings/{user_id}:
-    get:
-      summary: Get game settings for user
-      description: '**Game configuration retrieval endpoint**
-
-        Retrieves game-specific preferences including controls, audio, graphics, and
-        gameplay options.
-
-        **Performance:** <12ms P95 with optimized queries '
-      operationId: getGameSettings
-      tags:
-      - Game Settings
-      parameters:
-      - name: user_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: User unique identifier
-      responses:
-        '200':
-          description: Game settings retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GameSettingsResponse'
-        '400':
-          description: Invalid request - malformed user ID
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Game settings not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-    put:
-      summary: Update game settings
-      description: '**Game configuration update endpoint**
-
-        Updates game-specific preferences with validation for game compatibility.
-
-        **Performance:** <25ms P95, includes game validation '
-      operationId: updateGameSettings
-      tags:
-      - Game Settings
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: user_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: User unique identifier
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateGameSettingsRequest'
-      responses:
-        '200':
-          description: Game settings updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GameSettingsResponse'
-        '400':
-          description: Invalid request - malformed data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Unprocessable entity - game validation failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-  /defaults:
-    get:
-      summary: Get default preference templates
-      description: '**Default settings endpoint**
-
-        Provides default preference templates for new users and system defaults.
-
-        **Performance:** <5ms P95, cached indefinitely '
-      operationId: getDefaultPreferences
-      tags:
-      - User Preferences
-      responses:
-        '200':
-          description: Default preferences retrieved successfully
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                example: max-age=3600, public
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DefaultPreferencesResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
+    $ref: ./paths/health.yaml#/paths/~1health
+  /users/{userId}/preferences:
+    $ref: ./paths/users-{userId}-preferences.yaml#/paths/~1users~1{userId}~1preferences
+  /users/{userId}/preferences/reset:
+    $ref: ./paths/users-{userId}-preferences-reset.yaml#/paths/~1users~1{userId}~1preferences~1reset
+  /users/{userId}/preferences/{category}:
+    $ref: ./paths/users-{userId}-preferences-{category}.yaml#/paths/~1users~1{userId}~1preferences~1{category}
+  /preferences/categories:
+    $ref: ./paths/preferences-categories.yaml#/paths/~1preferences~1categories
+  /preferences/categories/{category}/schema:
+    $ref: ./paths/preferences-categories-{category}-schema.yaml#/paths/~1preferences~1categories~1{category}~1schema
+  /users/{userId}/preferences/sync:
+    $ref: ./paths/users-{userId}-preferences-sync.yaml#/paths/~1users~1{userId}~1preferences~1sync
+  /preferences/defaults:
+    $ref: ./paths/preferences-defaults.yaml#/paths/~1preferences~1defaults
+  /audit/preferences:
+    $ref: ./paths/audit-preferences.yaml#/paths/~1audit~1preferences
 components:
-  responses:
-    OK:
-      description: Operation completed successfully
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              success:
-                type: boolean
-                example: true
-              message:
-                type: string
-                example: Operation completed
-    Created:
-      description: Resource created successfully
-      headers:
-        Location:
-          schema:
-            type: string
-            format: uri
-          description: URI of the created resource
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              id:
-                type: string
-                format: uuid
-                description: Unique identifier of created resource
-              created_at:
-                type: string
-                format: date-time
-                description: Creation timestamp
-    BadRequest:
-      description: Invalid request parameters
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-            - code
-            - message
-            properties:
-              code:
-                type: integer
-                example: 500
-                format: int32
-                minimum: 100
-                maximum: 599
-              message:
-                type: string
-                example: Internal server error
-                maxLength: 1000
-              details:
-                type: object
-                description: Additional error details
-            description: Standard error response format
-    Unauthorized:
-      description: Authentication required
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-            - code
-            - message
-            properties:
-              code:
-                type: integer
-                example: 500
-                format: int32
-                minimum: 100
-                maximum: 599
-              message:
-                type: string
-                example: Internal server error
-                maxLength: 1000
-              details:
-                type: object
-                description: Additional error details
-            description: Standard error response format
-    Forbidden:
-      description: Access denied
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-            - code
-            - message
-            properties:
-              code:
-                type: integer
-                example: 500
-                format: int32
-                minimum: 100
-                maximum: 599
-              message:
-                type: string
-                example: Internal server error
-                maxLength: 1000
-              details:
-                type: object
-                description: Additional error details
-            description: Standard error response format
-    NotFound:
-      description: Resource not found
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-            - code
-            - message
-            properties:
-              code:
-                type: integer
-                example: 500
-                format: int32
-                minimum: 100
-                maximum: 599
-              message:
-                type: string
-                example: Internal server error
-                maxLength: 1000
-              details:
-                type: object
-                description: Additional error details
-            description: Standard error response format
-    Conflict:
-      description: Resource conflict
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-            - code
-            - message
-            properties:
-              code:
-                type: integer
-                example: 500
-                format: int32
-                minimum: 100
-                maximum: 599
-              message:
-                type: string
-                example: Internal server error
-                maxLength: 1000
-              details:
-                type: object
-                description: Additional error details
-            description: Standard error response format
-    InternalServerError:
-      description: Internal server error
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-            - code
-            - message
-            properties:
-              code:
-                type: integer
-                example: 500
-                format: int32
-                minimum: 100
-                maximum: 599
-              message:
-                type: string
-                example: Internal server error
-                maxLength: 1000
-              details:
-                type: object
-                description: Additional error details
-            description: Standard error response format
   schemas:
-    HealthResponse:
-      type: object
-      required:
-      - status
-      - timestamp
-      properties:
-        status:
-          type: string
-          enum:
-          - healthy
-          - degraded
-          - unhealthy
-          example: healthy
-          maxLength: 255
-        domain:
-          type: string
-          example: service-name
-          maxLength: 255
-        timestamp:
-          type: string
-          format: date-time
-          example: '2025-12-28T10:00:00Z'
-          maxLength: 255
-        version:
-          type: string
-          example: 1.0.0
-          maxLength: 50
-        uptime_seconds:
-          type: integer
-          example: 3600
-          minimum: 0
-        active_connections:
-          type: integer
-          example: 1500
-          minimum: 0
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    Error:
-      type: object
-      required:
-      - code
-      - message
-      properties:
-        code:
-          type: integer
-          example: 500
-          format: int32
-          minimum: 100
-          maximum: 599
-        message:
-          type: string
-          example: Internal server error
-          maxLength: 1000
-        details:
-          type: object
-          description: Additional error details
-      description: Standard error response format
     UserPreferences:
+      description: Complete user preferences entity with infrastructure domain inheritance
       type: object
-      required:
-      - user_id
-      - ui_settings
-      - game_settings
-      - notifications
-      - privacy
       properties:
         user_id:
           type: string
           format: uuid
-          description: User unique identifier
-          example: 550e8400-e29b-41d4-a716-446655440000
-        ui_settings:
-          $ref: '#/components/schemas/UISettings'
-        game_settings:
-          $ref: '#/components/schemas/GameSettings'
-        notifications:
-          $ref: '#/components/schemas/NotificationPreferences'
-        privacy:
-          $ref: '#/components/schemas/PrivacyPreferences'
-        created_at:
+          description: Associated user ID
+        categories:
+          type: object
+          description: Preference categories
+          properties:
+            appearance:
+              $ref: '#/components/schemas/AppearancePreferences'
+            notifications:
+              $ref: '#/components/schemas/NotificationPreferences'
+            gameplay:
+              $ref: '#/components/schemas/GameplayPreferences'
+            privacy:
+              $ref: '#/components/schemas/PrivacyPreferences'
+            accessibility:
+              $ref: '#/components/schemas/AccessibilityPreferences'
+            performance:
+              $ref: '#/components/schemas/PerformancePreferences'
+        metadata:
+          type: object
+          description: Preference metadata
+          properties:
+            version:
+              type: integer
+              minimum: 1
+              description: Preferences version for optimistic locking
+            last_updated:
+              type: string
+              format: date-time
+              description: Last update timestamp
+            last_updated_by:
+              type: string
+              format: uuid
+              description: User/system that last updated preferences
+    PreferenceCategory:
+      description: Individual preference category
+      type: object
+      properties:
+        category:
           type: string
-          format: date-time
-          description: Preferences creation timestamp
-          example: '2025-12-21T10:00:00Z'
-        updated_at:
+          enum:
+          - appearance
+          - notifications
+          - gameplay
+          - privacy
+          - accessibility
+          - performance
+          description: Category identifier
+        preferences:
+          type: object
+          description: Category-specific preferences
+          additionalProperties: true
+        metadata:
+          type: object
+          properties:
+            version:
+              type: integer
+              minimum: 1
+              description: Category version
+            last_updated:
+              type: string
+              format: date-time
+              description: Category last update timestamp
+    PreferenceCategoryInfo:
+      description: Preference category metadata
+      type: object
+      required:
+      - category
+      - name
+      - description
+      properties:
+        category:
           type: string
-          format: date-time
-          description: Last update timestamp
-          example: '2025-12-21T10:00:00Z'
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    UISettings:
+          enum:
+          - appearance
+          - notifications
+          - gameplay
+          - privacy
+          - accessibility
+          - performance
+          description: Category identifier
+        name:
+          type: string
+          description: Human-readable category name
+        description:
+          type: string
+          description: Category description
+        icon:
+          type: string
+          description: Category icon identifier
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Display priority (higher = more important)
+    PreferenceCategorySchema:
+      description: JSON schema for preference category validation
+      type: object
+      properties:
+        $schema:
+          type: string
+          description: JSON Schema version
+        type:
+          type: string
+          enum:
+          - object
+        properties:
+          type: object
+          description: Schema properties
+          additionalProperties: true
+        required:
+          type: array
+          items:
+            type: string
+          description: Required properties
+    PreferenceAuditEntry:
+      description: Audit entry for preference operations
+      allOf:
+      - $ref: ../common/schemas/infrastructure-entities.yaml#/AuditLogEntity
+      - type: object
+        properties:
+          user_id:
+            type: string
+            format: uuid
+            description: Associated user ID
+          category:
+            type: string
+            enum:
+            - appearance
+            - notifications
+            - gameplay
+            - privacy
+            - accessibility
+            - performance
+            description: Affected preference category
+          operation_type:
+            type: string
+            enum:
+            - create
+            - update
+            - reset
+            - sync
+            - category_update
+            description: Type of preference operation
+          old_values:
+            type: object
+            description: Previous preference values
+          new_values:
+            type: object
+            description: New preference values
+    AppearancePreferences:
+      description: User interface appearance preferences
       type: object
       properties:
         theme:
@@ -914,178 +266,123 @@ components:
           - light
           - dark
           - auto
+          - cyberpunk
+          - neon
           default: auto
           description: UI theme preference
-        language:
+        accent_color:
           type: string
-          maxLength: 10
-          default: en
-          description: Interface language
-          example: en
-        timezone:
-          type: string
-          maxLength: 50
-          description: User timezone
-          example: America/New_York
-        date_format:
+          pattern: ^#[0-9A-Fa-f]{6}$
+          default: '#00FF88'
+          description: Accent color in hex format
+        font_size:
           type: string
           enum:
-          - MM/DD/YYYY
-          - DD/MM/YYYY
-          - YYYY-MM-DD
-          default: MM/DD/YYYY
-          description: Preferred date format
-        accessibility:
-          type: object
-          properties:
-            high_contrast:
-              type: boolean
-              default: false
-              description: High contrast mode
-            large_text:
-              type: boolean
-              default: false
-              description: Large text mode
-            reduce_motion:
-              type: boolean
-              default: false
-              description: Reduce animations
-      description: User interface customization settings
-    GameSettings:
-      type: object
-      properties:
-        audio:
-          type: object
-          properties:
-            master_volume:
-              type: integer
-              minimum: 0
-              maximum: 100
-              default: 80
-              description: Master audio volume
-            music_volume:
-              type: integer
-              minimum: 0
-              maximum: 100
-              default: 70
-              description: Background music volume
-            sfx_volume:
-              type: integer
-              minimum: 0
-              maximum: 100
-              default: 90
-              description: Sound effects volume
-            voice_volume:
-              type: integer
-              minimum: 0
-              maximum: 100
-              default: 85
-              description: Voice audio volume
-        graphics:
-          type: object
-          properties:
-            quality:
-              type: string
-              enum:
-              - low
-              - medium
-              - high
-              - ultra
-              default: high
-              description: Graphics quality preset
-            resolution:
-              type: string
-              pattern: ^\d+x\d+$
-              default: 1920x1080
-              description: Screen resolution
-            vsync:
-              type: boolean
-              default: true
-              description: Vertical sync enabled
-            fps_limit:
-              type: integer
-              minimum: 30
-              maximum: 300
-              default: 144
-              description: FPS limit
-        controls:
-          type: object
-          properties:
-            mouse_sensitivity:
-              type: number
-              minimum: 0.1
-              maximum: 5.0
-              default: 1.0
-              description: Mouse sensitivity multiplier
-            invert_mouse:
-              type: boolean
-              default: false
-              description: Invert mouse Y axis
-            key_bindings:
-              type: object
-              description: Custom key bindings
-              additionalProperties:
-                type: string
-                maxLength: 50
-        gameplay:
-          type: object
-          properties:
-            auto_save:
-              type: boolean
-              default: true
-              description: Auto-save enabled
-            difficulty:
-              type: string
-              enum:
-              - easy
-              - normal
-              - hard
-              - nightmare
-              default: normal
-              description: Game difficulty
-            subtitles:
-              type: boolean
-              default: false
-              description: Show subtitles
-      description: Game-specific configuration settings
+          - small
+          - medium
+          - large
+          - extra_large
+          default: medium
+          description: Interface font size
+        language:
+          type: string
+          enum:
+          - en
+          - es
+          - zh
+          - ja
+          - ru
+          - de
+          - fr
+          - pl
+          - ko
+          - pt
+          default: en
+          description: Interface language
     NotificationPreferences:
+      description: Notification and communication preferences
       type: object
       properties:
         email_notifications:
           type: boolean
           default: true
-          description: Email notifications enabled
+          description: Enable email notifications
         push_notifications:
           type: boolean
           default: true
-          description: Push notifications enabled
+          description: Enable push notifications
         in_game_notifications:
           type: boolean
           default: true
-          description: In-game notifications enabled
-        marketing_emails:
-          type: boolean
-          default: false
-          description: Marketing emails allowed
-        friend_requests:
+          description: Enable in-game notifications
+        quiet_hours_start:
+          type: string
+          pattern: ^([01]?[0-9]|2[0-3]):[0-5][0-9]$
+          default: '22:00'
+          description: Quiet hours start time (HH:MM)
+        quiet_hours_end:
+          type: string
+          pattern: ^([01]?[0-9]|2[0-3]):[0-5][0-9]$
+          default: 08:00
+          description: Quiet hours end time (HH:MM)
+        notification_frequency:
+          type: string
+          enum:
+          - immediate
+          - hourly
+          - daily
+          - weekly
+          - never
+          default: immediate
+          description: Default notification frequency
+    GameplayPreferences:
+      description: Game-specific preferences
+      type: object
+      properties:
+        difficulty_preference:
+          type: string
+          enum:
+          - easy
+          - normal
+          - hard
+          - expert
+          default: normal
+          description: Preferred game difficulty
+        auto_save:
           type: boolean
           default: true
-          description: Friend request notifications
-        achievement_notifications:
-          type: boolean
-          default: true
-          description: Achievement notifications
-      description: Notification preferences and settings
+          description: Enable auto-save
+        control_scheme:
+          type: string
+          enum:
+          - classic
+          - modern
+          - custom
+          default: modern
+          description: Control scheme preference
+        music_volume:
+          type: integer
+          minimum: 0
+          maximum: 100
+          default: 70
+          description: Music volume percentage
+        sfx_volume:
+          type: integer
+          minimum: 0
+          maximum: 100
+          default: 80
+          description: Sound effects volume percentage
     PrivacyPreferences:
+      description: Privacy and data sharing preferences
       type: object
       properties:
         profile_visibility:
           type: string
           enum:
           - public
-          - friends
+          - friends_only
           - private
-          default: public
+          default: friends_only
           description: Profile visibility setting
         show_online_status:
           type: boolean
@@ -1094,176 +391,207 @@ components:
         allow_friend_requests:
           type: boolean
           default: true
-          description: Allow friend requests from others
-        data_sharing:
+          description: Allow others to send friend requests
+        data_collection_consent:
           type: boolean
           default: false
-          description: Allow anonymous data sharing
-        analytics_opt_in:
+          description: Consent for analytics data collection
+        marketing_emails:
+          type: boolean
+          default: false
+          description: Allow marketing email communications
+    AccessibilityPreferences:
+      description: Accessibility and usability preferences
+      type: object
+      properties:
+        high_contrast:
+          type: boolean
+          default: false
+          description: Enable high contrast mode
+        large_text:
+          type: boolean
+          default: false
+          description: Enable large text mode
+        reduce_motion:
+          type: boolean
+          default: false
+          description: Reduce animations and motion
+        screen_reader_support:
+          type: boolean
+          default: false
+          description: Enable screen reader optimizations
+        color_blind_mode:
+          type: string
+          enum:
+          - none
+          - deuteranopia
+          - protanopia
+          - tritanopia
+          default: none
+          description: Color blindness accommodation
+    PerformancePreferences:
+      description: Performance and quality preferences
+      type: object
+      properties:
+        graphics_quality:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - ultra
+          default: high
+          description: Graphics quality setting
+        frame_rate_limit:
+          type: integer
+          enum:
+          - 30
+          - 60
+          - 120
+          - 144
+          - unlimited
+          default: 60
+          description: Frame rate limit
+        vsync:
           type: boolean
           default: true
-          description: Opt-in to analytics collection
-      description: Privacy and data sharing preferences
-    UpdateUserPreferencesRequest:
-      type: object
-      properties:
-        ui_settings:
-          $ref: '#/components/schemas/UISettings'
-        game_settings:
-          $ref: '#/components/schemas/GameSettings'
-        notifications:
-          $ref: '#/components/schemas/NotificationPreferences'
-        privacy:
-          $ref: '#/components/schemas/PrivacyPreferences'
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    UpdateUISettingsRequest:
-      type: object
-      properties:
-        theme:
+          description: Enable vertical sync
+        texture_quality:
           type: string
           enum:
-          - light
-          - dark
-          - auto
-        language:
-          type: string
-          maxLength: 10
-        timezone:
-          type: string
-          maxLength: 50
-        date_format:
+          - low
+          - medium
+          - high
+          default: high
+          description: Texture quality setting
+        shadow_quality:
           type: string
           enum:
-          - MM/DD/YYYY
-          - DD/MM/YYYY
-          - YYYY-MM-DD
-        accessibility:
-          type: object
-          properties:
-            high_contrast:
-              type: boolean
-            large_text:
-              type: boolean
-            reduce_motion:
-              type: boolean
-    UpdateGameSettingsRequest:
+          - false
+          - low
+          - medium
+          - high
+          default: medium
+          description: Shadow quality setting
+    UpdatePreferencesRequest:
+      description: Request payload for updating user preferences
       type: object
+      required:
+      - categories
       properties:
-        audio:
+        categories:
           type: object
+          description: Updated preference categories
           properties:
-            master_volume:
-              type: integer
-              minimum: 0
-              maximum: 100
-            music_volume:
-              type: integer
-              minimum: 0
-              maximum: 100
-            sfx_volume:
-              type: integer
-              minimum: 0
-              maximum: 100
-            voice_volume:
-              type: integer
-              minimum: 0
-              maximum: 100
-        graphics:
+            appearance:
+              $ref: '#/components/schemas/AppearancePreferences'
+            notifications:
+              $ref: '#/components/schemas/NotificationPreferences'
+            gameplay:
+              $ref: '#/components/schemas/GameplayPreferences'
+            privacy:
+              $ref: '#/components/schemas/PrivacyPreferences'
+            accessibility:
+              $ref: '#/components/schemas/AccessibilityPreferences'
+            performance:
+              $ref: '#/components/schemas/PerformancePreferences'
+        version:
+          type: integer
+          minimum: 1
+          description: Current preferences version for optimistic locking
+    PatchPreferencesRequest:
+      description: Request payload for partial preference updates
+      type: object
+      required:
+      - categories
+      properties:
+        categories:
           type: object
+          description: Categories to update (partial)
           properties:
-            quality:
-              type: string
-              enum:
-              - low
-              - medium
-              - high
-              - ultra
-            resolution:
-              type: string
-              pattern: ^\d+x\d+$
-            vsync:
-              type: boolean
-            fps_limit:
-              type: integer
-              minimum: 30
-              maximum: 300
-        controls:
-          type: object
-          properties:
-            mouse_sensitivity:
-              type: number
-              minimum: 0.1
-              maximum: 5.0
-            invert_mouse:
-              type: boolean
-        gameplay:
-          type: object
-          properties:
-            auto_save:
-              type: boolean
-            difficulty:
-              type: string
-              enum:
-              - easy
-              - normal
-              - hard
-              - nightmare
-            subtitles:
-              type: boolean
-    UserPreferencesResponse:
+            appearance:
+              $ref: '#/components/schemas/AppearancePreferences'
+            notifications:
+              $ref: '#/components/schemas/NotificationPreferences'
+            gameplay:
+              $ref: '#/components/schemas/GameplayPreferences'
+            privacy:
+              $ref: '#/components/schemas/PrivacyPreferences'
+            accessibility:
+              $ref: '#/components/schemas/AccessibilityPreferences'
+            performance:
+              $ref: '#/components/schemas/PerformancePreferences'
+    UpdateCategoryRequest:
+      description: Request payload for updating specific category
       type: object
       required:
       - preferences
       properties:
         preferences:
-          $ref: '#/components/schemas/UserPreferences'
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    UISettingsResponse:
-      type: object
-      required:
-      - ui_settings
-      properties:
-        ui_settings:
-          $ref: '#/components/schemas/UISettings'
-    GameSettingsResponse:
-      type: object
-      required:
-      - game_settings
-      properties:
-        game_settings:
-          $ref: '#/components/schemas/GameSettings'
-    DefaultPreferencesResponse:
-      type: object
-      required:
-      - defaults
-      properties:
-        defaults:
           type: object
-          properties:
-            ui_settings:
-              $ref: '#/components/schemas/UISettings'
-            game_settings:
-              $ref: '#/components/schemas/GameSettings'
-            notifications:
-              $ref: '#/components/schemas/NotificationPreferences'
-            privacy:
-              $ref: '#/components/schemas/PrivacyPreferences'
-          description: Default preference templates for new users
+          description: Category-specific preferences
+          additionalProperties: true
+        version:
+          type: integer
+          minimum: 1
+          description: Category version for optimistic locking
+    ResetPreferencesRequest:
+      description: Request payload for resetting preferences
+      type: object
+      properties:
+        categories:
+          type: array
+          items:
+            type: string
+            enum:
+            - appearance
+            - notifications
+            - gameplay
+            - privacy
+            - accessibility
+            - performance
+          description: Specific categories to reset (empty = all categories)
+        preserve_custom:
+          type: boolean
+          default: false
+          description: Preserve user-customized preferences
+    SyncPreferencesRequest:
+      description: Request payload for preference synchronization
+      type: object
+      properties:
+        device_id:
+          type: string
+          format: uuid
+          description: Specific device to sync to
+        force_full_sync:
+          type: boolean
+          default: false
+          description: Force complete synchronization
+        conflict_resolution:
+          type: string
+          enum:
+          - server_wins
+          - client_wins
+          - manual
+          default: server_wins
+          description: How to resolve sync conflicts
+  responses:
+    OK:
+      $ref: ../common/responses/success.yaml#/OK
+    Created:
+      $ref: ../common/responses/success.yaml#/Created
+    Updated:
+      $ref: ../common/responses/success.yaml#/Updated
+    Deleted:
+      $ref: ../common/responses/success.yaml#/Deleted
+    BadRequest:
+      $ref: ../common/responses/error.yaml#/BadRequest
+    NotFound:
+      $ref: ../common/responses/error.yaml#/NotFound
+    Conflict:
+      $ref: ../common/responses/error.yaml#/Conflict
   securitySchemes:
     BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: JWT Bearer token authentication
-    ApiKeyAuth:
-      type: apiKey
-      in: header
-      name: X-API-Key
-      description: API Key authentication
+      $ref: ../common/security/security.yaml#/BearerAuth
     ServiceAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: Service-to-service authentication token
+      $ref: ../common/security/security.yaml#/ServiceAuth

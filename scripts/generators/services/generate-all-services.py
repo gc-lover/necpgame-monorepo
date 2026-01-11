@@ -48,8 +48,13 @@ def generate_service(service_name, spec_path, output_dir, logger):
 
             try:
                 logger.debug(f"Attempting to bundle {spec_path} -> {bundled_spec_path}")
-                from bundle_openapi import bundle_openapi_spec
-                bundle_openapi_spec(spec_path, bundled_spec_path)
+                bundle_cmd = [
+                    sys.executable,
+                    str(Path(__file__).parent / "bundle_openapi.py"),
+                    str(spec_path),
+                    str(bundled_spec_path)
+                ]
+                bundle_result = subprocess.run(bundle_cmd, capture_output=True, text=True, timeout=60)
                 bundle_result = subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr="")
                 logger.debug(f"Bundling successful for {service_name}")
             except Exception as e:
@@ -160,18 +165,21 @@ def main():
         else:
             i += 1
 
-    # Change to project root directory
-    project_root = Path(__file__).parent.parent
-    os.chdir(project_root)
-
-    # Setup logging
+    # Setup logging first
     logger = setup_logging(log_file, verbose)
+
+    # Change to project root directory
+    project_root = Path(__file__).parent.parent.parent.parent
+    logger.info(f"Changing to project root: {project_root}")
+    os.chdir(project_root)
+    logger.info(f"Changed to project root: {os.getcwd()}")
 
     output_dir_path = Path(output_dir)
     logger.info(f"Starting service generation to {output_dir_path}")
 
     # Find all service specifications
     proto_dir = Path("proto/openapi")
+    logger.info(f"Looking for proto_dir at: {proto_dir.absolute()}")
     if not proto_dir.exists():
         logger.error(f"proto/openapi directory not found: {proto_dir.absolute()}")
         return 1

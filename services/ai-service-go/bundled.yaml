@@ -1,0 +1,2166 @@
+openapi: 3.0.3
+info:
+  title: AI Service API
+  description: '**Enterprise-grade API for Artificial Intelligence Systems**
+
+
+    ## Domain Purpose
+
+    Provides comprehensive AI capabilities for NECPGAME MMOFPS RPG including adaptive
+    difficulty scaling, NPC behavior management, content personalization, player behavior
+    analytics, procedural quest generation, combat AI optimization, and anti-cheat
+    detection.
+
+
+    ## Key Features
+
+
+    - **Adaptive Difficulty Scaling**: Dynamic difficulty adjustment based on real-time
+    player skill assessment
+
+    - **NPC Behavior Management**: NPC AI behavior patterns and procedural generation
+    with configurable AI parameters
+
+    - **Content Personalization**: Personalized content and recommendation algorithms
+    based on player behavior
+
+    - **Player Behavior Analytics**: Player behavior pattern recognition for engagement
+    optimization
+
+    - **Procedural Quest Generation**: Dynamic quest generation with procedural narratives
+    and objectives
+
+    - **Combat AI Optimization**: Combat AI strategy prediction and counter-play suggestions
+
+    - **Anti-Cheat Detection**: AI-powered anti-cheat detection using machine learning
+    anomaly detection
+
+    - **Model Training**: AI model training pipelines for continuous improvement
+
+
+    ## Performance Targets
+
+
+    - P99 Latency: <15ms for AI operations and predictions
+
+    - Memory per Instance: <50KB baseline with struct alignment optimizations
+
+    - Concurrent Users: 10,000+ supported
+
+    - Throughput: 2000+ RPS sustained load capacity
+
+    - Uptime: 99.9% SLA
+
+
+    ## Domain Inheritance (SOLID/DRY)
+
+    This service inherits from common entities providing:
+
+    - Consistent base entity structure (id, timestamps, version)
+
+    - Domain-specific business entities through `allOf` pattern
+
+    - Optimistic locking for concurrent operations (version field)
+
+    - Strict typing with validation rules (min/max, patterns, enums)
+
+    '
+  version: 1.0.0
+  contact:
+    name: NECPGAME AI API Team
+    email: ai@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+- url: https://api.necpgame.com/v1/ai
+  description: Production environment
+- url: https://staging-api.necpgame.com/v1/ai
+  description: Staging environment
+- url: http://localhost:8090/api/v1/ai
+  description: Local development
+security:
+- BearerAuth: []
+tags:
+- name: Adaptive Difficulty
+  description: Dynamic difficulty scaling and player adaptation
+- name: NPC Behavior
+  description: NPC AI behavior management and generation
+- name: Content Personalization
+  description: Personalized content and recommendations
+- name: Behavior Analytics
+  description: Player behavior analysis and insights
+- name: Procedural Generation
+  description: Dynamic content generation
+- name: Combat AI
+  description: Combat AI optimization and strategy
+- name: Anti-Cheat
+  description: AI-powered anti-cheat detection
+- name: Model Training
+  description: AI model training and management
+- name: Health Monitoring
+  description: Service health and performance monitoring
+paths:
+  /health:
+    $ref: ./paths/health.yaml#/paths/~1health
+  /adaptive-difficulty/player/{playerId}/assessment:
+    $ref: ./paths/adaptive-difficulty-player-assessment.yaml#/paths/~1adaptive-difficulty~1player~1{playerId}~1assessment
+  /adaptive-difficulty/session/{sessionId}/scaling:
+    $ref: ./paths/adaptive-difficulty-session-scaling.yaml#/paths/~1adaptive-difficulty~1session~1{sessionId}~1scaling
+  /npc-behavior/npcs/{npcId}/behavior:
+    $ref: ./paths/npc-behavior-npcs-behavior.yaml#/paths/~1npc-behavior~1npcs~1{npcId}~1behavior
+  /npc-behavior/generate:
+    $ref: ./paths/npc-behavior-generate.yaml#/paths/~1npc-behavior~1generate
+  /personalization/player/{playerId}/recommendations:
+    $ref: ./paths/personalization-player-recommendations.yaml#/paths/~1personalization~1player~1{playerId}~1recommendations
+  /analytics/player/{playerId}/behavior:
+    $ref: ./paths/analytics-player-behavior.yaml#/paths/~1analytics~1player~1{playerId}~1behavior
+  /procedural/quest/generate:
+    $ref: ./paths/procedural-quest-generate.yaml#/paths/~1procedural~1quest~1generate
+  /combat-ai/strategy/predict:
+    $ref: ./paths/combat-ai-strategy-predict.yaml#/paths/~1combat-ai~1strategy~1predict
+  /anti-cheat/detect:
+    $ref: ./paths/anti-cheat-detect.yaml#/paths/~1anti-cheat~1detect
+  /models/train:
+    $ref: ./paths/models-train.yaml#/paths/~1models~1train
+  /models/{modelId}:
+    $ref: ./paths/models-modelId.yaml#/paths/~1models~1{modelId}
+components:
+  responses:
+    OK:
+      description: Operation completed successfully
+      headers:
+        Content-Type:
+          schema:
+            type: string
+            example: application/json
+        ETag:
+          schema:
+            type: string
+            description: Entity version for optimistic locking
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - success
+            - message
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: Operation completed successfully
+              data:
+                type: object
+                description: Response data payload
+    Created:
+      description: Resource created successfully
+      headers:
+        Content-Type:
+          schema:
+            type: string
+            example: application/json
+        Location:
+          schema:
+            type: string
+            description: URL of the created resource
+        ETag:
+          schema:
+            type: string
+            description: Entity version for optimistic locking
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - success
+            - message
+            - id
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: Resource created successfully
+              id:
+                type: string
+                format: uuid
+                description: ID of the created resource
+                example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+              data:
+                type: object
+                description: Created resource data
+    BadRequest:
+      description: Bad request - validation failed or malformed data
+      headers:
+        Content-Type:
+          schema:
+            type: string
+            example: application/json
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                minimum: 100
+                maximum: 599
+                example: 400
+              message:
+                type: string
+                example: Bad request
+              details:
+                type: object
+                description: Additional error details
+    Unauthorized:
+      description: Unauthorized - authentication required or invalid token
+      headers:
+        WWW-Authenticate:
+          schema:
+            type: string
+            example: Bearer realm="NECPGAME API"
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                minimum: 100
+                maximum: 599
+                example: 400
+              message:
+                type: string
+                example: Bad request
+              details:
+                type: object
+                description: Additional error details
+    NotFound:
+      description: Not found - requested resource does not exist
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                minimum: 100
+                maximum: 599
+                example: 400
+              message:
+                type: string
+                example: Bad request
+              details:
+                type: object
+                description: Additional error details
+    Conflict:
+      description: Conflict - resource has been modified by another request
+    InternalServerError:
+      description: Internal server error - unexpected system error occurred
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                minimum: 100
+                maximum: 599
+                example: 400
+              message:
+                type: string
+                example: Bad request
+              details:
+                type: object
+                description: Additional error details
+  schemas:
+    PlayerSkillAssessment:
+      type: object
+      required:
+      - account_id
+      - skill_level
+      - confidence_score
+      - assessed_at
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        assessed_at:
+          type: string
+          format: date-time
+        play_style:
+          type: string
+          enum:
+          - aggressive
+          - defensive
+          - strategic
+          - casual
+        performance_metrics:
+          $ref: '#/components/schemas/PerformanceMetrics'
+        preferred_game_modes:
+          type: array
+          items:
+            type: string
+        skill_level:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 10
+          description: Player skill level (0-10 scale)
+        confidence_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Confidence in assessment (0-1)
+      description: 'BACKEND NOTE: Fields ordered for optimal memory alignment (large
+        → small). Expected memory savings: 30-50%.'
+    DifficultyScaling:
+      type: object
+      required:
+      - session_id
+      - difficulty_multiplier
+      - applied_at
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        applied_at:
+          type: string
+          format: date-time
+        adjustment_reason:
+          type: string
+          enum:
+          - player_performance
+          - group_composition
+          - time_pressure
+          - streak_detection
+        difficulty_multiplier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 5.0
+          description: Difficulty multiplier (1.0 = normal)
+        enemy_spawn_rate:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 3.0
+        enemy_damage_multiplier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 3.0
+        enemy_health_multiplier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 3.0
+    NpcBehavior:
+      type: object
+      required:
+      - npc_id
+      - behavior_type
+      - aggressiveness
+      - intelligence
+      properties:
+        npc_id:
+          type: string
+          format: uuid
+        behavior_type:
+          type: string
+          enum:
+          - passive
+          - aggressive
+          - defensive
+          - patrol
+          - guard
+          - merchant
+          - quest_giver
+        combat_style:
+          type: string
+          enum:
+          - melee
+          - ranged
+          - magic
+          - mixed
+        last_updated:
+          type: string
+          format: date-time
+        interaction_responses:
+          type: object
+          additionalProperties:
+            type: string
+        patrol_route:
+          type: array
+          items:
+            $ref: '#/components/schemas/Vector3'
+        aggressiveness:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        intelligence:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+    PersonalizedRecommendations:
+      type: object
+      required:
+      - account_id
+      - recommendations
+      - generated_at
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        generated_at:
+          type: string
+          format: date-time
+        recommendations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContentRecommendation'
+        personalization_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+    PlayerBehaviorAnalytics:
+      type: object
+      required:
+      - account_id
+      - time_range
+      - analyzed_at
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        time_range:
+          type: string
+          enum:
+          - 1h
+          - 24h
+          - 7d
+          - 30d
+          - 90d
+        analyzed_at:
+          type: string
+          format: date-time
+        engagement_metrics:
+          $ref: '#/components/schemas/EngagementMetrics'
+        behavior_patterns:
+          type: array
+          items:
+            $ref: '#/components/schemas/BehaviorPattern'
+        risk_indicators:
+          type: array
+          items:
+            $ref: '#/components/schemas/RiskIndicator'
+    GeneratedQuest:
+      type: object
+      required:
+      - id
+      - title
+      - description
+      - objectives
+      - generated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+        difficulty:
+          type: string
+          enum:
+          - easy
+          - medium
+          - hard
+          - epic
+        generated_at:
+          type: string
+          format: date-time
+        generation_seed:
+          type: string
+        objectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestObjective'
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestReward'
+        estimated_duration:
+          type: integer
+          description: Estimated completion time in minutes
+    CombatStrategyPrediction:
+      type: object
+      required:
+      - account_id
+      - predicted_strategy
+      - confidence_score
+      - predicted_at
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        predicted_strategy:
+          type: string
+          enum:
+          - aggressive
+          - defensive
+          - flanking
+          - camping
+          - rushdown
+          - kite
+        predicted_at:
+          type: string
+          format: date-time
+        strategy_explanation:
+          type: string
+        counter_strategies:
+          type: array
+          items:
+            type: string
+        confidence_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+    AntiCheatDetection:
+      type: object
+      required:
+      - account_id
+      - risk_level
+      - analyzed_at
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        analysis_id:
+          type: string
+          format: uuid
+        risk_level:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - critical
+        analyzed_at:
+          type: string
+          format: date-time
+        recommendations:
+          type: array
+          items:
+            type: string
+        risk_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        requires_investigation:
+          type: boolean
+          default: false
+    ModelTrainingRequest:
+      type: object
+      required:
+      - model_type
+      - training_data
+      properties:
+        model_type:
+          type: string
+          enum:
+          - difficulty_scaling
+          - behavior_prediction
+          - content_recommendation
+          - anti_cheat
+        priority:
+          type: string
+          enum:
+          - low
+          - normal
+          - high
+          - critical
+          default: normal
+        training_data:
+          type: object
+          properties:
+            dataset_size:
+              type: integer
+              minimum: 1000
+            data_sources:
+              type: array
+              items:
+                type: string
+            time_range:
+              type: object
+              properties:
+                start_date:
+                  type: string
+                  format: date-time
+                end_date:
+                  type: string
+                  format: date-time
+        hyperparameters:
+          type: object
+          additionalProperties: true
+    ModelTrainingResponse:
+      type: object
+      required:
+      - job_id
+      - model_type
+      - status
+      - created_at
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        model_type:
+          type: string
+        status:
+          type: string
+          enum:
+          - queued
+          - training
+          - validating
+          - completed
+          - failed
+        created_at:
+          type: string
+          format: date-time
+        estimated_completion:
+          type: string
+          format: date-time
+        progress_percentage:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+    AIModel:
+      type: object
+      required:
+      - model_id
+      - model_type
+      - status
+      - created_at
+      properties:
+        model_id:
+          type: string
+          format: uuid
+        model_type:
+          type: string
+          enum:
+          - difficulty_scaling
+          - behavior_prediction
+          - content_recommendation
+          - anti_cheat
+        status:
+          type: string
+          enum:
+          - training
+          - deployed
+          - failed
+          - deprecated
+        created_at:
+          type: string
+          format: date-time
+        deployed_at:
+          type: string
+          format: date-time
+          nullable: true
+        accuracy_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        validation_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        version:
+          type: string
+        performance_metrics:
+          type: object
+          additionalProperties: true
+    ErrorResponse:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: integer
+          minimum: 100
+          maximum: 599
+          example: 400
+        message:
+          type: string
+          example: Bad request
+        details:
+          type: object
+          description: Additional error details
+    InfrastructureEntity:
+      type: object
+      required:
+      - id
+      - created_at
+      - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for infrastructure entity
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        created_at:
+          type: string
+          format: date-time
+          description: Entity creation timestamp
+          example: '2024-01-15T10:30:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: Last modification timestamp
+          example: '2024-01-15T14:20:00Z'
+        version:
+          type: integer
+          minimum: 1
+          description: Optimistic locking version for concurrent operations
+          example: 1
+    HealthResponse:
+      type: object
+      required:
+      - status
+      - timestamp
+      properties:
+        status:
+          type: string
+          enum:
+          - ok
+          - degraded
+          - critical
+          example: ok
+        message:
+          type: string
+          example: Service is healthy
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-01-15T10:30:00Z'
+        version:
+          type: string
+          example: 1.0.0
+    HealthBatchRequest:
+      type: object
+      properties:
+        services:
+          type: array
+          items:
+            type: string
+          description: List of services to check
+    HealthBatchResponse:
+      type: object
+      properties:
+        results:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/HealthResponse'
+    BaseEntity:
+      type: object
+      required:
+      - id
+      - created_at
+      - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: '2024-01-15T10:30:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: Last modification timestamp
+          example: '2024-01-15T14:20:00Z'
+    OptimisticLock:
+      type: object
+      properties:
+        version:
+          type: integer
+          minimum: 1
+          description: Version for optimistic locking
+          example: 1
+    UserAccountEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - username
+        - email
+        - account_status
+        - registration_method
+        properties:
+          username:
+            type: string
+            minLength: 3
+            maxLength: 30
+            pattern: ^[a-zA-Z0-9_-]+$
+            description: Unique username for login
+            example: nightrunner2077
+          email:
+            type: string
+            format: email
+            description: Primary email address
+            example: nightrunner@necpgame.com
+          email_verified:
+            type: boolean
+            description: Whether email is verified
+            example: true
+          email_verification_token:
+            type: string
+            description: Token for email verification
+            example: abc123def456
+          password_hash:
+            type: string
+            description: Bcrypt password hash
+            example: $2b$10$...
+          account_status:
+            type: string
+            enum:
+            - active
+            - suspended
+            - banned
+            - pending_verification
+            - deactivated
+            description: Account status
+            example: active
+          registration_method:
+            type: string
+            enum:
+            - email_password
+            - google_oauth
+            - discord_oauth
+            - steam_oauth
+            - guest
+            description: How user registered
+            example: email_password
+          registration_ip:
+            type: string
+            description: IP address used during registration
+            example: 192.168.1.100
+          last_login_ip:
+            type: string
+            description: IP address of last login
+            example: 10.0.0.50
+          last_login_at:
+            type: string
+            format: date-time
+            description: Timestamp of last successful login
+            example: '2024-01-15T14:20:00Z'
+          login_count:
+            type: integer
+            minimum: 0
+            description: Total number of logins
+            example: 147
+          failed_login_attempts:
+            type: integer
+            minimum: 0
+            description: Recent failed login attempts
+            example: 0
+          account_locked_until:
+            type: string
+            format: date-time
+            description: When account lock expires
+            example: '2024-01-15T16:00:00Z'
+          two_factor_enabled:
+            type: boolean
+            description: Whether 2FA is enabled
+            example: true
+          two_factor_secret:
+            type: string
+            description: TOTP secret for 2FA
+            example: JBSWY3DPEHPK3PXP
+          recovery_email:
+            type: string
+            format: email
+            description: Backup email for account recovery
+            example: backup@necpgame.com
+          preferred_language:
+            type: string
+            enum:
+            - en
+            - es
+            - zh
+            - ja
+            - ru
+            - de
+            - fr
+            - pl
+            - ko
+            - pt
+            description: User's preferred language
+            example: en
+    SessionEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - user_id
+        - session_token
+        - ip_address
+        - user_agent
+        - expires_at
+        properties:
+          user_id:
+            type: string
+            format: uuid
+            description: User this session belongs to
+            example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+          session_token:
+            type: string
+            minLength: 32
+            maxLength: 128
+            description: Unique session identifier/token
+            example: abc123def456ghi789jkl012mno345pqr678stu901vwx
+          refresh_token:
+            type: string
+            minLength: 32
+            maxLength: 128
+            description: Token for refreshing session
+            example: yz234abc567def890ghi123jkl456mno789pqr012stu
+          ip_address:
+            type: string
+            description: Client IP address
+            example: 192.168.1.100
+          user_agent:
+            type: string
+            description: Client user agent string
+            example: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
+          device_fingerprint:
+            type: string
+            description: Unique device identifier
+            example: fp_abcdef1234567890
+          location:
+            type: string
+            description: Approximate location based on IP
+            example: New York, US
+          expires_at:
+            type: string
+            format: date-time
+            description: When session expires
+            example: '2024-01-15T16:20:00Z'
+          is_active:
+            type: boolean
+            description: Whether session is currently active
+            example: true
+          last_activity_at:
+            type: string
+            format: date-time
+            description: Last user activity in this session
+            example: '2024-01-15T15:45:00Z'
+          security_level:
+            type: string
+            enum:
+            - standard
+            - elevated
+            - maximum
+            description: Security level of session
+            example: standard
+          session_metadata:
+            type: object
+            description: Additional session data
+            properties:
+              game_version:
+                type: string
+                description: Client game version
+                example: 1.2.3
+              platform:
+                type: string
+                enum:
+                - windows
+                - macos
+                - linux
+                - ios
+                - android
+                - web
+                description: Client platform
+                example: windows
+              vpn_detected:
+                type: boolean
+                description: Whether VPN usage was detected
+                example: false
+    AuditLogEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - event_type
+        - actor_id
+        - resource_type
+        - action
+        - severity
+        properties:
+          event_type:
+            type: string
+            enum:
+            - user_action
+            - system_event
+            - security_event
+            - admin_action
+            - api_call
+            description: Category of audit event
+            example: user_action
+          actor_id:
+            type: string
+            format: uuid
+            description: User/system that performed the action
+            example: b2c3d4e5-f6g7-8901-bcde-f23456789012
+          actor_type:
+            type: string
+            enum:
+            - user
+            - system
+            - admin
+            - api_client
+            description: Type of actor
+            example: user
+          resource_type:
+            type: string
+            enum:
+            - user
+            - session
+            - character
+            - guild
+            - item
+            - transaction
+            - quest
+            - chat
+            - file
+            description: Type of resource affected
+            example: character
+          resource_id:
+            type: string
+            format: uuid
+            description: Specific resource that was affected
+            example: c3d4e5f6-g7h8-9012-cdef-345678901234
+          action:
+            type: string
+            enum:
+            - create
+            - read
+            - update
+            - delete
+            - login
+            - logout
+            - ban
+            - unban
+            - transfer
+            - execute
+            description: Action performed
+            example: update
+          old_values:
+            type: object
+            description: Previous state of modified fields
+            example:
+              level: 24
+              experience: 12000
+          new_values:
+            type: object
+            description: New state of modified fields
+            example:
+              level: 25
+              experience: 12500
+          severity:
+            type: string
+            enum:
+            - low
+            - medium
+            - high
+            - critical
+            description: Security/impact severity
+            example: low
+          ip_address:
+            type: string
+            description: IP address of the actor
+            example: 192.168.1.100
+          user_agent:
+            type: string
+            description: User agent of the actor
+            example: NECPGAME Client v1.2.3
+          location:
+            type: string
+            description: Approximate location
+            example: Night City, NC
+          success:
+            type: boolean
+            description: Whether the action succeeded
+            example: true
+          error_message:
+            type: string
+            description: Error message if action failed
+            example: Insufficient permissions
+          metadata:
+            type: object
+            description: Additional audit data
+            properties:
+              request_id:
+                type: string
+                description: Unique request identifier
+                example: req_abc123def456
+              session_id:
+                type: string
+                format: uuid
+                description: Associated session ID
+                example: d4e5f6g7-h8i9-0123-def0-456789012345
+              api_endpoint:
+                type: string
+                description: API endpoint called
+                example: /api/v1/characters/upgrade
+              response_time_ms:
+                type: integer
+                description: API response time
+                example: 45
+    ApiKeyEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - owner_id
+        - name
+        - key_hash
+        - permissions
+        - status
+        properties:
+          owner_id:
+            type: string
+            format: uuid
+            description: User or service that owns this API key
+            example: e5f6g7h8-i9j0-1234-ef01-567890123456
+          name:
+            type: string
+            minLength: 1
+            maxLength: 50
+            description: Human-readable name for the key
+            example: Mobile App Key
+          description:
+            type: string
+            maxLength: 200
+            description: Description of key usage
+            example: API key for mobile application authentication
+          key_hash:
+            type: string
+            description: SHA-256 hash of the actual API key
+            example: a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3
+          key_prefix:
+            type: string
+            minLength: 8
+            maxLength: 8
+            description: First 8 characters of API key for identification
+            example: ncp_1a2b
+          permissions:
+            type: array
+            items:
+              type: string
+              enum:
+              - read_user
+              - write_user
+              - read_character
+              - write_character
+              - read_inventory
+              - write_inventory
+              - admin
+            description: Granted permissions
+            example:
+            - read_user
+            - read_character
+            - read_inventory
+          status:
+            type: string
+            enum:
+            - active
+            - suspended
+            - revoked
+            - expired
+            description: API key status
+            example: active
+          expires_at:
+            type: string
+            format: date-time
+            description: When key expires (null = never)
+            example: '2025-01-15T10:30:00Z'
+          last_used_at:
+            type: string
+            format: date-time
+            description: Last time key was used
+            example: '2024-01-15T14:20:00Z'
+          usage_count:
+            type: integer
+            minimum: 0
+            description: Total API calls made with this key
+            example: 15420
+          rate_limit:
+            type: integer
+            minimum: 1
+            description: Requests per minute allowed
+            example: 60
+          allowed_ips:
+            type: array
+            items:
+              type: string
+            description: IP addresses allowed to use this key
+            example:
+            - 192.168.1.0/24
+            - 10.0.0.1
+          metadata:
+            type: object
+            description: Additional key metadata
+            properties:
+              created_by:
+                type: string
+                format: uuid
+                description: User who created this key
+                example: f6g7h8i9-j0k1-2345-f012-678901234567
+              application:
+                type: string
+                description: Application using this key
+                example: NECPGAME Mobile App
+              environment:
+                type: string
+                enum:
+                - development
+                - staging
+                - production
+                description: Environment this key is for
+                example: production
+    ConfigurationEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - config_key
+        - config_value
+        - config_type
+        - environment
+        properties:
+          config_key:
+            type: string
+            minLength: 1
+            maxLength: 100
+            pattern: ^[a-zA-Z0-9_\-\.]+$
+            description: Configuration key
+            example: game.max_players_per_server
+          config_value:
+            type: string
+            description: Configuration value (stored as string)
+            example: '1000'
+          config_type:
+            type: string
+            enum:
+            - string
+            - integer
+            - float
+            - boolean
+            - json
+            description: Data type of the value
+            example: integer
+          environment:
+            type: string
+            enum:
+            - development
+            - staging
+            - production
+            - all
+            description: Environment this config applies to
+            example: production
+          description:
+            type: string
+            maxLength: 500
+            description: Description of what this config controls
+            example: Maximum number of players allowed per game server
+          default_value:
+            type: string
+            description: Default value if not set
+            example: '500'
+          validation_rules:
+            type: object
+            description: Validation rules for the value
+            properties:
+              min_value:
+                type: number
+                description: Minimum allowed value
+                example: 1
+              max_value:
+                type: number
+                description: Maximum allowed value
+                example: 10000
+              allowed_values:
+                type: array
+                items:
+                  type: string
+                description: List of allowed values
+                example:
+                - '100'
+                - '500'
+                - '1000'
+                - '2000'
+          is_encrypted:
+            type: boolean
+            description: Whether value is encrypted
+            example: false
+          last_modified_by:
+            type: string
+            format: uuid
+            description: User who last modified this config
+            example: g7h8i9j0-k1l2-3456-0123-456789012345
+          requires_restart:
+            type: boolean
+            description: Whether server restart is required after change
+            example: true
+    ServiceHealthEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - service_name
+        - status
+        - response_time_ms
+        - timestamp
+        properties:
+          service_name:
+            type: string
+            minLength: 1
+            maxLength: 50
+            description: Name of the service being monitored
+            example: auth-service
+          status:
+            type: string
+            enum:
+            - healthy
+            - degraded
+            - unhealthy
+            - down
+            - maintenance
+            description: Current health status
+            example: healthy
+          response_time_ms:
+            type: integer
+            minimum: 0
+            description: Response time in milliseconds
+            example: 45
+          timestamp:
+            type: string
+            format: date-time
+            description: When this health check was performed
+            example: '2024-01-15T15:30:00Z'
+          uptime_seconds:
+            type: integer
+            minimum: 0
+            description: Service uptime in seconds
+            example: 86400
+          memory_usage_mb:
+            type: integer
+            minimum: 0
+            description: Current memory usage in MB
+            example: 256
+          memory_usage_percent:
+            type: number
+            minimum: 0
+            maximum: 100
+            description: Memory usage percentage
+            example: 23.5
+          cpu_usage_percent:
+            type: number
+            minimum: 0
+            maximum: 100
+            description: CPU usage percentage
+            example: 15.2
+          active_connections:
+            type: integer
+            minimum: 0
+            description: Number of active connections
+            example: 1250
+          queue_depth:
+            type: integer
+            minimum: 0
+            description: Number of queued requests
+            example: 5
+          error_rate_percent:
+            type: number
+            minimum: 0
+            maximum: 100
+            description: Error rate percentage
+            example: 0.1
+          version:
+            type: string
+            description: Service version
+            example: 1.2.3
+          environment:
+            type: string
+            enum:
+            - development
+            - staging
+            - production
+            description: Deployment environment
+            example: production
+          checks:
+            type: array
+            items:
+              $ref: '#/components/schemas/HealthCheck'
+            description: Detailed health checks
+    HealthCheck:
+      type: object
+      required:
+      - check_name
+      - status
+      - response_time_ms
+      properties:
+        check_name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Name of the health check
+          example: database_connection
+        status:
+          type: string
+          enum:
+          - pass
+          - warn
+          - fail
+          description: Health check result
+          example: pass
+        response_time_ms:
+          type: integer
+          minimum: 0
+          description: Check response time
+          example: 12
+        message:
+          type: string
+          maxLength: 200
+          description: Check result message
+          example: Database connection successful
+        details:
+          type: object
+          description: Additional check details
+          example:
+            connection_pool_size: 10
+            active_connections: 3
+    NotificationQueueEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - notification_type
+        - recipient_id
+        - content
+        - priority
+        - status
+        properties:
+          notification_type:
+            type: string
+            enum:
+            - email
+            - push
+            - in_game
+            - sms
+            - webhook
+            description: Type of notification
+            example: email
+          recipient_id:
+            type: string
+            format: uuid
+            description: User receiving the notification
+            example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+          recipient_contact:
+            type: string
+            description: Contact info (email, phone, etc.)
+            example: user@necpgame.com
+          content:
+            type: object
+            description: Notification content
+            required:
+            - subject
+            - body
+            properties:
+              subject:
+                type: string
+                minLength: 1
+                maxLength: 100
+                description: Notification subject/title
+                example: Quest Completed!
+              body:
+                type: string
+                minLength: 1
+                maxLength: 2000
+                description: Notification body/content
+                example: Congratulations! You have completed the 'Corporate Espionage'
+                  quest.
+              template_id:
+                type: string
+                description: Template used for notification
+                example: quest_completion_v2
+          priority:
+            type: string
+            enum:
+            - low
+            - normal
+            - high
+            - critical
+            description: Notification priority
+            example: normal
+          status:
+            type: string
+            enum:
+            - queued
+            - processing
+            - sent
+            - delivered
+            - failed
+            - cancelled
+            description: Delivery status
+            example: queued
+          scheduled_for:
+            type: string
+            format: date-time
+            description: When to send notification (null = immediate)
+            example: '2024-01-15T16:00:00Z'
+          sent_at:
+            type: string
+            format: date-time
+            description: When notification was sent
+            example: '2024-01-15T15:45:00Z'
+          delivered_at:
+            type: string
+            format: date-time
+            description: When notification was delivered
+            example: '2024-01-15T15:45:02Z'
+          retry_count:
+            type: integer
+            minimum: 0
+            description: Number of delivery attempts
+            example: 0
+          max_retries:
+            type: integer
+            minimum: 0
+            maximum: 5
+            description: Maximum retry attempts
+            example: 3
+          error_message:
+            type: string
+            description: Delivery error message
+            example: SMTP server timeout
+          metadata:
+            type: object
+            description: Additional notification data
+            properties:
+              campaign_id:
+                type: string
+                description: Marketing campaign ID
+                example: quest_reminder_2024
+              source_service:
+                type: string
+                description: Service that triggered notification
+                example: quest-service
+              user_preferences:
+                type: object
+                description: User's notification preferences
+                example:
+                  email_enabled: true
+                  push_enabled: false
+    PerformanceMetrics:
+      type: object
+      properties:
+        win_rate:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        average_score:
+          type: number
+          format: float
+        average_kills_per_match:
+          type: number
+          format: float
+        average_deaths_per_match:
+          type: number
+          format: float
+        accuracy_percentage:
+          type: number
+          format: float
+        average_match_duration:
+          type: integer
+          description: Average match duration in seconds
+    UpdateSkillAssessmentRequest:
+      type: object
+      properties:
+        play_style:
+          type: string
+          enum:
+          - aggressive
+          - defensive
+          - strategic
+          - casual
+        performance_data:
+          $ref: '#/components/schemas/PerformanceMetrics'
+        skill_level:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 10
+    UpdateDifficultyScalingRequest:
+      type: object
+      properties:
+        adjustment_reason:
+          type: string
+          enum:
+          - manual_override
+          - emergency_adjustment
+          - balance_testing
+        difficulty_multiplier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 5.0
+    UpdateNpcBehaviorRequest:
+      type: object
+      properties:
+        behavior_type:
+          type: string
+          enum:
+          - passive
+          - aggressive
+          - defensive
+          - patrol
+          - guard
+          - merchant
+          - quest_giver
+        combat_style:
+          type: string
+          enum:
+          - melee
+          - ranged
+          - magic
+          - mixed
+        interaction_responses:
+          type: object
+          additionalProperties:
+            type: string
+        patrol_route:
+          type: array
+          items:
+            $ref: '#/components/schemas/Vector3'
+        aggressiveness:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        intelligence:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+    GenerateNpcRequest:
+      type: object
+      required:
+      - npc_type
+      - location
+      properties:
+        npc_type:
+          type: string
+          enum:
+          - enemy
+          - ally
+          - neutral
+          - merchant
+          - quest_giver
+        faction:
+          type: string
+        custom_properties:
+          type: object
+          additionalProperties: true
+        location:
+          $ref: '#/components/schemas/Vector3'
+        difficulty_level:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 10
+          default: 1
+    GeneratedNpc:
+      type: object
+      required:
+      - id
+      - npc_type
+      - location
+      - behavior
+      - generated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        npc_type:
+          type: string
+          enum:
+          - enemy
+          - ally
+          - neutral
+          - merchant
+          - quest_giver
+        generated_at:
+          type: string
+          format: date-time
+        generation_seed:
+          type: string
+          description: Seed used for procedural generation
+        behavior:
+          $ref: '#/components/schemas/NpcBehavior'
+        stats:
+          $ref: '#/components/schemas/NpcStats'
+        location:
+          $ref: '#/components/schemas/Vector3'
+    NpcStats:
+      type: object
+      properties:
+        speed:
+          type: number
+          format: float
+          minimum: 0
+        health:
+          type: integer
+          minimum: 1
+        damage:
+          type: integer
+          minimum: 0
+        defense:
+          type: integer
+          minimum: 0
+        level:
+          type: integer
+          minimum: 1
+    Vector3:
+      type: object
+      required:
+      - x
+      - y
+      - z
+      properties:
+        x:
+          type: number
+          format: float
+        y:
+          type: number
+          format: float
+        z:
+          type: number
+          format: float
+    ContentRecommendation:
+      type: object
+      required:
+      - content_id
+      - content_type
+      - relevance_score
+      properties:
+        content_id:
+          type: string
+          format: uuid
+        content_type:
+          type: string
+          enum:
+          - quest
+          - item
+          - challenge
+          - event
+          - location
+        reason:
+          type: string
+          enum:
+          - skill_level
+          - play_style
+          - preferences
+          - achievements
+          - social_circle
+        relevance_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+    BehaviorPattern:
+      type: object
+      required:
+      - pattern_type
+      - frequency
+      - confidence
+      properties:
+        pattern_type:
+          type: string
+          enum:
+          - aggressive_play
+          - defensive_play
+          - team_player
+          - lone_wolf
+          - achievement_hunter
+          - casual_player
+        detected_at:
+          type: string
+          format: date-time
+        frequency:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        confidence:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+    RiskIndicator:
+      type: object
+      required:
+      - indicator_type
+      - severity
+      - description
+      properties:
+        indicator_type:
+          type: string
+          enum:
+          - aimbot_suspicion
+          - speed_hack_suspicion
+          - wall_hack_suspicion
+          - unusual_win_rate
+          - pattern_exploitation
+        description:
+          type: string
+        evidence:
+          type: array
+          items:
+            type: string
+        severity:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+    EngagementMetrics:
+      type: object
+      properties:
+        sessions_per_day:
+          type: number
+          format: float
+        retention_rate:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        progression_rate:
+          type: number
+          format: float
+        average_session_duration:
+          type: integer
+          description: Average session duration in minutes
+    GenerateQuestRequest:
+      type: object
+      required:
+      - player_level
+      - quest_type
+      properties:
+        quest_type:
+          type: string
+          enum:
+          - combat
+          - exploration
+          - collection
+          - escort
+          - puzzle
+          - assassination
+        difficulty:
+          type: string
+          enum:
+          - easy
+          - medium
+          - hard
+          - epic
+          default: medium
+        theme:
+          type: string
+          enum:
+          - cyberpunk
+          - military
+          - supernatural
+          - mystery
+          - adventure
+        location:
+          type: string
+        custom_parameters:
+          type: object
+          additionalProperties: true
+        player_level:
+          type: integer
+          minimum: 1
+          maximum: 100
+        time_limit:
+          type: integer
+          description: Time limit in minutes
+    QuestObjective:
+      type: object
+      required:
+      - description
+      - objective_type
+      properties:
+        target_id:
+          type: string
+          format: uuid
+        description:
+          type: string
+          maxLength: 500
+        objective_type:
+          type: string
+          enum:
+          - kill
+          - collect
+          - explore
+          - interact
+          - survive
+          - escort
+        location:
+          type: string
+        target_count:
+          type: integer
+          minimum: 1
+    QuestReward:
+      type: object
+      required:
+      - reward_type
+      - amount
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        reward_type:
+          type: string
+          enum:
+          - experience
+          - currency
+          - item
+          - reputation
+          - title
+        amount:
+          type: integer
+          minimum: 0
+    SuspiciousBehaviorReport:
+      type: object
+      required:
+      - account_id
+      - behavior_type
+      - evidence
+      - severity
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        session_id:
+          type: string
+          format: uuid
+        behavior_type:
+          type: string
+          enum:
+          - aimbot
+          - speed_hack
+          - wall_hack
+          - unusual_accuracy
+          - pattern_exploitation
+          - stat_manipulation
+        timestamp:
+          type: string
+          format: date-time
+        evidence:
+          type: array
+          items:
+            type: string
+        severity:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+    BehaviorAnalysisResult:
+      type: object
+      required:
+      - account_id
+      - analysis_id
+      - risk_level
+      - analyzed_at
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        analysis_id:
+          type: string
+          format: uuid
+        risk_level:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - critical
+        analyzed_at:
+          type: string
+          format: date-time
+        recommendations:
+          type: array
+          items:
+            type: string
+        risk_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        requires_investigation:
+          type: boolean
+          default: false
+    ModelTrainingJob:
+      type: object
+      required:
+      - job_id
+      - model_type
+      - status
+      - created_at
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        model_type:
+          type: string
+        status:
+          type: string
+          enum:
+          - queued
+          - training
+          - validating
+          - completed
+          - failed
+        created_at:
+          type: string
+          format: date-time
+        estimated_completion:
+          type: string
+          format: date-time
+        progress_percentage:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+    ModelTrainingStatus:
+      type: object
+      required:
+      - model_id
+      - status
+      - last_updated
+      properties:
+        model_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - training
+          - deployed
+          - failed
+          - deprecated
+        last_updated:
+          type: string
+          format: date-time
+        deployed_at:
+          type: string
+          format: date-time
+          nullable: true
+        accuracy_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        validation_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+    CombatStrategyRequest:
+      type: object
+      required:
+      - player_id
+      - combat_state
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        combat_state:
+          type: object
+          properties:
+            current_health:
+              type: number
+              format: float
+              minimum: 0
+            enemy_count:
+              type: integer
+              minimum: 0
+            ammo_remaining:
+              type: integer
+              minimum: 0
+            position:
+              $ref: '#/components/schemas/Vector3'
+        context:
+          type: object
+          additionalProperties: true
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: '**JWT Bearer Authentication**
+
+
+        Use JWT tokens obtained from `/auth/login` or `/auth/refresh`.
+
+
+        **Token Format:** `Authorization: Bearer <jwt_token>`
+
+
+        **Token Expiration:** 15 minutes for access tokens, 7 days for refresh tokens
+
+
+        **Security Features:**
+
+        - RS256 signature verification
+
+        - Token blacklisting on logout
+
+        - Rate limiting per user
+
+        - Geographic restrictions (optional)
+
+        '

@@ -1,1171 +1,670 @@
 openapi: 3.0.3
 info:
-  title: Push Notification Service API - Enterprise-Grade Push Notifications
-  description: '**Enterprise-Grade Push Notification API for NECPGAME**
+  title: Push Notification Service API
+  description: '**Enterprise-grade API for Push Notifications**
 
-    Service for managing push notifications across mobile devices, web browsers, and
-    gaming platforms. Provides real-time delivery, targeting, analytics, and user
-    preference management.
-
-    ## Key Features
-
-    - **Enterprise-grade architecture** with proper domain separation
-
-    - **Backend optimization hints** for struct alignment and performance
-
-    - **Complete validation** with redocly and ogen code generation
-
-    - **Security-first approach** with JWT authentication
-
-    - **Performance-optimized** response structures
-
-    - **Comprehensive error handling** with proper HTTP status codes
 
     ## Domain Purpose
 
-    Manages push notification delivery, device registration, targeting, scheduling,
-    and analytics. Supports multiple platforms (iOS, Android, Web) with real-time
-    delivery guarantees.
+    Comprehensive push notification service providing real-time delivery, device management,
+
+    analytics, and personalization for enhanced user engagement across all platforms.
+
+
+    ## Business Value
+
+    - Real-time user engagement and retention
+
+    - Multi-platform notification delivery (iOS, Android, Web, Desktop)
+
+    - Advanced analytics and targeting
+
+    - Enterprise-grade scalability and reliability
+
+    - GDPR compliant notification management
+
 
     ## Performance Targets
 
-    - P99 Latency: <100ms for notification delivery
+    - P99 Latency: <100ms for notification dispatch
 
-    - Memory: <30KB per active device token
+    - Throughput: 100,000+ notifications per second
 
-    - Concurrent users: 100,000+ simultaneous notifications
+    - Delivery Success Rate: >99.5% across all platforms
 
-    - Delivery rate: 99.9% success rate
+    - Queue Processing Time: <10ms average
+
+
+    ## Domain Inheritance
+
+    This service inherits from infrastructure-entities.yaml providing:
+
+    - Notification queue entity for async processing
+
+    - Audit trails for notification operations
+
+    - Configuration management for provider settings
+
+    - User account references for targeting
+
+    - Optimistic locking for concurrent operations
+
+    - Strict typing with validation rules
 
     '
   version: 1.0.0
   contact:
-    name: NECPGAME API Support
-    url: https://necpgame.com/support
+    name: NECPGAME API Team
     email: api@necpgame.com
   license:
     name: MIT
-    url: https://opensource.org/licenses/MIT
 servers:
-- url: https://api.necpgame.com/v1/push-notification
-  description: Production server
-- url: https://staging-api.necpgame.com/v1/push-notification
-  description: Staging server
-- url: http://localhost:8080/api/v1/push-notification
-  description: Local development server
+- url: https://api.necpgame.com/v1/push-notification-service
+  description: Production environment
+- url: https://staging-api.necpgame.com/v1/push-notification-service
+  description: Staging environment
+- url: http://localhost:8080/api/v1/push-notification-service
+  description: Local development
 security:
 - BearerAuth: []
 tags:
 - name: Device Management
-  description: Device token registration and management
+  description: Device registration and token management
 - name: Notification Delivery
-  description: Sending and managing push notifications
-- name: Targeting & Scheduling
-  description: Audience targeting and delivery scheduling
+  description: Sending and queuing notifications
+- name: Campaign Management
+  description: Notification campaigns and targeting
 - name: Analytics & Reporting
-  description: Notification analytics and reporting
+  description: Delivery analytics and engagement metrics
+- name: Template Management
+  description: Notification templates and personalization
 - name: Health Monitoring
-  description: System health and performance monitoring
+  description: Service health and performance monitoring
 paths:
   /health:
-    get:
-      summary: Push notification service health check
-      description: '**Enterprise-grade health check endpoint**
-
-        Provides real-time health status of the push notification microservice.
-
-        Critical for service discovery, load balancing, and monitoring.
-
-        **Performance:** <1ms response time, cached for 30 seconds '
-      operationId: pushNotificationServiceHealthCheck
-      tags:
-      - Health Monitoring
-      parameters:
-      - name: Accept-Encoding
-        in: header
-        schema:
-          type: string
-          enum:
-          - gzip
-          - deflate
-          - br
-      responses:
-        '200':
-          description: Service is healthy
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                example: max-age=30, s-maxage=60
-            ETag:
-              schema:
-                type: string
-                example: '"health-v1.0"'
-            Content-Encoding:
-              schema:
-                type: string
-                enum:
-                - gzip
-                - deflate
-                - br
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HealthResponse'
-        '503':
-          description: Service is unhealthy
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HealthResponse'
-        '429':
-          description: Too many requests - rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
+    $ref: ./paths/health.yaml#/paths/~1health
   /devices:
-    post:
-      summary: Register device for push notifications
-      description: '**Device registration endpoint**
-
-        Registers a device token for receiving push notifications. Supports multiple
-        platforms and handles token updates.
-
-        **Performance:** <50ms P95, includes token validation '
-      operationId: registerDevice
-      tags:
-      - Device Management
-      security:
-      - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RegisterDeviceRequest'
-      responses:
-        '201':
-          description: Device registered successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DeviceResponse'
-        '400':
-          description: Invalid request - malformed device data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '409':
-          description: Device already registered
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - registration rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-  /devices/{device_id}:
-    put:
-      summary: Update device information
-      description: '**Device update endpoint**
-
-        Updates device token, platform info, or user preferences for the device.
-
-        **Performance:** <25ms P95, real-time updates '
-      operationId: updateDevice
-      tags:
-      - Device Management
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: device_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Device unique identifier
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateDeviceRequest'
-      responses:
-        '200':
-          description: Device updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DeviceResponse'
-        '400':
-          description: Invalid request - malformed device data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Device not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - update rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 10
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-    delete:
-      summary: Unregister device
-      description: '**Device unregistration endpoint**
-
-        Removes device from push notification delivery. Supports soft delete with
-        cleanup scheduling.
-
-        **Performance:** <15ms P95, includes cleanup operations '
-      operationId: unregisterDevice
-      tags:
-      - Device Management
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: device_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Device unique identifier
-      responses:
-        '204':
-          description: Device unregistered successfully
-        '400':
-          description: Invalid request - malformed device ID
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Device not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - unregistration rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 5
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
+    $ref: ./paths/devices.yaml#/paths/~1devices
+  /devices/{deviceId}:
+    $ref: ./paths/devices-{deviceId}.yaml#/paths/~1devices~1{deviceId}
   /notifications/send:
-    post:
-      summary: Send push notification
-      description: '**Notification delivery endpoint**
-
-        Sends push notification to specified users or devices. Supports targeting,
-        scheduling, and delivery guarantees.
-
-        **Performance:** <100ms P95, includes queueing and delivery '
-      operationId: sendNotification
-      tags:
-      - Notification Delivery
-      security:
-      - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SendNotificationRequest'
-      responses:
-        '202':
-          description: Notification queued for delivery
-          headers:
-            X-Notification-ID:
-              schema:
-                type: string
-                format: uuid
-                description: Unique notification identifier
-            Location:
-              schema:
-                type: string
-                example: /api/v1/notifications/status/550e8400-e29b-41d4-a716-446655440000
-                description: Status tracking endpoint
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NotificationQueuedResponse'
-        '400':
-          description: Invalid request - malformed notification data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - notification rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 5
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-  /notifications/{notification_id}/status:
-    get:
-      summary: Get notification delivery status
-      description: '**Notification status endpoint**
-
-        Retrieves delivery status and analytics for a specific notification.
-
-        **Performance:** <20ms P95, cached status data '
-      operationId: getNotificationStatus
-      tags:
-      - Notification Delivery
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: notification_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Notification unique identifier
-      responses:
-        '200':
-          description: Notification status retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NotificationStatusResponse'
-        '400':
-          description: Invalid request - malformed notification ID
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Notification not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
+    $ref: ./paths/notifications-send.yaml#/paths/~1notifications~1send
+  /notifications/{notificationId}/status:
+    $ref: ./paths/notifications-{notificationId}-status.yaml#/paths/~1notifications~1{notificationId}~1status
   /campaigns:
-    post:
-      summary: Create notification campaign
-      description: '**Campaign creation endpoint**
-
-        Creates scheduled notification campaigns with targeting and analytics.
-
-        **Performance:** <75ms P95, includes validation and scheduling '
-      operationId: createCampaign
-      tags:
-      - Targeting & Scheduling
-      security:
-      - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateCampaignRequest'
-      responses:
-        '201':
-          description: Campaign created successfully
-          headers:
-            Location:
-              schema:
-                type: string
-                example: /api/v1/campaigns/550e8400-e29b-41d4-a716-446655440000
-                description: Campaign management endpoint
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CampaignResponse'
-        '400':
-          description: Invalid request - malformed campaign data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - campaign creation rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-  /analytics/summary:
-    get:
-      summary: Get notification analytics summary
-      description: '**Analytics endpoint**
-
-        Provides aggregated analytics for notifications and campaigns.
-
-        **Performance:** <50ms P95, cached aggregated data '
-      operationId: getAnalyticsSummary
-      tags:
-      - Analytics & Reporting
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: start_date
-        in: query
-        schema:
-          type: string
-          format: date
-        description: Start date for analytics (YYYY-MM-DD)
-      - name: end_date
-        in: query
-        schema:
-          type: string
-          format: date
-        description: End date for analytics (YYYY-MM-DD)
-      responses:
-        '200':
-          description: Analytics summary retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AnalyticsSummaryResponse'
-        '400':
-          description: Invalid request - malformed date parameters
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - analytics rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 10
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
+    $ref: ./paths/campaigns.yaml#/paths/~1campaigns
+  /campaigns/{campaignId}:
+    $ref: ./paths/campaigns-{campaignId}.yaml#/paths/~1campaigns~1{campaignId}
+  /analytics/delivery:
+    $ref: ./paths/analytics-delivery.yaml#/paths/~1analytics~1delivery
+  /templates:
+    $ref: ./paths/templates.yaml#/paths/~1templates
 components:
-  responses:
-    OK:
-      description: Operation completed successfully
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              success:
-                type: boolean
-                example: true
-              message:
-                type: string
-                example: Operation completed
-    Created:
-      description: Resource created successfully
-      headers:
-        Location:
-          schema:
-            type: string
-            format: uri
-          description: URI of the created resource
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              id:
-                type: string
-                format: uuid
-                description: Unique identifier of created resource
-              created_at:
-                type: string
-                format: date-time
-                description: Creation timestamp
-    BadRequest:
-      description: Invalid request parameters
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-            - code
-            - message
-            properties:
-              code:
-                type: integer
-                example: 500
-                format: int32
-                minimum: 100
-                maximum: 599
-              message:
-                type: string
-                example: Internal server error
-                maxLength: 1000
-              details:
-                type: object
-                description: Additional error details
-            description: Standard error response format
-    Unauthorized:
-      description: Authentication required
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-            - code
-            - message
-            properties:
-              code:
-                type: integer
-                example: 500
-                format: int32
-                minimum: 100
-                maximum: 599
-              message:
-                type: string
-                example: Internal server error
-                maxLength: 1000
-              details:
-                type: object
-                description: Additional error details
-            description: Standard error response format
-    Forbidden:
-      description: Access denied
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-            - code
-            - message
-            properties:
-              code:
-                type: integer
-                example: 500
-                format: int32
-                minimum: 100
-                maximum: 599
-              message:
-                type: string
-                example: Internal server error
-                maxLength: 1000
-              details:
-                type: object
-                description: Additional error details
-            description: Standard error response format
-    NotFound:
-      description: Resource not found
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-            - code
-            - message
-            properties:
-              code:
-                type: integer
-                example: 500
-                format: int32
-                minimum: 100
-                maximum: 599
-              message:
-                type: string
-                example: Internal server error
-                maxLength: 1000
-              details:
-                type: object
-                description: Additional error details
-            description: Standard error response format
-    Conflict:
-      description: Resource conflict
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-            - code
-            - message
-            properties:
-              code:
-                type: integer
-                example: 500
-                format: int32
-                minimum: 100
-                maximum: 599
-              message:
-                type: string
-                example: Internal server error
-                maxLength: 1000
-              details:
-                type: object
-                description: Additional error details
-            description: Standard error response format
-    InternalServerError:
-      description: Internal server error
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-            - code
-            - message
-            properties:
-              code:
-                type: integer
-                example: 500
-                format: int32
-                minimum: 100
-                maximum: 599
-              message:
-                type: string
-                example: Internal server error
-                maxLength: 1000
-              details:
-                type: object
-                description: Additional error details
-            description: Standard error response format
   schemas:
-    HealthResponse:
+    DeviceRegistration:
+      description: Device registration entity with infrastructure domain inheritance
+      allOf:
+      - $ref: ../common/schemas/infrastructure-entities.yaml#/ConfigurationEntity
+      - type: object
+        properties:
+          device_token:
+            type: string
+            description: Encrypted push notification token
+          device_fingerprint:
+            type: string
+            description: Unique device fingerprint hash
+          platform:
+            type: string
+            enum:
+            - ios
+            - android
+            - web
+            - desktop
+            description: Device platform
+          platform_version:
+            type: string
+            description: Platform/OS version
+          app_version:
+            type: string
+            description: App version on device
+          locale:
+            type: string
+            description: Device locale/language
+          timezone:
+            type: string
+            description: Device timezone
+          capabilities:
+            type: array
+            items:
+              type: string
+              enum:
+              - rich_notifications
+              - actions
+              - custom_sounds
+              - badges
+            description: Device notification capabilities
+          last_active_at:
+            type: string
+            format: date-time
+            description: Last device activity timestamp
+          notification_preferences:
+            $ref: '#/components/schemas/DeviceNotificationPreferences'
+    DeviceSummary:
+      description: Device summary for listings
       type: object
-      required:
-      - status
-      - timestamp
       properties:
-        status:
-          type: string
-          enum:
-          - healthy
-          - degraded
-          - unhealthy
-          example: healthy
-          maxLength: 255
-        domain:
-          type: string
-          example: service-name
-          maxLength: 255
-        timestamp:
-          type: string
-          format: date-time
-          example: '2025-12-28T10:00:00Z'
-          maxLength: 255
-        version:
-          type: string
-          example: 1.0.0
-          maxLength: 50
-        uptime_seconds:
-          type: integer
-          example: 3600
-          minimum: 0
-        active_connections:
-          type: integer
-          example: 1500
-          minimum: 0
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    Error:
-      type: object
-      required:
-      - code
-      - message
-      properties:
-        code:
-          type: integer
-          example: 500
-          format: int32
-          minimum: 100
-          maximum: 599
-        message:
-          type: string
-          example: Internal server error
-          maxLength: 1000
-        details:
-          type: object
-          description: Additional error details
-      description: Standard error response format
-    Device:
-      type: object
-      required:
-      - device_id
-      - platform
-      - token
-      - user_id
-      - status
-      properties:
-        device_id:
+        id:
           type: string
           format: uuid
-          description: Device unique identifier
-          example: 550e8400-e29b-41d4-a716-446655440000
+          description: Device ID
         platform:
           type: string
           enum:
           - ios
           - android
           - web
-          - gaming_console
+          - desktop
           description: Device platform
-          example: ios
-        token:
+        last_active_at:
           type: string
-          maxLength: 500
-          description: Push notification token
-          example: eA1B2cD3eF4gH5iJ6kL7mN8oP9qR0sT1uV2wX3yZ
-        user_id:
+          format: date-time
+          description: Last activity
+        is_active:
+          type: boolean
+          description: Device active status
+    NotificationCampaign:
+      description: Notification campaign entity
+      allOf:
+      - $ref: ../common/schemas/infrastructure-entities.yaml#/ConfigurationEntity
+      - type: object
+        properties:
+          name:
+            type: string
+            minLength: 1
+            maxLength: 100
+            description: Campaign name
+          description:
+            type: string
+            maxLength: 500
+            description: Campaign description
+          status:
+            type: string
+            enum:
+            - draft
+            - scheduled
+            - active
+            - completed
+            - cancelled
+            description: Campaign status
+          campaign_type:
+            type: string
+            enum:
+            - broadcast
+            - targeted
+            - transactional
+            - promotional
+            description: Campaign type
+          target_audience:
+            $ref: '#/components/schemas/CampaignTargetAudience'
+          content:
+            $ref: '#/components/schemas/CampaignContent'
+          scheduling:
+            $ref: '#/components/schemas/CampaignScheduling'
+          performance_metrics:
+            $ref: '#/components/schemas/CampaignPerformanceMetrics'
+    CampaignSummary:
+      description: Campaign summary for listings
+      type: object
+      properties:
+        id:
           type: string
           format: uuid
-          description: Associated user ID
-          example: 660e8400-e29b-41d4-a716-446655440001
-        app_version:
+          description: Campaign ID
+        name:
           type: string
-          maxLength: 50
-          description: App version on device
-          example: 2.1.0
-        os_version:
-          type: string
-          maxLength: 50
-          description: Operating system version
-          example: iOS 17.0
-        timezone:
-          type: string
-          maxLength: 50
-          description: Device timezone
-          example: America/New_York
-        language:
-          type: string
-          maxLength: 10
-          description: Device language
-          example: en
+          description: Campaign name
         status:
           type: string
           enum:
+          - draft
+          - scheduled
           - active
-          - inactive
-          - blocked
-          default: active
-          description: Device registration status
-          example: active
-        registered_at:
+          - completed
+          - cancelled
+          description: Campaign status
+        target_count:
+          type: integer
+          description: Number of target devices
+        sent_count:
+          type: integer
+          description: Number of notifications sent
+        delivered_count:
+          type: integer
+          description: Number of notifications delivered
+        scheduled_for:
           type: string
           format: date-time
-          description: Registration timestamp
-          example: '2025-12-21T10:00:00Z'
-        last_seen_at:
-          type: string
-          format: date-time
-          description: Last activity timestamp
-          example: '2025-12-21T15:30:00Z'
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    RegisterDeviceRequest:
-      type: object
-      required:
-      - platform
-      - token
-      properties:
-        platform:
-          type: string
-          enum:
-          - ios
-          - android
-          - web
-          - gaming_console
-          description: Device platform
-        token:
-          type: string
-          maxLength: 500
-          description: Push notification token
-        app_version:
-          type: string
-          maxLength: 50
-          description: App version
-        os_version:
-          type: string
-          maxLength: 50
-          description: Operating system version
-        timezone:
-          type: string
-          maxLength: 50
-          description: Device timezone
-        language:
-          type: string
-          maxLength: 10
-          description: Device language
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    UpdateDeviceRequest:
+          description: Campaign scheduled time
+    NotificationTemplate:
+      description: Notification template entity
+      allOf:
+      - $ref: ../common/schemas/infrastructure-entities.yaml#/ConfigurationEntity
+      - type: object
+        properties:
+          name:
+            type: string
+            minLength: 1
+            maxLength: 100
+            description: Template name
+          category:
+            type: string
+            minLength: 1
+            maxLength: 50
+            description: Template category
+          content:
+            $ref: '#/components/schemas/TemplateContent'
+          parameters:
+            type: array
+            items:
+              $ref: '#/components/schemas/TemplateParameter'
+            description: Template parameters
+          platforms:
+            type: array
+            items:
+              type: string
+              enum:
+              - ios
+              - android
+              - web
+              - desktop
+            description: Supported platforms
+          versions:
+            type: array
+            items:
+              $ref: '#/components/schemas/TemplateVersion'
+            description: Template version history
+    TemplateSummary:
+      description: Template summary for listings
       type: object
       properties:
-        token:
-          type: string
-          maxLength: 500
-          description: New push notification token
-        app_version:
-          type: string
-          maxLength: 50
-          description: Updated app version
-        timezone:
-          type: string
-          maxLength: 50
-          description: Updated timezone
-        language:
-          type: string
-          maxLength: 10
-          description: Updated language
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    DeviceResponse:
-      type: object
-      required:
-      - device
-      properties:
-        device:
-          $ref: '#/components/schemas/Device'
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    Notification:
-      type: object
-      required:
-      - notification_id
-      - title
-      - body
-      - target
-      properties:
-        notification_id:
+        id:
           type: string
           format: uuid
-          description: Notification unique identifier
-          example: 770e8400-e29b-41d4-a716-446655440002
-        title:
+          description: Template ID
+        name:
           type: string
-          maxLength: 100
-          description: Notification title
-          example: Achievement Unlocked!
-        body:
+          description: Template name
+        category:
           type: string
-          maxLength: 500
-          description: Notification body text
-          example: Congratulations! You unlocked the 'Cyber Runner' achievement.
-        data:
-          type: object
-          description: Additional notification data/payload
-          example:
-            achievement_id: cyber_runner
-            points: 100
-        target:
-          $ref: '#/components/schemas/NotificationTarget'
-        priority:
-          type: string
-          enum:
-          - low
-          - normal
-          - high
-          - critical
-          default: normal
-          description: Notification priority
-        ttl_seconds:
-          type: integer
-          minimum: 0
-          maximum: 604800
-          default: 86400
-          description: Time-to-live in seconds (max 7 days)
-        created_at:
+          description: Template category
+        platforms:
+          type: array
+          items:
+            type: string
+            enum:
+            - ios
+            - android
+            - web
+            - desktop
+          description: Supported platforms
+        last_updated:
           type: string
           format: date-time
-          description: Creation timestamp
-          example: '2025-12-21T10:00:00Z'
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    NotificationTarget:
+          description: Last update timestamp
+    DeviceNotificationPreferences:
+      description: Device-specific notification preferences
       type: object
       properties:
-        user_ids:
+        enabled:
+          type: boolean
+          default: true
+          description: Whether notifications are enabled for this device
+        quiet_hours_start:
+          type: string
+          pattern: ^([01]?[0-9]|2[0-3]):[0-5][0-9]$
+          description: Quiet hours start time
+        quiet_hours_end:
+          type: string
+          pattern: ^([01]?[0-9]|2[0-3]):[0-5][0-9]$
+          description: Quiet hours end time
+        allowed_categories:
+          type: array
+          items:
+            type: string
+          description: Allowed notification categories
+    CampaignTargetAudience:
+      description: Campaign target audience definition
+      type: object
+      properties:
+        user_segments:
           type: array
           items:
             type: string
             format: uuid
-          maxItems: 1000
-          description: Specific user IDs to target
-        segments:
+          description: User segment IDs to target
+        platform_filters:
           type: array
           items:
             type: string
-            maxLength: 100
-          description: User segments to target (e.g., "premium_users", "new_players")
-        all_users:
-          type: boolean
-          default: false
-          description: Send to all registered users
-      description: Notification targeting configuration
-    SendNotificationRequest:
+            enum:
+            - ios
+            - android
+            - web
+            - desktop
+          description: Platform filters
+        geographic_filters:
+          type: array
+          items:
+            type: string
+          description: Geographic region filters
+        custom_filters:
+          type: object
+          description: Custom targeting filters
+          additionalProperties: true
+    CampaignContent:
+      description: Campaign notification content
       type: object
       required:
       - title
       - body
-      - target
       properties:
+        template_id:
+          type: string
+          format: uuid
+          description: Template to use for content
         title:
           type: string
+          minLength: 1
           maxLength: 100
           description: Notification title
         body:
           type: string
+          minLength: 1
           maxLength: 500
-          description: Notification body text
+          description: Notification body
         data:
           type: object
-          description: Additional notification data/payload
-        target:
-          $ref: '#/components/schemas/NotificationTarget'
-        priority:
-          type: string
-          enum:
-          - low
-          - normal
-          - high
-          - critical
-          default: normal
-        ttl_seconds:
-          type: integer
-          minimum: 0
-          maximum: 604800
-          default: 86400
+          description: Additional notification data
+          additionalProperties: true
+        actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/NotificationAction'
+          description: Notification actions
+    CampaignScheduling:
+      description: Campaign scheduling configuration
+      type: object
+      properties:
         scheduled_at:
           type: string
           format: date-time
-          description: Schedule delivery for future time
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    NotificationQueuedResponse:
+          description: Campaign scheduled time
+        timezone:
+          type: string
+          description: Scheduling timezone
+        recurrence:
+          type: object
+          properties:
+            frequency:
+              type: string
+              enum:
+              - once
+              - daily
+              - weekly
+              - monthly
+              description: Recurrence frequency
+            interval:
+              type: integer
+              minimum: 1
+              description: Recurrence interval
+            end_date:
+              type: string
+              format: date-time
+              description: Recurrence end date
+    CampaignPerformanceMetrics:
+      description: Campaign performance tracking
+      type: object
+      properties:
+        target_count:
+          type: integer
+          description: Total target devices
+        sent_count:
+          type: integer
+          description: Notifications sent
+        delivered_count:
+          type: integer
+          description: Notifications delivered
+        opened_count:
+          type: integer
+          description: Notifications opened
+        clicked_count:
+          type: integer
+          description: Notification actions clicked
+        failed_count:
+          type: integer
+          description: Delivery failures
+        delivery_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Delivery success rate
+        engagement_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: User engagement rate
+    DeliveryAnalytics:
+      description: Comprehensive delivery analytics
+      type: object
+      properties:
+        time_range:
+          type: object
+          properties:
+            start_date:
+              type: string
+              format: date-time
+            end_date:
+              type: string
+              format: date-time
+        platform_metrics:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/PlatformDeliveryMetrics'
+        geographic_metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/GeographicDeliveryMetrics'
+        failure_analysis:
+          $ref: '#/components/schemas/DeliveryFailureAnalysis'
+        performance_trends:
+          type: array
+          items:
+            $ref: '#/components/schemas/PerformanceTrendData'
+    PlatformDeliveryMetrics:
+      description: Delivery metrics for specific platform
+      type: object
+      properties:
+        total_sent:
+          type: integer
+          description: Total notifications sent
+        delivered:
+          type: integer
+          description: Successfully delivered
+        failed:
+          type: integer
+          description: Delivery failures
+        delivery_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Delivery success rate
+        average_delivery_time:
+          type: number
+          description: Average delivery time in seconds
+    GeographicDeliveryMetrics:
+      description: Delivery metrics by geographic region
+      type: object
+      properties:
+        region:
+          type: string
+          description: Geographic region
+        sent_count:
+          type: integer
+          description: Notifications sent to region
+        delivery_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Regional delivery rate
+        average_delivery_time:
+          type: number
+          description: Regional average delivery time
+    DeliveryFailureAnalysis:
+      description: Analysis of delivery failures
+      type: object
+      properties:
+        total_failures:
+          type: integer
+          description: Total delivery failures
+        failure_reasons:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Failure counts by reason
+        platform_failures:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Failures by platform
+        retry_success_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Success rate of retry attempts
+    PerformanceTrendData:
+      description: Performance trend data point
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Data point timestamp
+        delivery_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Delivery rate at this time
+        average_delivery_time:
+          type: number
+          description: Average delivery time
+        throughput:
+          type: number
+          description: Notifications per second
+    NotificationAction:
+      description: Notification action definition
+      type: object
+      required:
+      - action
+      - title
+      properties:
+        action:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Action identifier
+        title:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Action display title
+        icon:
+          type: string
+          description: Action icon identifier
+        destructive:
+          type: boolean
+          default: false
+          description: Whether action is destructive
+    TemplateContent:
+      description: Template content definition
+      type: object
+      required:
+      - title_template
+      - body_template
+      properties:
+        title_template:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Title template with parameters
+        body_template:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          description: Body template with parameters
+        data_template:
+          type: object
+          description: Data payload template
+          additionalProperties: true
+    TemplateParameter:
+      description: Template parameter definition
+      type: object
+      required:
+      - name
+      - type
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Parameter name
+        type:
+          type: string
+          enum:
+          - string
+          - number
+          - boolean
+          - date
+          - object
+          description: Parameter data type
+        required:
+          type: boolean
+          default: false
+          description: Whether parameter is required
+        default_value:
+          type: string
+          description: Default parameter value
+        validation:
+          type: object
+          description: Parameter validation rules
+          additionalProperties: true
+    TemplateVersion:
+      description: Template version information
+      type: object
+      required:
+      - version
+      - created_at
+      properties:
+        version:
+          type: string
+          description: Version identifier
+        created_at:
+          type: string
+          format: date-time
+          description: Version creation time
+        created_by:
+          type: string
+          format: uuid
+          description: User who created version
+        changes:
+          type: string
+          description: Description of changes
+    NotificationStatus:
+      description: Notification delivery status
       type: object
       required:
       - notification_id
       - status
-      - estimated_delivery_time
+      - created_at
       properties:
         notification_id:
           type: string
@@ -1175,227 +674,316 @@ components:
           type: string
           enum:
           - queued
-          - processing
+          - sending
+          - sent
           - delivered
           - failed
-          description: Current delivery status
-          example: queued
-        estimated_delivery_time:
+          description: Overall delivery status
+        created_at:
           type: string
           format: date-time
-          description: Estimated delivery completion time
-          example: '2025-12-21T10:01:00Z'
-        target_count:
-          type: integer
-          minimum: 0
-          description: Number of target devices
-          example: 15420
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    NotificationStatusResponse:
-      type: object
-      required:
-      - notification
-      - delivery_stats
-      properties:
-        notification:
-          $ref: '#/components/schemas/Notification'
-        delivery_stats:
-          $ref: '#/components/schemas/DeliveryStats'
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    DeliveryStats:
+          description: Notification creation time
+        sent_at:
+          type: string
+          format: date-time
+          description: Time notification was sent
+        platform_stats:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/PlatformNotificationStats'
+          description: Delivery statistics by platform
+        failure_details:
+          type: array
+          items:
+            $ref: '#/components/schemas/NotificationFailure'
+          description: Details of delivery failures
+    PlatformNotificationStats:
+      description: Notification statistics for specific platform
       type: object
       properties:
-        total_targeted:
+        sent:
           type: integer
-          minimum: 0
-          description: Total devices targeted
-          example: 15420
+          description: Notifications sent to platform
         delivered:
           type: integer
-          minimum: 0
-          description: Successfully delivered notifications
-          example: 15200
+          description: Successfully delivered
         failed:
           type: integer
-          minimum: 0
-          description: Failed deliveries
-          example: 120
+          description: Delivery failures
         pending:
           type: integer
-          minimum: 0
           description: Still pending delivery
-          example: 100
-        delivery_rate:
-          type: number
-          minimum: 0
-          maximum: 1
-          description: Delivery success rate (0.0 to 1.0)
-          example: 0.987
-        average_delivery_time_ms:
+    NotificationFailure:
+      description: Notification delivery failure details
+      type: object
+      required:
+      - device_id
+      - failure_reason
+      properties:
+        device_id:
+          type: string
+          format: uuid
+          description: Failed device ID
+        failure_reason:
+          type: string
+          enum:
+          - invalid_token
+          - device_unregistered
+          - network_error
+          - quota_exceeded
+          - platform_rejected
+          - timeout
+          description: Reason for delivery failure
+        failure_details:
+          type: string
+          description: Detailed failure information
+        retry_count:
           type: integer
           minimum: 0
-          description: Average delivery time in milliseconds
-          example: 85
-      description: Notification delivery statistics
+          description: Number of retry attempts
+        last_attempt_at:
+          type: string
+          format: date-time
+          description: Last delivery attempt time
+    RegisterDeviceRequest:
+      description: Request payload for device registration
+      type: object
+      required:
+      - device_token
+      - platform
+      properties:
+        device_token:
+          type: string
+          minLength: 10
+          maxLength: 500
+          description: Device push notification token
+        platform:
+          type: string
+          enum:
+          - ios
+          - android
+          - web
+          - desktop
+          description: Device platform
+        platform_version:
+          type: string
+          description: Platform/OS version
+        app_version:
+          type: string
+          description: App version
+        locale:
+          type: string
+          description: Device locale
+        timezone:
+          type: string
+          description: Device timezone
+        device_metadata:
+          type: object
+          description: Additional device metadata
+          additionalProperties: true
+    UpdateDeviceRequest:
+      description: Request payload for device update
+      type: object
+      properties:
+        device_token:
+          type: string
+          minLength: 10
+          maxLength: 500
+          description: Updated device token
+        app_version:
+          type: string
+          description: Updated app version
+        locale:
+          type: string
+          description: Updated locale
+        timezone:
+          type: string
+          description: Updated timezone
+        notification_preferences:
+          $ref: '#/components/schemas/DeviceNotificationPreferences'
+    SendNotificationRequest:
+      description: Request payload for sending notification
+      type: object
+      required:
+      - targets
+      - content
+      properties:
+        targets:
+          type: object
+          properties:
+            user_ids:
+              type: array
+              items:
+                type: string
+                format: uuid
+              description: Target user IDs
+            device_ids:
+              type: array
+              items:
+                type: string
+                format: uuid
+              description: Target device IDs
+            segments:
+              type: array
+              items:
+                type: string
+                format: uuid
+              description: Target user segments
+          description: Notification targets
+        content:
+          type: object
+          required:
+          - title
+          - body
+          properties:
+            title:
+              type: string
+              minLength: 1
+              maxLength: 100
+              description: Notification title
+            body:
+              type: string
+              minLength: 1
+              maxLength: 500
+              description: Notification body
+            data:
+              type: object
+              description: Additional notification data
+              additionalProperties: true
+            actions:
+              type: array
+              items:
+                $ref: '#/components/schemas/NotificationAction'
+              description: Notification actions
+          description: Notification content
+        priority:
+          type: string
+          enum:
+          - low
+          - normal
+          - high
+          - critical
+          default: normal
+          description: Notification priority
+        ttl:
+          type: integer
+          minimum: 0
+          maximum: 2592000
+          default: 86400
+          description: Time-to-live in seconds
+        scheduled_for:
+          type: string
+          format: date-time
+          description: Scheduled delivery time
     CreateCampaignRequest:
+      description: Request payload for creating notification campaign
       type: object
       required:
       - name
-      - notification
-      - target
-      - schedule
+      - target_audience
+      - content
       properties:
         name:
           type: string
+          minLength: 1
           maxLength: 100
           description: Campaign name
-          example: Holiday Achievement Push
         description:
           type: string
           maxLength: 500
           description: Campaign description
-        notification:
-          $ref: '#/components/schemas/SendNotificationRequest'
-        target:
-          $ref: '#/components/schemas/NotificationTarget'
-        schedule:
-          type: object
-          required:
-          - type
-          properties:
-            type:
-              type: string
-              enum:
-              - immediate
-              - scheduled
-              - recurring
-              description: Campaign schedule type
-            scheduled_at:
-              type: string
-              format: date-time
-              description: Specific delivery time
-            recurring_pattern:
-              type: string
-              enum:
-              - daily
-              - weekly
-              - monthly
-              description: Recurring delivery pattern
-        max_sends_per_hour:
+        target_audience:
+          $ref: '#/components/schemas/CampaignTargetAudience'
+        content:
+          $ref: '#/components/schemas/CampaignContent'
+        scheduling:
+          $ref: '#/components/schemas/CampaignScheduling'
+        budget_limit:
+          type: integer
+          minimum: 0
+          description: Campaign budget limit (notifications)
+        rate_limit:
           type: integer
           minimum: 1
-          maximum: 100000
-          default: 10000
-          description: Rate limiting for large campaigns
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    CampaignResponse:
+          maximum: 10000
+          description: Maximum notifications per minute
+    UpdateCampaignRequest:
+      description: Request payload for updating campaign
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Campaign name
+        description:
+          type: string
+          maxLength: 500
+          description: Campaign description
+        target_audience:
+          $ref: '#/components/schemas/CampaignTargetAudience'
+        content:
+          $ref: '#/components/schemas/CampaignContent'
+        scheduling:
+          $ref: '#/components/schemas/CampaignScheduling'
+    CreateTemplateRequest:
+      description: Request payload for creating notification template
       type: object
       required:
-      - campaign
+      - name
+      - category
+      - content
       properties:
-        campaign:
-          type: object
-          required:
-          - campaign_id
-          - name
-          - status
-          properties:
-            campaign_id:
-              type: string
-              format: uuid
-              description: Campaign unique identifier
-            name:
-              type: string
-              maxLength: 100
-              description: Campaign name
-            status:
-              type: string
-              enum:
-              - draft
-              - scheduled
-              - running
-              - completed
-              - cancelled
-              description: Campaign status
-            created_at:
-              type: string
-              format: date-time
-              description: Creation timestamp
-            scheduled_at:
-              type: string
-              format: date-time
-              description: Scheduled delivery time
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    AnalyticsSummaryResponse:
-      type: object
-      required:
-      - summary
-      properties:
-        summary:
-          type: object
-          properties:
-            total_notifications_sent:
-              type: integer
-              minimum: 0
-              description: Total notifications sent in period
-              example: 1250000
-            total_delivered:
-              type: integer
-              minimum: 0
-              description: Total notifications delivered
-              example: 1235000
-            overall_delivery_rate:
-              type: number
-              minimum: 0
-              maximum: 1
-              description: Overall delivery success rate
-              example: 0.988
-            average_delivery_time_ms:
-              type: integer
-              minimum: 0
-              description: Average delivery time
-              example: 92
-            platform_breakdown:
-              type: object
-              properties:
-                ios:
-                  $ref: '#/components/schemas/DeliveryStats'
-                android:
-                  $ref: '#/components/schemas/DeliveryStats'
-                web:
-                  $ref: '#/components/schemas/DeliveryStats'
-            top_campaigns:
-              type: array
-              items:
-                type: object
-                properties:
-                  campaign_name:
-                    type: string
-                  delivery_rate:
-                    type: number
-                  total_sent:
-                    type: integer
-              maxItems: 10
-          description: Aggregated notification analytics
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Template name
+        category:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Template category
+        description:
+          type: string
+          maxLength: 500
+          description: Template description
+        content:
+          $ref: '#/components/schemas/TemplateContent'
+        parameters:
+          type: array
+          items:
+            $ref: '#/components/schemas/TemplateParameter'
+          description: Template parameters
+        platforms:
+          type: array
+          items:
+            type: string
+            enum:
+            - ios
+            - android
+            - web
+            - desktop
+          description: Supported platforms
+  responses:
+    OK:
+      $ref: ../common/responses/success.yaml#/OK
+    Created:
+      $ref: ../common/responses/success.yaml#/Created
+    Accepted:
+      $ref: ../common/responses/success.yaml#/Accepted
+    Updated:
+      $ref: ../common/responses/success.yaml#/Updated
+    Deleted:
+      $ref: ../common/responses/success.yaml#/Deleted
+    BadRequest:
+      $ref: ../common/responses/error.yaml#/BadRequest
+    NotFound:
+      $ref: ../common/responses/error.yaml#/NotFound
+    Conflict:
+      $ref: ../common/responses/error.yaml#/Conflict
   securitySchemes:
     BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: JWT Bearer token authentication
-    ApiKeyAuth:
-      type: apiKey
-      in: header
-      name: X-API-Key
-      description: API Key authentication
+      $ref: ../common/security/security.yaml#/BearerAuth
     ServiceAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: Service-to-service authentication token
+      $ref: ../common/security/security.yaml#/ServiceAuth

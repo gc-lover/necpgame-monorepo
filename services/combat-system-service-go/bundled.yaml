@@ -1,0 +1,3100 @@
+openapi: 3.0.3
+info:
+  title: Combat System Service API - Enterprise-Grade Combat Engine
+  description: '**Enterprise-grade API for Combat System Management**
+
+    Complete combat system management for NECPGAME with domain separation architecture.
+    Handles combat rules, balance configurations, damage calculations, and ability
+    management.
+
+    ## Key Features
+
+    - **Domain Separation**: Schemas organized in separate files by responsibility
+    - **Backend Optimization**: Struct alignment hints for 30-50% memory savings -
+    **Enterprise-grade**: Full OpenAPI 3.0 compliance with ogen code generation -
+    **Performance Targets**: P99 <10ms, 1000+ concurrent calculations
+
+    ## Architecture
+
+    - **Combat Rules**: `schemas/combat-rules-schemas.yaml` - Core combat mechanics
+    - **Damage Calculations**: `schemas/damage-calculation-schemas.yaml` - Damage
+    resolution - **Balance Config**: `schemas/balance-config-schemas.yaml` - Balance
+    parameters - **Ability System**: `schemas/ability-system-schemas.yaml` - Combat
+    abilities
+
+    ## Performance Targets
+
+    - P99 Latency: <10ms for configuration reads, <50ms for damage calculations -
+    Memory: <50KB per active configuration with struct alignment optimizations - Concurrent
+    Systems: 1000+ simultaneous combat calculations supported - Data Consistency:
+    ACID compliance with optimistic locking for updates
+
+    '
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+- url: https://api.necpgame.com/v1/combat-system
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/combat-system
+  description: Staging server
+- url: http://localhost:8080/api/v1/combat-system
+  description: Local development server
+security:
+- BearerAuth: []
+tags:
+- name: Combat Rules
+  description: Combat system rule management and configuration
+- name: Damage Calculations
+  description: Damage calculation engine and modifiers
+- name: Balance Config
+  description: Combat balance parameter management
+- name: Ability System
+  description: Combat ability configurations and balancing
+- name: Health Monitoring
+  description: System health and performance monitoring
+paths:
+  /health:
+    get:
+      summary: Combat system service health check
+      description: '**Enterprise-grade health check endpoint**
+
+        Provides real-time health status of the combat system microservice.
+
+        Critical for service discovery, load balancing, and monitoring.
+
+        **Performance:** <1ms response time, cached for 30 seconds
+
+        '
+      operationId: combatSystemServiceHealthCheck
+      tags:
+      - Health Monitoring
+      parameters:
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
+      responses:
+        '200':
+          description: Service is healthy
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=30, s-maxage=60
+            ETag:
+              schema:
+                type: string
+                example: '"combat-system-health-v1.0"'
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                - gzip
+                - deflate
+                - br
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - status
+                - timestamp
+                properties:
+                  status:
+                    type: string
+                    enum:
+                    - ok
+                    - degraded
+                    - critical
+                    example: ok
+                    description: Current health status
+                  message:
+                    type: string
+                    example: Service is healthy
+                    description: Human-readable status message
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2024-01-15T10:30:00Z'
+                    description: Time when health check was performed
+                  version:
+                    type: string
+                    example: 1.0.0
+                    description: Service version
+                  uptime:
+                    type: integer
+                    example: 3600
+                    description: Service uptime in seconds
+                  checks:
+                    type: object
+                    description: Detailed health checks
+                    additionalProperties:
+                      type: object
+                      properties:
+                        status:
+                          type: string
+                          enum:
+                          - ok
+                          - degraded
+                          - critical
+                        message:
+                          type: string
+                        response_time:
+                          type: integer
+                          description: Response time in milliseconds
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - status
+                - timestamp
+                properties:
+                  status:
+                    type: string
+                    enum:
+                    - ok
+                    - degraded
+                    - critical
+                    example: ok
+                    description: Current health status
+                  message:
+                    type: string
+                    example: Service is healthy
+                    description: Human-readable status message
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2024-01-15T10:30:00Z'
+                    description: Time when health check was performed
+                  version:
+                    type: string
+                    example: 1.0.0
+                    description: Service version
+                  uptime:
+                    type: integer
+                    example: 3600
+                    description: Service uptime in seconds
+                  checks:
+                    type: object
+                    description: Detailed health checks
+                    additionalProperties:
+                      type: object
+                      properties:
+                        status:
+                          type: string
+                          enum:
+                          - ok
+                          - degraded
+                          - critical
+                        message:
+                          type: string
+                        response_time:
+                          type: integer
+                          description: Response time in milliseconds
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+                description: Seconds to wait before retrying
+            X-RateLimit-Limit:
+              schema:
+                type: integer
+                description: Maximum requests per time window
+            X-RateLimit-Remaining:
+              schema:
+                type: integer
+                description: Remaining requests in current window
+            X-RateLimit-Reset:
+              schema:
+                type: string
+                format: date-time
+                description: Time when rate limit resets
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+  /combat-system/rules:
+    get:
+      summary: Get combat system rules
+      description: '**Retrieve current combat system configuration**
+
+        Returns the active combat system rules including damage calculations, combat
+        mechanics, and balance parameters.
+
+        **BACKEND NOTE:** Cached configuration, <1ms response time.
+
+        '
+      operationId: combatSystemServiceGetRules
+      tags:
+      - Combat Rules
+      security:
+      - BearerAuth: []
+      responses:
+        '200':
+          description: Combat system rules retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatSystemRules'
+        '401':
+          description: Unauthorized - authentication required or invalid token
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+                example: Bearer realm="NECPGAME API"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+    put:
+      summary: Update combat system rules
+      description: '**Update combat system configuration**
+
+        Modifies combat system rules with optimistic locking for concurrency control.
+
+        **BACKEND NOTE:** Triggers cache invalidation and audit logging.
+
+        '
+      operationId: combatSystemServiceUpdateRules
+      tags:
+      - Combat Rules
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCombatSystemRulesRequest'
+      responses:
+        '200':
+          description: Combat system rules updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatSystemRules'
+        '400':
+          description: Bad request - validation failed or malformed data
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                example: application/json
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        '401':
+          description: Unauthorized - authentication required or invalid token
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+                example: Bearer realm="NECPGAME API"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        '409':
+          description: Conflict - version mismatch
+          content:
+            application/json:
+              schema:
+                description: Conflict - resource has been modified by another request
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+                description: Seconds to wait before retrying
+            X-RateLimit-Limit:
+              schema:
+                type: integer
+                description: Maximum requests per time window
+            X-RateLimit-Remaining:
+              schema:
+                type: integer
+                description: Remaining requests in current window
+            X-RateLimit-Reset:
+              schema:
+                type: string
+                format: date-time
+                description: Time when rate limit resets
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+  /combat-system/damage/calculator:
+    post:
+      summary: Calculate combat damage
+      description: '**Advanced damage calculation engine**
+
+        Processes damage calculations with all modifiers, environmental factors, and
+        critical hit mechanics for accurate combat resolution.
+
+        **BACKEND NOTE:** <50ms P99 latency, handles 1000+ concurrent calculations.
+
+        '
+      operationId: combatSystemServiceCalculateDamage
+      tags:
+      - Damage Calculations
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DamageCalculationRequest'
+      responses:
+        '200':
+          description: Damage calculated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DamageCalculationResponse'
+        '400':
+          description: Bad request - validation failed or malformed data
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                example: application/json
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        '401':
+          description: Unauthorized - authentication required or invalid token
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+                example: Bearer realm="NECPGAME API"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+                description: Seconds to wait before retrying
+            X-RateLimit-Limit:
+              schema:
+                type: integer
+                description: Maximum requests per time window
+            X-RateLimit-Remaining:
+              schema:
+                type: integer
+                description: Remaining requests in current window
+            X-RateLimit-Reset:
+              schema:
+                type: string
+                format: date-time
+                description: Time when rate limit resets
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        '500':
+          description: Internal calculation error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+  /combat-system/balance:
+    get:
+      summary: Get combat balance configuration
+      description: '**Retrieve combat balance parameters**
+
+        Returns current balance configuration including global multipliers, character
+        balance, and environmental modifiers.
+
+        **BACKEND NOTE:** Cached configuration with <1ms response time.
+
+        '
+      operationId: combatSystemServiceGetBalance
+      tags:
+      - Balance Config
+      security:
+      - BearerAuth: []
+      responses:
+        '200':
+          description: Balance configuration retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatBalanceConfig'
+        '401':
+          description: Unauthorized - authentication required or invalid token
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+                example: Bearer realm="NECPGAME API"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+    put:
+      summary: Update combat balance configuration
+      description: '**Update combat balance parameters**
+
+        Modifies balance configuration with optimistic locking for safe concurrent
+        updates.
+
+        **BACKEND NOTE:** Triggers global cache invalidation and audit logging.
+
+        '
+      operationId: combatSystemServiceUpdateBalance
+      tags:
+      - Balance Config
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCombatBalanceConfigRequest'
+      responses:
+        '200':
+          description: Balance configuration updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatBalanceConfig'
+        '400':
+          description: Bad request - validation failed or malformed data
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                example: application/json
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        '401':
+          description: Unauthorized - authentication required or invalid token
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+                example: Bearer realm="NECPGAME API"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        '409':
+          description: Conflict - version mismatch
+          content:
+            application/json:
+              schema:
+                description: Conflict - resource has been modified by another request
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+                description: Seconds to wait before retrying
+            X-RateLimit-Limit:
+              schema:
+                type: integer
+                description: Maximum requests per time window
+            X-RateLimit-Remaining:
+              schema:
+                type: integer
+                description: Remaining requests in current window
+            X-RateLimit-Reset:
+              schema:
+                type: string
+                format: date-time
+                description: Time when rate limit resets
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+  /combat-system/abilities:
+    get:
+      summary: List ability configurations
+      description: '**Retrieve ability configurations with pagination**
+
+        Returns paginated list of combat ability configurations with balance notes
+        and stat requirements for game design and balancing.
+
+        **BACKEND NOTE:** Database query with pagination, <10ms P99 for first page.
+
+        '
+      operationId: combatSystemServiceListAbilities
+      tags:
+      - Ability System
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+        description: Page number
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Items per page
+      - name: ability_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - offensive
+          - defensive
+          - utility
+          - ultimate
+        description: Filter by ability type
+      responses:
+        '200':
+          description: Ability configurations retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AbilityConfigurationsResponse'
+        '401':
+          description: Unauthorized - authentication required or invalid token
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+                example: Bearer realm="NECPGAME API"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+components:
+  schemas:
+    CombatSystemRules:
+      type: object
+      required:
+      - version
+      - damage_rules
+      - combat_mechanics
+      - balance_parameters
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique configuration identifier
+        version:
+          type: integer
+          minimum: 1
+          description: Configuration version for optimistic locking
+        damage_rules:
+          $ref: '#/components/schemas/DamageRules'
+        combat_mechanics:
+          $ref: '#/components/schemas/CombatMechanics'
+        balance_parameters:
+          $ref: '#/components/schemas/BalanceParameters'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        created_by:
+          type: string
+          description: User who created this configuration
+    UpdateCombatSystemRulesRequest:
+      type: object
+      required:
+      - version
+      properties:
+        version:
+          type: integer
+          minimum: 1
+          description: Current version for optimistic locking
+        damage_rules:
+          $ref: '#/components/schemas/DamageRules'
+        combat_mechanics:
+          $ref: '#/components/schemas/CombatMechanics'
+        balance_parameters:
+          $ref: '#/components/schemas/BalanceParameters'
+    DamageCalculationRequest:
+      type: object
+      required:
+      - attacker_id
+      - defender_id
+      - weapon_id
+      - hit_location
+      properties:
+        attacker_id:
+          type: string
+          format: uuid
+          description: Attacking entity identifier
+        defender_id:
+          type: string
+          format: uuid
+          description: Defending entity identifier
+        weapon_id:
+          type: string
+          description: Weapon or ability identifier
+        hit_location:
+          type: string
+          enum:
+          - head
+          - torso
+          - left_arm
+          - right_arm
+          - left_leg
+          - right_leg
+          description: Body part hit location
+        base_damage:
+          type: integer
+          minimum: 0
+          maximum: 10000
+          description: Base weapon damage before modifiers
+        attacker_stats:
+          $ref: '#/components/schemas/EntityStats'
+        defender_stats:
+          $ref: '#/components/schemas/EntityStats'
+        environmental_factors:
+          $ref: '#/components/schemas/EnvironmentalFactors'
+        modifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/DamageModifier'
+          description: Additional damage modifiers to apply
+    DamageCalculationResponse:
+      type: object
+      required:
+      - total_damage
+      - final_damage
+      - critical_hit
+      - modifiers_applied
+      properties:
+        total_damage:
+          type: integer
+          minimum: 0
+          description: Total calculated damage before armor
+        final_damage:
+          type: integer
+          minimum: 0
+          description: Final damage after all reductions
+        critical_hit:
+          type: boolean
+          description: Whether this was a critical hit
+        modifiers_applied:
+          type: array
+          items:
+            $ref: '#/components/schemas/AppliedModifier'
+          description: List of all modifiers that were applied
+        damage_breakdown:
+          type: object
+          properties:
+            base_damage:
+              type: integer
+              description: Base weapon damage
+            critical_multiplier:
+              type: number
+              format: float
+              description: Critical hit multiplier applied
+            armor_reduction:
+              type: integer
+              description: Damage reduced by armor
+            environmental_modifier:
+              type: number
+              format: float
+              description: Environmental damage modifier
+        calculation_metadata:
+          type: object
+          properties:
+            processing_time_ms:
+              type: integer
+              description: Time taken to calculate damage
+            rules_version:
+              type: integer
+              description: Combat rules version used
+            calculation_id:
+              type: string
+              format: uuid
+              description: Unique calculation identifier
+    CombatBalanceConfig:
+      type: object
+      required:
+      - version
+      - global_multipliers
+      - character_balance
+      - environment_balance
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique configuration identifier
+        version:
+          type: integer
+          minimum: 1
+          description: Configuration version for optimistic locking
+        global_multipliers:
+          $ref: '#/components/schemas/GlobalMultipliers'
+        character_balance:
+          $ref: '#/components/schemas/CharacterBalance'
+        environment_balance:
+          $ref: '#/components/schemas/EnvironmentBalance'
+        faction_modifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/FactionModifier'
+          description: Faction-specific balance modifiers
+        region_modifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/RegionModifier'
+          description: Region-specific balance modifiers
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    UpdateCombatBalanceConfigRequest:
+      type: object
+      required:
+      - version
+      properties:
+        version:
+          type: integer
+          minimum: 1
+          description: Current version for optimistic locking
+        global_multipliers:
+          $ref: '#/components/schemas/GlobalMultipliers'
+        character_balance:
+          $ref: '#/components/schemas/CharacterBalance'
+        environment_balance:
+          $ref: '#/components/schemas/EnvironmentBalance'
+        faction_modifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/FactionModifier'
+        region_modifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/RegionModifier'
+    AbilityConfigurationsResponse:
+      type: object
+      required:
+      - abilities
+      - pagination
+      properties:
+        abilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/AbilityConfiguration'
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+              minimum: 1
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 100
+            total_count:
+              type: integer
+              minimum: 0
+            total_pages:
+              type: integer
+              minimum: 0
+            has_next:
+              type: boolean
+            has_previous:
+              type: boolean
+    AbilityConfiguration:
+      type: object
+      required:
+      - id
+      - name
+      - ability_type
+      - power_level
+      - cooldown
+      - resource_cost
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique ability identifier
+        name:
+          type: string
+          description: Human-readable ability name
+        description:
+          type: string
+          description: Detailed ability description
+        ability_type:
+          type: string
+          enum:
+          - offensive
+          - defensive
+          - utility
+          - ultimate
+          description: Category of ability
+        power_level:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: Relative power level for balancing
+        cooldown:
+          type: integer
+          minimum: 0
+          maximum: 300000
+          description: Cooldown in milliseconds
+        resource_cost:
+          type: integer
+          minimum: 0
+          maximum: 1000
+          description: Resource points required to use
+        stat_requirements:
+          type: object
+          properties:
+            minimum_level:
+              type: integer
+              minimum: 1
+              maximum: 100
+              default: 1
+            required_stats:
+              type: object
+              properties:
+                strength:
+                  type: integer
+                  minimum: 0
+                  default: 0
+                intelligence:
+                  type: integer
+                  minimum: 0
+                  default: 0
+                dexterity:
+                  type: integer
+                  minimum: 0
+                  default: 0
+                wisdom:
+                  type: integer
+                  minimum: 0
+                  default: 0
+        damage_scaling:
+          type: object
+          properties:
+            base_damage:
+              type: integer
+              minimum: 0
+              maximum: 10000
+            damage_type:
+              type: string
+              enum:
+              - physical
+              - magical
+              - pure
+            scaling_stat:
+              type: string
+              enum:
+              - strength
+              - intelligence
+              - dexterity
+            scaling_factor:
+              type: number
+              format: float
+              minimum: 0.0
+              maximum: 5.0
+        effect_modifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/AbilityEffect'
+          description: Status effects applied by ability
+        targeting_rules:
+          type: object
+          properties:
+            range:
+              type: integer
+              minimum: 0
+              maximum: 1000
+              description: Ability range in game units
+            target_type:
+              type: string
+              enum:
+              - self
+              - single_target
+              - aoe
+              - line
+              - cone
+            max_targets:
+              type: integer
+              minimum: 1
+              maximum: 20
+              default: 1
+        balance_notes:
+          type: string
+          description: Game designer's balancing notes
+        is_enabled:
+          type: boolean
+          default: true
+          description: Whether ability is currently enabled
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    UpdateAbilityConfigurationRequest:
+      type: object
+      required:
+      - version
+      properties:
+        version:
+          type: integer
+          minimum: 1
+          description: Current version for optimistic locking
+        name:
+          type: string
+        description:
+          type: string
+        power_level:
+          type: integer
+          minimum: 1
+          maximum: 10
+        cooldown:
+          type: integer
+          minimum: 0
+          maximum: 300000
+        resource_cost:
+          type: integer
+          minimum: 0
+          maximum: 1000
+        stat_requirements:
+          type: object
+          properties:
+            minimum_level:
+              type: integer
+              minimum: 1
+              maximum: 100
+            required_stats:
+              type: object
+              properties:
+                strength:
+                  type: integer
+                  minimum: 0
+                intelligence:
+                  type: integer
+                  minimum: 0
+                dexterity:
+                  type: integer
+                  minimum: 0
+                wisdom:
+                  type: integer
+                  minimum: 0
+        damage_scaling:
+          type: object
+          properties:
+            base_damage:
+              type: integer
+              minimum: 0
+              maximum: 10000
+            damage_type:
+              type: string
+              enum:
+              - physical
+              - magical
+              - pure
+            scaling_stat:
+              type: string
+              enum:
+              - strength
+              - intelligence
+              - dexterity
+            scaling_factor:
+              type: number
+              format: float
+              minimum: 0.0
+              maximum: 5.0
+        effect_modifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/AbilityEffect'
+        targeting_rules:
+          type: object
+          properties:
+            range:
+              type: integer
+              minimum: 0
+              maximum: 1000
+            target_type:
+              type: string
+              enum:
+              - self
+              - single_target
+              - aoe
+              - line
+              - cone
+            max_targets:
+              type: integer
+              minimum: 1
+              maximum: 20
+        balance_notes:
+          type: string
+        is_enabled:
+          type: boolean
+    AbilityBalanceUpdate:
+      type: object
+      required:
+      - ability_id
+      - update_type
+      - new_value
+      properties:
+        ability_id:
+          type: string
+          format: uuid
+        update_type:
+          type: string
+          enum:
+          - power_level
+          - cooldown
+          - resource_cost
+          - damage_scaling
+          - effect_magnitude
+        new_value:
+          type: number
+          format: float
+          description: New value for the balance parameter
+        reason:
+          type: string
+          description: Reason for the balance change
+    AbilityBalanceBulkUpdateRequest:
+      type: object
+      required:
+      - updates
+      properties:
+        updates:
+          type: array
+          items:
+            $ref: '#/components/schemas/AbilityBalanceUpdate'
+          minItems: 1
+          maxItems: 100
+          description: List of ability balance updates to apply
+        batch_reason:
+          type: string
+          description: Reason for this batch of balance changes
+        apply_immediately:
+          type: boolean
+          default: false
+          description: Whether to apply changes immediately or schedule them
+    AbilityBalanceBulkUpdateResponse:
+      type: object
+      required:
+      - total_updates
+      - successful_updates
+      - failed_updates
+      properties:
+        total_updates:
+          type: integer
+          minimum: 0
+        successful_updates:
+          type: integer
+          minimum: 0
+        failed_updates:
+          type: integer
+          minimum: 0
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              ability_id:
+                type: string
+                format: uuid
+              error_message:
+                type: string
+        applied_at:
+          type: string
+          format: date-time
+          description: When the changes were applied
+    HealthResponse:
+      type: object
+      required:
+      - status
+      - timestamp
+      properties:
+        status:
+          type: string
+          enum:
+          - ok
+          - degraded
+          - critical
+          example: ok
+          description: Current health status
+        message:
+          type: string
+          example: Service is healthy
+          description: Human-readable status message
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-01-15T10:30:00Z'
+          description: Time when health check was performed
+        version:
+          type: string
+          example: 1.0.0
+          description: Service version
+        uptime:
+          type: integer
+          example: 3600
+          description: Service uptime in seconds
+        checks:
+          type: object
+          description: Detailed health checks
+          additionalProperties:
+            type: object
+            properties:
+              status:
+                type: string
+                enum:
+                - ok
+                - degraded
+                - critical
+              message:
+                type: string
+              response_time:
+                type: integer
+                description: Response time in milliseconds
+    DetailedHealthResponse:
+      allOf:
+      - $ref: '#/components/schemas/HealthResponse'
+      - type: object
+        properties:
+          dependencies:
+            type: object
+            description: Health status of service dependencies
+            properties:
+              database:
+                $ref: '#/components/schemas/HealthResponse'
+              redis:
+                $ref: '#/components/schemas/HealthResponse'
+              external_services:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      example: payment-service
+                    status:
+                      type: string
+                      enum:
+                      - ok
+                      - degraded
+                      - critical
+                    response_time:
+                      type: integer
+          metrics:
+            type: object
+            description: Service performance metrics
+            properties:
+              active_connections:
+                type: integer
+                example: 150
+              requests_per_second:
+                type: number
+                example: 45.2
+              average_response_time:
+                type: integer
+                example: 25
+              error_rate:
+                type: number
+                example: 0.001
+    HealthBatchRequest:
+      type: object
+      properties:
+        services:
+          type: array
+          items:
+            type: string
+            example: database
+          description: List of services to check
+        timeout:
+          type: integer
+          minimum: 1
+          maximum: 30
+          default: 5
+          description: Timeout for each health check in seconds
+    HealthBatchResponse:
+      type: object
+      properties:
+        overall_status:
+          type: string
+          enum:
+          - ok
+          - degraded
+          - critical
+          example: ok
+          description: Overall health status across all checked services
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-01-15T10:30:00Z'
+        results:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/HealthResponse'
+          description: Health results for each service
+    ErrorResponse:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: integer
+          minimum: 100
+          maximum: 599
+          example: 400
+        message:
+          type: string
+          example: Bad request
+        details:
+          type: object
+          description: Additional error details
+    InfrastructureEntity:
+      type: object
+      required:
+      - id
+      - created_at
+      - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for infrastructure entity
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        created_at:
+          type: string
+          format: date-time
+          description: Entity creation timestamp
+          example: '2024-01-15T10:30:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: Last modification timestamp
+          example: '2024-01-15T14:20:00Z'
+        version:
+          type: integer
+          minimum: 1
+          description: Optimistic locking version for concurrent operations
+          example: 1
+    BaseEntity:
+      type: object
+      required:
+      - id
+      - created_at
+      - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: '2024-01-15T10:30:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: Last modification timestamp
+          example: '2024-01-15T14:20:00Z'
+    OptimisticLock:
+      type: object
+      properties:
+        version:
+          type: integer
+          minimum: 1
+          description: Version for optimistic locking
+          example: 1
+    UserAccountEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - username
+        - email
+        - account_status
+        - registration_method
+        properties:
+          username:
+            type: string
+            minLength: 3
+            maxLength: 30
+            pattern: ^[a-zA-Z0-9_-]+$
+            description: Unique username for login
+            example: nightrunner2077
+          email:
+            type: string
+            format: email
+            description: Primary email address
+            example: nightrunner@necpgame.com
+          email_verified:
+            type: boolean
+            description: Whether email is verified
+            example: true
+          email_verification_token:
+            type: string
+            description: Token for email verification
+            example: abc123def456
+          password_hash:
+            type: string
+            description: Bcrypt password hash
+            example: $2b$10$...
+          account_status:
+            type: string
+            enum:
+            - active
+            - suspended
+            - banned
+            - pending_verification
+            - deactivated
+            description: Account status
+            example: active
+          registration_method:
+            type: string
+            enum:
+            - email_password
+            - google_oauth
+            - discord_oauth
+            - steam_oauth
+            - guest
+            description: How user registered
+            example: email_password
+          registration_ip:
+            type: string
+            description: IP address used during registration
+            example: 192.168.1.100
+          last_login_ip:
+            type: string
+            description: IP address of last login
+            example: 10.0.0.50
+          last_login_at:
+            type: string
+            format: date-time
+            description: Timestamp of last successful login
+            example: '2024-01-15T14:20:00Z'
+          login_count:
+            type: integer
+            minimum: 0
+            description: Total number of logins
+            example: 147
+          failed_login_attempts:
+            type: integer
+            minimum: 0
+            description: Recent failed login attempts
+            example: 0
+          account_locked_until:
+            type: string
+            format: date-time
+            description: When account lock expires
+            example: '2024-01-15T16:00:00Z'
+          two_factor_enabled:
+            type: boolean
+            description: Whether 2FA is enabled
+            example: true
+          two_factor_secret:
+            type: string
+            description: TOTP secret for 2FA
+            example: JBSWY3DPEHPK3PXP
+          recovery_email:
+            type: string
+            format: email
+            description: Backup email for account recovery
+            example: backup@necpgame.com
+          preferred_language:
+            type: string
+            enum:
+            - en
+            - es
+            - zh
+            - ja
+            - ru
+            - de
+            - fr
+            - pl
+            - ko
+            - pt
+            description: User's preferred language
+            example: en
+    SessionEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - user_id
+        - session_token
+        - ip_address
+        - user_agent
+        - expires_at
+        properties:
+          user_id:
+            type: string
+            format: uuid
+            description: User this session belongs to
+            example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+          session_token:
+            type: string
+            minLength: 32
+            maxLength: 128
+            description: Unique session identifier/token
+            example: abc123def456ghi789jkl012mno345pqr678stu901vwx
+          refresh_token:
+            type: string
+            minLength: 32
+            maxLength: 128
+            description: Token for refreshing session
+            example: yz234abc567def890ghi123jkl456mno789pqr012stu
+          ip_address:
+            type: string
+            description: Client IP address
+            example: 192.168.1.100
+          user_agent:
+            type: string
+            description: Client user agent string
+            example: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
+          device_fingerprint:
+            type: string
+            description: Unique device identifier
+            example: fp_abcdef1234567890
+          location:
+            type: string
+            description: Approximate location based on IP
+            example: New York, US
+          expires_at:
+            type: string
+            format: date-time
+            description: When session expires
+            example: '2024-01-15T16:20:00Z'
+          is_active:
+            type: boolean
+            description: Whether session is currently active
+            example: true
+          last_activity_at:
+            type: string
+            format: date-time
+            description: Last user activity in this session
+            example: '2024-01-15T15:45:00Z'
+          security_level:
+            type: string
+            enum:
+            - standard
+            - elevated
+            - maximum
+            description: Security level of session
+            example: standard
+          session_metadata:
+            type: object
+            description: Additional session data
+            properties:
+              game_version:
+                type: string
+                description: Client game version
+                example: 1.2.3
+              platform:
+                type: string
+                enum:
+                - windows
+                - macos
+                - linux
+                - ios
+                - android
+                - web
+                description: Client platform
+                example: windows
+              vpn_detected:
+                type: boolean
+                description: Whether VPN usage was detected
+                example: false
+    AuditLogEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - event_type
+        - actor_id
+        - resource_type
+        - action
+        - severity
+        properties:
+          event_type:
+            type: string
+            enum:
+            - user_action
+            - system_event
+            - security_event
+            - admin_action
+            - api_call
+            description: Category of audit event
+            example: user_action
+          actor_id:
+            type: string
+            format: uuid
+            description: User/system that performed the action
+            example: b2c3d4e5-f6g7-8901-bcde-f23456789012
+          actor_type:
+            type: string
+            enum:
+            - user
+            - system
+            - admin
+            - api_client
+            description: Type of actor
+            example: user
+          resource_type:
+            type: string
+            enum:
+            - user
+            - session
+            - character
+            - guild
+            - item
+            - transaction
+            - quest
+            - chat
+            - file
+            description: Type of resource affected
+            example: character
+          resource_id:
+            type: string
+            format: uuid
+            description: Specific resource that was affected
+            example: c3d4e5f6-g7h8-9012-cdef-345678901234
+          action:
+            type: string
+            enum:
+            - create
+            - read
+            - update
+            - delete
+            - login
+            - logout
+            - ban
+            - unban
+            - transfer
+            - execute
+            description: Action performed
+            example: update
+          old_values:
+            type: object
+            description: Previous state of modified fields
+            example:
+              level: 24
+              experience: 12000
+          new_values:
+            type: object
+            description: New state of modified fields
+            example:
+              level: 25
+              experience: 12500
+          severity:
+            type: string
+            enum:
+            - low
+            - medium
+            - high
+            - critical
+            description: Security/impact severity
+            example: low
+          ip_address:
+            type: string
+            description: IP address of the actor
+            example: 192.168.1.100
+          user_agent:
+            type: string
+            description: User agent of the actor
+            example: NECPGAME Client v1.2.3
+          location:
+            type: string
+            description: Approximate location
+            example: Night City, NC
+          success:
+            type: boolean
+            description: Whether the action succeeded
+            example: true
+          error_message:
+            type: string
+            description: Error message if action failed
+            example: Insufficient permissions
+          metadata:
+            type: object
+            description: Additional audit data
+            properties:
+              request_id:
+                type: string
+                description: Unique request identifier
+                example: req_abc123def456
+              session_id:
+                type: string
+                format: uuid
+                description: Associated session ID
+                example: d4e5f6g7-h8i9-0123-def0-456789012345
+              api_endpoint:
+                type: string
+                description: API endpoint called
+                example: /api/v1/characters/upgrade
+              response_time_ms:
+                type: integer
+                description: API response time
+                example: 45
+    ApiKeyEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - owner_id
+        - name
+        - key_hash
+        - permissions
+        - status
+        properties:
+          owner_id:
+            type: string
+            format: uuid
+            description: User or service that owns this API key
+            example: e5f6g7h8-i9j0-1234-ef01-567890123456
+          name:
+            type: string
+            minLength: 1
+            maxLength: 50
+            description: Human-readable name for the key
+            example: Mobile App Key
+          description:
+            type: string
+            maxLength: 200
+            description: Description of key usage
+            example: API key for mobile application authentication
+          key_hash:
+            type: string
+            description: SHA-256 hash of the actual API key
+            example: a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3
+          key_prefix:
+            type: string
+            minLength: 8
+            maxLength: 8
+            description: First 8 characters of API key for identification
+            example: ncp_1a2b
+          permissions:
+            type: array
+            items:
+              type: string
+              enum:
+              - read_user
+              - write_user
+              - read_character
+              - write_character
+              - read_inventory
+              - write_inventory
+              - admin
+            description: Granted permissions
+            example:
+            - read_user
+            - read_character
+            - read_inventory
+          status:
+            type: string
+            enum:
+            - active
+            - suspended
+            - revoked
+            - expired
+            description: API key status
+            example: active
+          expires_at:
+            type: string
+            format: date-time
+            description: When key expires (null = never)
+            example: '2025-01-15T10:30:00Z'
+          last_used_at:
+            type: string
+            format: date-time
+            description: Last time key was used
+            example: '2024-01-15T14:20:00Z'
+          usage_count:
+            type: integer
+            minimum: 0
+            description: Total API calls made with this key
+            example: 15420
+          rate_limit:
+            type: integer
+            minimum: 1
+            description: Requests per minute allowed
+            example: 60
+          allowed_ips:
+            type: array
+            items:
+              type: string
+            description: IP addresses allowed to use this key
+            example:
+            - 192.168.1.0/24
+            - 10.0.0.1
+          metadata:
+            type: object
+            description: Additional key metadata
+            properties:
+              created_by:
+                type: string
+                format: uuid
+                description: User who created this key
+                example: f6g7h8i9-j0k1-2345-f012-678901234567
+              application:
+                type: string
+                description: Application using this key
+                example: NECPGAME Mobile App
+              environment:
+                type: string
+                enum:
+                - development
+                - staging
+                - production
+                description: Environment this key is for
+                example: production
+    ConfigurationEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - config_key
+        - config_value
+        - config_type
+        - environment
+        properties:
+          config_key:
+            type: string
+            minLength: 1
+            maxLength: 100
+            pattern: ^[a-zA-Z0-9_\-\.]+$
+            description: Configuration key
+            example: game.max_players_per_server
+          config_value:
+            type: string
+            description: Configuration value (stored as string)
+            example: '1000'
+          config_type:
+            type: string
+            enum:
+            - string
+            - integer
+            - float
+            - boolean
+            - json
+            description: Data type of the value
+            example: integer
+          environment:
+            type: string
+            enum:
+            - development
+            - staging
+            - production
+            - all
+            description: Environment this config applies to
+            example: production
+          description:
+            type: string
+            maxLength: 500
+            description: Description of what this config controls
+            example: Maximum number of players allowed per game server
+          default_value:
+            type: string
+            description: Default value if not set
+            example: '500'
+          validation_rules:
+            type: object
+            description: Validation rules for the value
+            properties:
+              min_value:
+                type: number
+                description: Minimum allowed value
+                example: 1
+              max_value:
+                type: number
+                description: Maximum allowed value
+                example: 10000
+              allowed_values:
+                type: array
+                items:
+                  type: string
+                description: List of allowed values
+                example:
+                - '100'
+                - '500'
+                - '1000'
+                - '2000'
+          is_encrypted:
+            type: boolean
+            description: Whether value is encrypted
+            example: false
+          last_modified_by:
+            type: string
+            format: uuid
+            description: User who last modified this config
+            example: g7h8i9j0-k1l2-3456-0123-456789012345
+          requires_restart:
+            type: boolean
+            description: Whether server restart is required after change
+            example: true
+    ServiceHealthEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - service_name
+        - status
+        - response_time_ms
+        - timestamp
+        properties:
+          service_name:
+            type: string
+            minLength: 1
+            maxLength: 50
+            description: Name of the service being monitored
+            example: auth-service
+          status:
+            type: string
+            enum:
+            - healthy
+            - degraded
+            - unhealthy
+            - down
+            - maintenance
+            description: Current health status
+            example: healthy
+          response_time_ms:
+            type: integer
+            minimum: 0
+            description: Response time in milliseconds
+            example: 45
+          timestamp:
+            type: string
+            format: date-time
+            description: When this health check was performed
+            example: '2024-01-15T15:30:00Z'
+          uptime_seconds:
+            type: integer
+            minimum: 0
+            description: Service uptime in seconds
+            example: 86400
+          memory_usage_mb:
+            type: integer
+            minimum: 0
+            description: Current memory usage in MB
+            example: 256
+          memory_usage_percent:
+            type: number
+            minimum: 0
+            maximum: 100
+            description: Memory usage percentage
+            example: 23.5
+          cpu_usage_percent:
+            type: number
+            minimum: 0
+            maximum: 100
+            description: CPU usage percentage
+            example: 15.2
+          active_connections:
+            type: integer
+            minimum: 0
+            description: Number of active connections
+            example: 1250
+          queue_depth:
+            type: integer
+            minimum: 0
+            description: Number of queued requests
+            example: 5
+          error_rate_percent:
+            type: number
+            minimum: 0
+            maximum: 100
+            description: Error rate percentage
+            example: 0.1
+          version:
+            type: string
+            description: Service version
+            example: 1.2.3
+          environment:
+            type: string
+            enum:
+            - development
+            - staging
+            - production
+            description: Deployment environment
+            example: production
+          checks:
+            type: array
+            items:
+              $ref: '#/components/schemas/HealthCheck'
+            description: Detailed health checks
+    HealthCheck:
+      type: object
+      required:
+      - check_name
+      - status
+      - response_time_ms
+      properties:
+        check_name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Name of the health check
+          example: database_connection
+        status:
+          type: string
+          enum:
+          - pass
+          - warn
+          - fail
+          description: Health check result
+          example: pass
+        response_time_ms:
+          type: integer
+          minimum: 0
+          description: Check response time
+          example: 12
+        message:
+          type: string
+          maxLength: 200
+          description: Check result message
+          example: Database connection successful
+        details:
+          type: object
+          description: Additional check details
+          example:
+            connection_pool_size: 10
+            active_connections: 3
+    NotificationQueueEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - notification_type
+        - recipient_id
+        - content
+        - priority
+        - status
+        properties:
+          notification_type:
+            type: string
+            enum:
+            - email
+            - push
+            - in_game
+            - sms
+            - webhook
+            description: Type of notification
+            example: email
+          recipient_id:
+            type: string
+            format: uuid
+            description: User receiving the notification
+            example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+          recipient_contact:
+            type: string
+            description: Contact info (email, phone, etc.)
+            example: user@necpgame.com
+          content:
+            type: object
+            description: Notification content
+            required:
+            - subject
+            - body
+            properties:
+              subject:
+                type: string
+                minLength: 1
+                maxLength: 100
+                description: Notification subject/title
+                example: Quest Completed!
+              body:
+                type: string
+                minLength: 1
+                maxLength: 2000
+                description: Notification body/content
+                example: Congratulations! You have completed the 'Corporate Espionage'
+                  quest.
+              template_id:
+                type: string
+                description: Template used for notification
+                example: quest_completion_v2
+          priority:
+            type: string
+            enum:
+            - low
+            - normal
+            - high
+            - critical
+            description: Notification priority
+            example: normal
+          status:
+            type: string
+            enum:
+            - queued
+            - processing
+            - sent
+            - delivered
+            - failed
+            - cancelled
+            description: Delivery status
+            example: queued
+          scheduled_for:
+            type: string
+            format: date-time
+            description: When to send notification (null = immediate)
+            example: '2024-01-15T16:00:00Z'
+          sent_at:
+            type: string
+            format: date-time
+            description: When notification was sent
+            example: '2024-01-15T15:45:00Z'
+          delivered_at:
+            type: string
+            format: date-time
+            description: When notification was delivered
+            example: '2024-01-15T15:45:02Z'
+          retry_count:
+            type: integer
+            minimum: 0
+            description: Number of delivery attempts
+            example: 0
+          max_retries:
+            type: integer
+            minimum: 0
+            maximum: 5
+            description: Maximum retry attempts
+            example: 3
+          error_message:
+            type: string
+            description: Delivery error message
+            example: SMTP server timeout
+          metadata:
+            type: object
+            description: Additional notification data
+            properties:
+              campaign_id:
+                type: string
+                description: Marketing campaign ID
+                example: quest_reminder_2024
+              source_service:
+                type: string
+                description: Service that triggered notification
+                example: quest-service
+              user_preferences:
+                type: object
+                description: User's notification preferences
+                example:
+                  email_enabled: true
+                  push_enabled: false
+    DamageRules:
+      type: object
+      required:
+      - base_damage_multiplier
+      - critical_hit_multiplier
+      - armor_reduction_factor
+      properties:
+        base_damage_multiplier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 5.0
+          default: 1.0
+          description: Global damage multiplier
+        critical_hit_multiplier:
+          type: number
+          format: float
+          minimum: 1.0
+          maximum: 3.0
+          default: 1.5
+          description: Critical hit damage multiplier
+        armor_reduction_factor:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.7
+          description: How much armor reduces incoming damage
+        environmental_modifiers:
+          type: object
+          properties:
+            weather_damage_modifier:
+              type: number
+              format: float
+              description: Weather-based damage modifier
+            time_of_day_modifier:
+              type: number
+              format: float
+              description: Time-based damage modifier
+    CombatMechanics:
+      type: object
+      required:
+      - turn_based_enabled
+      - action_points_system
+      - interruption_rules
+      properties:
+        turn_based_enabled:
+          type: boolean
+          default: false
+          description: Enable turn-based combat mode
+        action_points_system:
+          type: object
+          properties:
+            max_action_points:
+              type: integer
+              minimum: 1
+              maximum: 10
+              default: 3
+            points_per_turn:
+              type: integer
+              minimum: 1
+              maximum: 5
+              default: 3
+        interruption_rules:
+          type: object
+          properties:
+            allow_interruptions:
+              type: boolean
+              default: true
+            interruption_penalty:
+              type: integer
+              minimum: 0
+              maximum: 100
+              default: 50
+              description: Action point penalty for interruptions
+    BalanceParameters:
+      type: object
+      required:
+      - difficulty_scaling
+      - player_advantages
+      - npc_modifiers
+      properties:
+        difficulty_scaling:
+          type: object
+          properties:
+            scaling_factor:
+              type: number
+              format: float
+              minimum: 0.1
+              maximum: 2.0
+              default: 1.0
+            level_difference_modifier:
+              type: number
+              format: float
+              description: Damage modifier based on level difference
+        player_advantages:
+          type: object
+          properties:
+            first_strike_bonus:
+              type: number
+              format: float
+              description: Damage bonus for first strike
+            positional_advantage:
+              type: number
+              format: float
+              description: Damage bonus for high ground
+        npc_modifiers:
+          type: object
+          properties:
+            elite_multiplier:
+              type: number
+              format: float
+              default: 1.5
+              description: Damage multiplier for elite NPCs
+            boss_multiplier:
+              type: number
+              format: float
+              default: 2.0
+              description: Damage multiplier for boss NPCs
+    EntityStats:
+      type: object
+      required:
+      - level
+      - strength
+      - defense
+      - armor_rating
+      properties:
+        level:
+          type: integer
+          minimum: 1
+          maximum: 100
+        strength:
+          type: integer
+          minimum: 0
+          maximum: 1000
+        defense:
+          type: integer
+          minimum: 0
+          maximum: 1000
+        armor_rating:
+          type: integer
+          minimum: 0
+          maximum: 1000
+        critical_chance:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.05
+        critical_multiplier:
+          type: number
+          format: float
+          minimum: 1.0
+          maximum: 3.0
+          default: 1.5
+    EnvironmentalFactors:
+      type: object
+      properties:
+        weather_condition:
+          type: string
+          enum:
+          - clear
+          - rain
+          - snow
+          - fog
+          - storm
+          description: Current weather affecting damage
+        time_of_day:
+          type: string
+          enum:
+          - dawn
+          - day
+          - dusk
+          - night
+          description: Time of day affecting visibility and damage
+        terrain_type:
+          type: string
+          enum:
+          - open
+          - urban
+          - forest
+          - mountain
+          - water
+          description: Terrain type affecting positioning
+        cover_type:
+          type: string
+          enum:
+          - none
+          - light
+          - medium
+          - heavy
+          description: Cover type affecting damage reduction
+    DamageModifier:
+      type: object
+      required:
+      - type
+      - value
+      properties:
+        type:
+          type: string
+          enum:
+          - additive
+          - multiplicative
+          - percentage
+          - fixed
+          description: How the modifier is applied
+        value:
+          type: number
+          format: float
+          description: Modifier value
+        source:
+          type: string
+          enum:
+          - weapon
+          - ability
+          - implant
+          - environmental
+          - status_effect
+          description: Source of the modifier
+        description:
+          type: string
+          description: Human-readable description of the modifier
+    AppliedModifier:
+      type: object
+      required:
+      - modifier
+      - value_change
+      properties:
+        modifier:
+          $ref: '#/components/schemas/DamageModifier'
+        value_change:
+          type: number
+          format: float
+          description: How much this modifier changed the damage
+        order:
+          type: integer
+          description: Order in which modifier was applied
+    GlobalMultipliers:
+      type: object
+      required:
+      - damage_multiplier
+      - experience_multiplier
+      - loot_multiplier
+      properties:
+        damage_multiplier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 3.0
+          default: 1.0
+          description: Global damage multiplier
+        experience_multiplier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 3.0
+          default: 1.0
+          description: Global experience gain multiplier
+        loot_multiplier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 3.0
+          default: 1.0
+          description: Global loot drop multiplier
+        currency_multiplier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 5.0
+          default: 1.0
+          description: Global currency reward multiplier
+    CharacterBalance:
+      type: object
+      required:
+      - class_modifiers
+      - level_scaling
+      properties:
+        class_modifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClassModifier'
+          description: Class-specific balance adjustments
+        level_scaling:
+          type: object
+          properties:
+            scaling_curve:
+              type: string
+              enum:
+              - linear
+              - exponential
+              - logarithmic
+              default: exponential
+            max_level:
+              type: integer
+              minimum: 1
+              maximum: 200
+              default: 100
+            power_curve:
+              type: number
+              format: float
+              minimum: 0.1
+              maximum: 2.0
+              default: 0.5
+        stat_progression:
+          type: object
+          properties:
+            health_per_level:
+              type: integer
+              minimum: 1
+              maximum: 1000
+              default: 10
+            damage_per_level:
+              type: number
+              format: float
+              minimum: 0.1
+              maximum: 10.0
+              default: 1.0
+            defense_per_level:
+              type: number
+              format: float
+              minimum: 0.1
+              maximum: 10.0
+              default: 0.5
+    EnvironmentBalance:
+      type: object
+      required:
+      - terrain_modifiers
+      - weather_modifiers
+      - time_modifiers
+      properties:
+        terrain_modifiers:
+          type: object
+          properties:
+            open_field:
+              $ref: '#/components/schemas/TerrainModifier'
+            urban:
+              $ref: '#/components/schemas/TerrainModifier'
+            forest:
+              $ref: '#/components/schemas/TerrainModifier'
+            mountain:
+              $ref: '#/components/schemas/TerrainModifier'
+        weather_modifiers:
+          type: object
+          properties:
+            clear:
+              type: number
+              format: float
+              minimum: 0.5
+              maximum: 2.0
+              default: 1.0
+            rain:
+              type: number
+              format: float
+              minimum: 0.5
+              maximum: 2.0
+              default: 0.9
+            snow:
+              type: number
+              format: float
+              minimum: 0.5
+              maximum: 2.0
+              default: 0.8
+            storm:
+              type: number
+              format: float
+              minimum: 0.5
+              maximum: 2.0
+              default: 1.2
+        time_modifiers:
+          type: object
+          properties:
+            day:
+              type: number
+              format: float
+              minimum: 0.5
+              maximum: 2.0
+              default: 1.0
+            night:
+              type: number
+              format: float
+              minimum: 0.5
+              maximum: 2.0
+              default: 1.1
+    TerrainModifier:
+      type: object
+      properties:
+        movement_speed_modifier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 2.0
+          default: 1.0
+        cover_effectiveness:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.5
+        visibility_modifier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 2.0
+          default: 1.0
+    ClassModifier:
+      type: object
+      required:
+      - class_name
+      - damage_modifier
+      - defense_modifier
+      properties:
+        class_name:
+          type: string
+          enum:
+          - warrior
+          - mage
+          - rogue
+          - ranger
+          - paladin
+          - necromancer
+        damage_modifier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 3.0
+          default: 1.0
+        defense_modifier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 3.0
+          default: 1.0
+        health_modifier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 3.0
+          default: 1.0
+        special_abilities_modifier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 3.0
+          default: 1.0
+    FactionModifier:
+      type: object
+      required:
+      - faction_name
+      - reputation_modifier
+      properties:
+        faction_name:
+          type: string
+        reputation_modifier:
+          type: number
+          format: float
+          minimum: -2.0
+          maximum: 2.0
+          default: 0.0
+        damage_modifier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 2.0
+          default: 1.0
+        reward_modifier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 2.0
+          default: 1.0
+    RegionModifier:
+      type: object
+      required:
+      - region_name
+      - difficulty_modifier
+      properties:
+        region_name:
+          type: string
+        difficulty_modifier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 3.0
+          default: 1.0
+        experience_modifier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 3.0
+          default: 1.0
+        loot_quality_modifier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 3.0
+          default: 1.0
+    AbilityEffect:
+      type: object
+      required:
+      - effect_type
+      - duration
+      properties:
+        effect_type:
+          type: string
+          enum:
+          - damage_over_time
+          - heal_over_time
+          - buff
+          - debuff
+          - stun
+          - silence
+          - root
+          - speed_boost
+        duration:
+          type: integer
+          minimum: 0
+          maximum: 300000
+          description: Effect duration in milliseconds
+        magnitude:
+          type: number
+          format: float
+          description: Effect strength or magnitude
+        tick_rate:
+          type: integer
+          minimum: 0
+          maximum: 60000
+          description: How often effect ticks (for DoT/HoT)
+        stat_modifier:
+          type: string
+          enum:
+          - health
+          - damage
+          - defense
+          - speed
+          - critical_chance
+          description: Which stat is modified
+        stacks:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 1
+          description: How many times effect can stack
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: '**JWT Bearer Authentication**
+
+
+        Use JWT tokens obtained from `/auth/login` or `/auth/refresh`.
+
+
+        **Token Format:** `Authorization: Bearer <jwt_token>`
+
+
+        **Token Expiration:** 15 minutes for access tokens, 7 days for refresh tokens
+
+
+        **Security Features:**
+
+        - RS256 signature verification
+
+        - Token blacklisting on logout
+
+        - Rate limiting per user
+
+        - Geographic restrictions (optional)
+
+        '
+  responses:
+    TooManyRequests:
+      description: Too many requests - rate limit exceeded
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+            example: 60
+            description: Seconds to wait before retrying
+        X-RateLimit-Limit:
+          schema:
+            type: integer
+            description: Maximum requests per time window
+        X-RateLimit-Remaining:
+          schema:
+            type: integer
+            description: Remaining requests in current window
+        X-RateLimit-Reset:
+          schema:
+            type: string
+            format: date-time
+            description: Time when rate limit resets
+      content:
+        application/json:
+          schema:
+            $ref: ../schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+    Unauthorized:
+      description: Unauthorized - authentication required or invalid token
+      headers:
+        WWW-Authenticate:
+          schema:
+            type: string
+            example: Bearer realm="NECPGAME API"
+      content:
+        application/json:
+          schema:
+            $ref: ../schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+    BadRequest:
+      description: Bad request - validation failed or malformed data
+      headers:
+        Content-Type:
+          schema:
+            type: string
+            example: application/json
+      content:
+        application/json:
+          schema:
+            $ref: ../schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+    Conflict:
+      description: Conflict - resource has been modified by another request

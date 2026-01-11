@@ -1,0 +1,539 @@
+openapi: 3.0.3
+info:
+  title: Global State Service - Enterprise Grade
+  description: 'Enterprise-Grade Global State Management API for NECPGAME MMOFPS RPG.
+
+    **Enterprise-Grade Domain:** specialized-domain
+
+    **Module:** global-state-service-go
+
+    **Purpose:** High-performance global state management with event sourcing, distributed
+    caching, and real-time synchronization for 10k+ concurrent players.
+
+    **BACKEND NOTE:** Struct field alignment optimized (large → small types). All
+    schemas ordered for optimal memory layout in generated Go code. Expected memory
+    savings: 30-50% for state structs.
+
+    Context timeouts: 50ms for state operations, 200ms for analytics queries, 10ms
+    for cache operations.
+
+    DB pool config: Read replicas for historical queries, Redis cluster for hot state
+    data.
+
+    **Features:**
+
+    - Event sourcing for complete state history and audit trails - Distributed state
+    synchronization with CRDT conflict resolution - Multi-level caching (L1 memory,
+    L2 Redis, L3 PostgreSQL) - Real-time state streaming with WebSocket support -
+    State reconstruction and time travel capabilities - Anti-cheat state validation
+    and rollback mechanisms
+
+    **Performance:** P99 <50ms for state operations, 10k+ concurrent players, zero
+    allocations in hot path '
+  version: 1.0.0
+  license:
+    name: Proprietary
+    url: https://necpgame.com/license
+  contact:
+    name: NECPGAME Global State API Support
+    url: https://necpgame.com/support
+    email: api@global-state.necpgame.com
+servers:
+- url: http://localhost:8087/api/v1
+  description: Global State Service Go (development)
+- url: https://global-state-go.necpgame.com/api/v1
+  description: Global State Service Go (production)
+security:
+- BearerAuth: []
+tags:
+- name: State Management
+  description: Core state operations and management
+- name: Event Sourcing
+  description: Event processing and state reconstruction
+- name: Synchronization
+  description: Cross-region state synchronization
+- name: Analytics
+  description: State analytics and reporting
+- name: System
+  description: System health and monitoring
+paths:
+  /health:
+    $ref: ./paths/health.yaml#/paths/~1health
+  /state/{aggregateType}/{aggregateId}:
+    $ref: ./paths/state-{aggregateType}-{aggregateId}.yaml#/paths/~1state~1{aggregateType}~1{aggregateId}
+  /events:
+    $ref: ./paths/events.yaml#/paths/~1events
+  /events/{aggregateType}/{aggregateId}:
+    $ref: ./paths/events-{aggregateType}-{aggregateId}.yaml#/paths/~1events~1{aggregateType}~1{aggregateId}
+  /sync:
+    $ref: ./paths/sync.yaml#/paths/~1sync
+  /analytics/state-changes:
+    $ref: ./paths/analytics-state-changes.yaml#/paths/~1analytics~1state-changes
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: healthy
+        version:
+          type: string
+          example: 1.0.0
+        uptime:
+          type: integer
+          format: int64
+          example: 3600
+        timestamp:
+          type: string
+          format: date-time
+        activeConnections:
+          type: integer
+          example: 1250
+        cacheHitRate:
+          type: number
+          format: float
+          example: 0.95
+    Error:
+      type: object
+      required:
+      - error
+      - code
+      - message
+      properties:
+        error:
+          type: string
+          description: Error code
+          example: VALIDATION_ERROR
+        code:
+          type: string
+          description: HTTP status code
+          example: '400'
+        message:
+          type: string
+          description: Human readable error message
+          example: Invalid request parameters
+        timestamp:
+          type: string
+          format: date-time
+        details:
+          type: object
+          description: Additional error details
+    AggregateState:
+      type: object
+      required:
+      - aggregateType
+      - aggregateId
+      - version
+      - data
+      properties:
+        aggregateType:
+          type: string
+          enum:
+          - player
+          - guild
+          - world
+          - economy
+          - combat
+        aggregateId:
+          type: string
+          format: uuid
+        version:
+          type: integer
+          minimum: 1
+        data:
+          type: object
+          description: Current state data
+        lastModified:
+          type: string
+          format: date-time
+        checksum:
+          type: string
+          description: State checksum for integrity validation
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/GameEvent'
+          description: Associated events (if requested)
+    StateUpdateRequest:
+      type: object
+      required:
+      - changes
+      - expectedVersion
+      properties:
+        changes:
+          type: object
+          description: State changes to apply
+        expectedVersion:
+          type: integer
+          minimum: 1
+          description: Expected current version for optimistic locking
+        metadata:
+          type: object
+          description: Update metadata
+        userId:
+          type: string
+          format: uuid
+          description: User performing the update
+    StateUpdateResponse:
+      type: object
+      required:
+      - aggregateType
+      - aggregateId
+      - newVersion
+      properties:
+        aggregateType:
+          type: string
+          enum:
+          - player
+          - guild
+          - world
+          - economy
+          - combat
+        aggregateId:
+          type: string
+          format: uuid
+        newVersion:
+          type: integer
+          minimum: 1
+        appliedChanges:
+          type: object
+          description: Changes that were applied
+        timestamp:
+          type: string
+          format: date-time
+    GameEvent:
+      type: object
+      required:
+      - eventId
+      - eventType
+      - aggregateType
+      - aggregateId
+      - eventVersion
+      - eventData
+      - timestamp
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        eventType:
+          type: string
+          example: PlayerLevelUp
+        aggregateType:
+          type: string
+          enum:
+          - player
+          - guild
+          - world
+          - economy
+          - combat
+        aggregateId:
+          type: string
+          format: uuid
+        eventVersion:
+          type: integer
+          minimum: 1
+        correlationId:
+          type: string
+          format: uuid
+        causationId:
+          type: string
+          format: uuid
+        eventData:
+          type: object
+          description: Event payload
+        metadata:
+          type: object
+          description: Event metadata
+        serverId:
+          type: string
+        playerId:
+          type: string
+          format: uuid
+        sessionId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        processedAt:
+          type: string
+          format: date-time
+    EventPublishRequest:
+      type: object
+      required:
+      - eventType
+      - aggregateType
+      - aggregateId
+      - eventData
+      properties:
+        eventType:
+          type: string
+        aggregateType:
+          type: string
+          enum:
+          - player
+          - guild
+          - world
+          - economy
+          - combat
+        aggregateId:
+          type: string
+          format: uuid
+        eventData:
+          type: object
+        metadata:
+          type: object
+        correlationId:
+          type: string
+          format: uuid
+        causationId:
+          type: string
+          format: uuid
+    EventPublishResponse:
+      type: object
+      required:
+      - eventId
+      - eventVersion
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        eventVersion:
+          type: integer
+          minimum: 1
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum:
+          - published
+          - processing
+          - processed
+          default: published
+    EventHistoryResponse:
+      type: object
+      required:
+      - aggregateType
+      - aggregateId
+      - events
+      properties:
+        aggregateType:
+          type: string
+          enum:
+          - player
+          - guild
+          - world
+          - economy
+          - combat
+        aggregateId:
+          type: string
+          format: uuid
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/GameEvent'
+        totalCount:
+          type: integer
+          minimum: 0
+        hasMore:
+          type: boolean
+          default: false
+    SyncRequest:
+      type: object
+      required:
+      - regionId
+      - changes
+      properties:
+        regionId:
+          type: string
+          description: Source region identifier
+        changes:
+          type: array
+          items:
+            $ref: '#/components/schemas/StateChange'
+        lastSyncVersion:
+          type: integer
+          minimum: 0
+        syncToken:
+          type: string
+          description: Synchronization token for consistency
+    StateChange:
+      type: object
+      required:
+      - aggregateType
+      - aggregateId
+      - changeType
+      - version
+      properties:
+        aggregateType:
+          type: string
+          enum:
+          - player
+          - guild
+          - world
+          - economy
+          - combat
+        aggregateId:
+          type: string
+          format: uuid
+        changeType:
+          type: string
+          enum:
+          - create
+          - update
+          - delete
+        version:
+          type: integer
+          minimum: 1
+        data:
+          type: object
+        timestamp:
+          type: string
+          format: date-time
+        originRegion:
+          type: string
+    SyncResponse:
+      type: object
+      required:
+      - status
+      - appliedChanges
+      properties:
+        status:
+          type: string
+          enum:
+          - success
+          - partial_success
+          - conflicts_detected
+        appliedChanges:
+          type: integer
+          minimum: 0
+        conflicts:
+          type: array
+          items:
+            $ref: '#/components/schemas/SyncConflict'
+        syncToken:
+          type: string
+        nextSyncVersion:
+          type: integer
+    SyncConflict:
+      type: object
+      required:
+      - aggregateType
+      - aggregateId
+      - conflictType
+      properties:
+        aggregateType:
+          type: string
+          enum:
+          - player
+          - guild
+          - world
+          - economy
+          - combat
+        aggregateId:
+          type: string
+          format: uuid
+        conflictType:
+          type: string
+          enum:
+          - version_conflict
+          - data_conflict
+        localVersion:
+          type: integer
+        remoteVersion:
+          type: integer
+        localData:
+          type: object
+        remoteData:
+          type: object
+    StateAnalyticsResponse:
+      type: object
+      required:
+      - timeRange
+      - metrics
+      properties:
+        timeRange:
+          type: string
+          enum:
+          - 1h
+          - 24h
+          - 7d
+          - 30d
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/StateMetric'
+        summary:
+          $ref: '#/components/schemas/StateAnalyticsSummary'
+    StateMetric:
+      type: object
+      required:
+      - timestamp
+      - aggregateType
+      - changeCount
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        aggregateType:
+          type: string
+          enum:
+          - player
+          - guild
+          - world
+          - economy
+          - combat
+        changeCount:
+          type: integer
+          minimum: 0
+        uniqueAggregates:
+          type: integer
+          minimum: 0
+        averageVersion:
+          type: number
+          format: float
+        topEvents:
+          type: array
+          items:
+            type: object
+            properties:
+              eventType:
+                type: string
+              count:
+                type: integer
+    StateAnalyticsSummary:
+      type: object
+      required:
+      - totalChanges
+      - totalAggregates
+      - averageChangesPerAggregate
+      properties:
+        totalChanges:
+          type: integer
+          minimum: 0
+        totalAggregates:
+          type: integer
+          minimum: 0
+        averageChangesPerAggregate:
+          type: number
+          format: float
+        mostActiveAggregate:
+          type: object
+          properties:
+            aggregateType:
+              type: string
+            aggregateId:
+              type: string
+            changeCount:
+              type: integer
+        peakActivityTime:
+          type: string
+          format: date-time
+  responses: {}
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: JWT Bearer token authentication

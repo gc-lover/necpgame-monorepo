@@ -1,0 +1,866 @@
+openapi: 3.0.3
+info:
+  title: Effect Service API
+  description: '**Enterprise-grade API for Game Effects, Buffs, and Debuffs Management**
+
+
+    ## Domain Purpose
+
+    Comprehensive effect management service providing real-time application, tracking,
+
+    and synchronization of game effects, buffs, debuffs, and status modifications
+    across
+
+    all NECPGAME gameplay systems.
+
+
+    ## Business Value
+
+    - Real-time effect calculations and application
+
+    - Complex effect stacking and interaction systems
+
+    - Performance-optimized effect persistence and synchronization
+
+    - Enterprise-grade scalability for millions of concurrent effects
+
+    - Advanced effect analytics and balancing tools
+
+
+    ## Performance Targets
+
+    - P99 Latency: <25ms for effect operations
+
+    - Throughput: 100,000+ effect operations per second
+
+    - Concurrent Effects: 1,000,000+ active effects supported
+
+    - Memory per Character: <2KB for effect storage
+
+
+    ## Domain Inheritance
+
+    This service inherits from game-entities.yaml providing:
+
+    - Effect templates as game entities with versioning
+
+    - Character effect tracking with optimistic locking
+
+    - Combat action integration for effect application
+
+    - Ability system integration for effect sources
+
+    - Strict typing with validation rules
+
+    '
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Team
+    email: api@necpgame.com
+  license:
+    name: MIT
+servers:
+- url: https://api.necpgame.com/v1/effect-service
+  description: Production environment
+- url: https://staging-api.necpgame.com/v1/effect-service
+  description: Staging environment
+- url: http://localhost:8080/api/v1/effect-service
+  description: Local development
+security:
+- BearerAuth: []
+tags:
+- name: Effect Management
+  description: Core effect application and lifecycle operations
+- name: Effect Templates
+  description: Effect template creation and management
+- name: Character Effects
+  description: Character-specific effect tracking
+- name: Effect Analytics
+  description: Effect usage and performance analytics
+- name: Effect Balancing
+  description: Effect balancing and modification tools
+- name: Health Monitoring
+  description: Service health and performance monitoring
+paths:
+  /health:
+    $ref: ./paths/health.yaml#/paths/~1health
+  /effects/apply:
+    $ref: ./paths/effects-apply.yaml#/paths/~1effects~1apply
+  /effects/remove:
+    $ref: ./paths/effects-remove.yaml#/paths/~1effects~1remove
+  /effects/modify:
+    $ref: ./paths/effects-modify.yaml#/paths/~1effects~1modify
+  /effects/{effectId}/extend:
+    $ref: ./paths/effects-{effectId}-extend.yaml#/paths/~1effects~1{effectId}~1extend
+  /characters/{characterId}/effects:
+    $ref: ./paths/characters-{characterId}-effects.yaml#/paths/~1characters~1{characterId}~1effects
+  /characters/{characterId}/effects/batch:
+    $ref: ./paths/characters-{characterId}-effects-batch.yaml#/paths/~1characters~1{characterId}~1effects~1batch
+  /characters/{characterId}/effects/clear:
+    $ref: ./paths/characters-{characterId}-effects-clear.yaml#/paths/~1characters~1{characterId}~1effects~1clear
+  /templates:
+    $ref: ./paths/templates.yaml#/paths/~1templates
+  /templates/{templateId}:
+    $ref: ./paths/templates-{templateId}.yaml#/paths/~1templates~1{templateId}
+  /analytics/usage:
+    $ref: ./paths/analytics-usage.yaml#/paths/~1analytics~1usage
+  /balancing/adjust:
+    $ref: ./paths/balancing-adjust.yaml#/paths/~1balancing~1adjust
+components:
+  schemas:
+    AppliedEffect:
+      description: Active effect instance applied to a character
+      type: object
+      required:
+      - id
+      - character_id
+      - template_id
+      - applied_at
+      - expires_at
+      - current_strength
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Effect instance unique identifier
+        character_id:
+          type: string
+          format: uuid
+          description: Character this effect is applied to
+        template_id:
+          type: string
+          format: uuid
+          description: Effect template used
+        source_id:
+          type: string
+          format: uuid
+          description: Source that applied the effect (ability, item, etc.)
+        source_type:
+          type: string
+          enum:
+          - ability
+          - item
+          - skill
+          - environment
+          - system
+          description: Type of effect source
+        applied_at:
+          type: string
+          format: date-time
+          description: When effect was applied
+        expires_at:
+          type: string
+          format: date-time
+          description: When effect expires
+        duration_seconds:
+          type: integer
+          minimum: 0
+          description: Total effect duration in seconds
+        remaining_seconds:
+          type: integer
+          minimum: 0
+          description: Remaining duration in seconds
+        current_strength:
+          type: number
+          minimum: 0
+          maximum: 1000
+          description: Current effect strength (can be modified)
+        base_strength:
+          type: number
+          minimum: 0
+          maximum: 1000
+          description: Base strength from template
+        stat_modifiers:
+          type: object
+          description: Current stat modifications applied
+          additionalProperties:
+            type: number
+          example:
+            strength: 15
+            agility: -5
+            health_regen: 10
+        stacking_count:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Number of stacked instances
+        max_stacks:
+          type: integer
+          minimum: 1
+          description: Maximum allowed stacks
+        is_permanent:
+          type: boolean
+          default: false
+          description: Whether effect is permanent
+        can_dispel:
+          type: boolean
+          default: true
+          description: Whether effect can be dispelled
+        dispel_resistance:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 0
+          description: Resistance to dispelling (0-1)
+        visual_effect_id:
+          type: string
+          description: Associated visual effect identifier
+        audio_effect_id:
+          type: string
+          description: Associated audio effect identifier
+        metadata:
+          type: object
+          description: Additional effect metadata
+          additionalProperties: true
+    EffectTemplate:
+      description: Effect template configuration with game domain inheritance
+      allOf:
+      - $ref: ../common/schemas/game-entities.yaml#/BaseGameEntity
+      - type: object
+        properties:
+          name:
+            type: string
+            minLength: 1
+            maxLength: 100
+            description: Effect template name
+          description:
+            type: string
+            maxLength: 500
+            description: Effect description
+          effect_type:
+            type: string
+            enum:
+            - buff
+            - debuff
+            - crowd_control
+            - healing
+            - damage_over_time
+            description: Primary effect type
+          category:
+            type: string
+            minLength: 1
+            maxLength: 50
+            description: Effect category for organization
+          base_strength:
+            type: number
+            minimum: 0
+            maximum: 1000
+            description: Base effect strength
+          duration_seconds:
+            type: integer
+            minimum: 0
+            description: Base duration (0 = permanent)
+          stat_modifiers:
+            type: object
+            description: Stat modifications applied
+            additionalProperties:
+              oneOf:
+              - type: number
+                description: Flat modifier
+              - type: string
+                pattern: ^[-+]?\\d*\\.?\\d+%$
+                description: Percentage modifier
+            example:
+              strength: '+15'
+              agility: -10%
+              health_regen: '+5'
+          stacking_rules:
+            $ref: '#/components/schemas/EffectStackingRules'
+          interaction_rules:
+            type: array
+            items:
+              $ref: '#/components/schemas/EffectInteractionRule'
+            description: Rules for interacting with other effects
+          visual_config:
+            type: object
+            properties:
+              icon_id:
+                type: string
+                description: Effect icon identifier
+              particle_effect_id:
+                type: string
+                description: Particle effect identifier
+              color_hex:
+                type: string
+                pattern: ^#[0-9A-Fa-f]{6}$
+                description: Effect color
+              animation_type:
+                type: string
+                enum:
+                - static
+                - pulsing
+                - rotating
+                - fading
+                description: Visual animation type
+            description: Visual effect configuration
+          audio_config:
+            type: object
+            properties:
+              sound_effect_id:
+                type: string
+                description: Sound effect identifier
+              volume_multiplier:
+                type: number
+                minimum: 0
+                maximum: 2
+                default: 1
+                description: Volume adjustment
+              loop:
+                type: boolean
+                default: false
+                description: Whether to loop audio
+            description: Audio effect configuration
+          balancing_config:
+            type: object
+            properties:
+              power_level:
+                type: integer
+                minimum: 1
+                maximum: 100
+                description: Effect power level for balancing
+              target_difficulty:
+                type: string
+                enum:
+                - easy
+                - normal
+                - hard
+                - expert
+                description: Intended difficulty level
+              scaling_factor:
+                type: number
+                minimum: 0.1
+                maximum: 10
+                default: 1
+                description: Difficulty scaling multiplier
+            description: Balancing configuration
+          is_active:
+            type: boolean
+            default: true
+            description: Whether template is active
+    EffectStackingRules:
+      description: Rules for effect stacking behavior
+      type: object
+      properties:
+        stacking_type:
+          type: string
+          enum:
+          - none
+          - replace
+          - refresh
+          - intensify
+          - separate
+          default: none
+          description: How effects stack
+        max_stacks:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Maximum number of stacks
+        stack_duration_refresh:
+          type: boolean
+          default: false
+          description: Whether new stacks refresh duration
+        strength_per_stack:
+          type: number
+          minimum: 0
+          description: Additional strength per stack
+        stack_limit_source:
+          type: boolean
+          default: false
+          description: Whether stacks are limited by source
+    EffectInteractionRule:
+      description: Rules for effect interactions
+      type: object
+      required:
+      - target_effect_type
+      - interaction_type
+      properties:
+        target_effect_type:
+          type: string
+          enum:
+          - buff
+          - debuff
+          - crowd_control
+          - healing
+          - damage_over_time
+          description: Type of effect to interact with
+        interaction_type:
+          type: string
+          enum:
+          - amplify
+          - reduce
+          - cancel
+          - prevent
+          - combine
+          description: Type of interaction
+        strength_modifier:
+          type: number
+          description: Strength modification factor
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Interaction priority
+    CharacterEffectSummary:
+      description: Summary of character active effects
+      type: object
+      properties:
+        total_effects:
+          type: integer
+          description: Total number of active effects
+        effect_counts_by_type:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Count by effect type
+        active_buff_count:
+          type: integer
+          description: Number of active buffs
+        active_debuff_count:
+          type: integer
+          description: Number of active debuffs
+        crowd_control_active:
+          type: boolean
+          description: Whether character is under crowd control
+        permanent_effects_count:
+          type: integer
+          description: Number of permanent effects
+    StatChanges:
+      description: Summary of stat changes from effect operations
+      type: object
+      properties:
+        strength:
+          type: number
+          description: Strength change
+        agility:
+          type: number
+          description: Agility change
+        intelligence:
+          type: number
+          description: Intelligence change
+        health:
+          type: number
+          description: Health change
+        max_health:
+          type: number
+          description: Max health change
+        mana:
+          type: number
+          description: Mana change
+        max_mana:
+          type: number
+          description: Max mana change
+        health_regen:
+          type: number
+          description: Health regeneration change
+        mana_regen:
+          type: number
+          description: Mana regeneration change
+        movement_speed:
+          type: number
+          description: Movement speed change
+        attack_speed:
+          type: number
+          description: Attack speed change
+        critical_chance:
+          type: number
+          description: Critical hit chance change
+        damage_reduction:
+          type: number
+          description: Damage reduction change
+    EffectUsageAnalytics:
+      description: Comprehensive effect usage analytics
+      type: object
+      properties:
+        time_range:
+          type: object
+          properties:
+            start_date:
+              type: string
+              format: date-time
+            end_date:
+              type: string
+              format: date-time
+        total_applications:
+          type: integer
+          description: Total effect applications
+        unique_characters_affected:
+          type: integer
+          description: Number of unique characters affected
+        average_effects_per_character:
+          type: number
+          description: Average effects per character
+        effect_type_distribution:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Distribution by effect type
+        popular_templates:
+          type: array
+          items:
+            type: object
+            properties:
+              template_id:
+                type: string
+                format: uuid
+              application_count:
+                type: integer
+              average_duration_seconds:
+                type: number
+          description: Most used effect templates
+        stacking_analytics:
+          type: object
+          properties:
+            average_stacks_per_effect:
+              type: number
+              description: Average number of stacks per effect
+            max_stacks_reached:
+              type: integer
+              description: Highest stack count reached
+            stacking_efficiency:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: How effectively stacking is used
+        performance_impact:
+          type: object
+          properties:
+            average_calculation_time_ms:
+              type: number
+              description: Average effect calculation time
+            memory_usage_per_effect_kb:
+              type: number
+              description: Memory usage per active effect
+    EffectTemplateSummary:
+      description: Effect template summary for listings
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        effect_type:
+          type: string
+          enum:
+          - buff
+          - debuff
+          - crowd_control
+          - healing
+          - damage_over_time
+        category:
+          type: string
+        base_strength:
+          type: number
+        duration_seconds:
+          type: integer
+        is_active:
+          type: boolean
+        last_updated:
+          type: string
+          format: date-time
+    ApplyEffectRequest:
+      description: Request payload for applying an effect
+      type: object
+      required:
+      - character_id
+      - template_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Target character ID
+        template_id:
+          type: string
+          format: uuid
+          description: Effect template to apply
+        source_id:
+          type: string
+          format: uuid
+          description: Source applying the effect
+        source_type:
+          type: string
+          enum:
+          - ability
+          - item
+          - skill
+          - environment
+          - system
+          default: system
+          description: Type of effect source
+        strength_modifier:
+          type: number
+          minimum: 0.1
+          maximum: 10
+          default: 1
+          description: Strength multiplier
+        duration_modifier:
+          type: number
+          minimum: 0.1
+          maximum: 10
+          default: 1
+          description: Duration multiplier
+        custom_metadata:
+          type: object
+          description: Additional effect metadata
+          additionalProperties: true
+    RemoveEffectRequest:
+      description: Request payload for removing an effect
+      type: object
+      required:
+      - effect_id
+      properties:
+        effect_id:
+          type: string
+          format: uuid
+          description: Effect instance ID to remove
+        removal_reason:
+          type: string
+          enum:
+          - expired
+          - dispelled
+          - cancelled
+          - replaced
+          - system_removal
+          default: system_removal
+          description: Reason for effect removal
+    ModifyEffectRequest:
+      description: Request payload for modifying an effect
+      type: object
+      required:
+      - effect_id
+      properties:
+        effect_id:
+          type: string
+          format: uuid
+          description: Effect instance ID to modify
+        strength_modifier:
+          type: number
+          minimum: 0.1
+          maximum: 10
+          description: New strength multiplier
+        duration_extension_seconds:
+          type: integer
+          minimum: 0
+          maximum: 86400
+          description: Additional duration in seconds
+        stat_modifiers_override:
+          type: object
+          description: Override stat modifiers
+          additionalProperties:
+            type: number
+    BatchApplyEffectsRequest:
+      description: Request payload for batch effect application
+      type: object
+      required:
+      - effects
+      properties:
+        effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApplyEffectRequest'
+          minItems: 1
+          maxItems: 50
+          description: Effects to apply
+        atomic_operation:
+          type: boolean
+          default: true
+          description: Whether all effects must succeed or fail together
+        ignore_stacking_conflicts:
+          type: boolean
+          default: false
+          description: Ignore stacking rule conflicts
+    CreateEffectTemplateRequest:
+      description: Request payload for creating effect template
+      type: object
+      required:
+      - name
+      - effect_type
+      - category
+      - base_strength
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Template name
+        description:
+          type: string
+          maxLength: 500
+          description: Template description
+        effect_type:
+          type: string
+          enum:
+          - buff
+          - debuff
+          - crowd_control
+          - healing
+          - damage_over_time
+          description: Effect type
+        category:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Effect category
+        base_strength:
+          type: number
+          minimum: 0
+          maximum: 1000
+          description: Base effect strength
+        duration_seconds:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Effect duration (0 = permanent)
+        stat_modifiers:
+          type: object
+          description: Stat modifications
+          additionalProperties:
+            oneOf:
+            - type: number
+            - type: string
+              pattern: ^[-+]?\\d*\\.?\\d+%$
+        stacking_rules:
+          $ref: '#/components/schemas/EffectStackingRules'
+        visual_config:
+          type: object
+          properties:
+            icon_id:
+              type: string
+            color_hex:
+              type: string
+              pattern: ^#[0-9A-Fa-f]{6}$
+        balancing_config:
+          type: object
+          properties:
+            power_level:
+              type: integer
+              minimum: 1
+              maximum: 100
+            target_difficulty:
+              type: string
+              enum:
+              - easy
+              - normal
+              - hard
+              - expert
+    UpdateEffectTemplateRequest:
+      description: Request payload for updating effect template
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        base_strength:
+          type: number
+          minimum: 0
+          maximum: 1000
+        duration_seconds:
+          type: integer
+          minimum: 0
+        stat_modifiers:
+          type: object
+          additionalProperties:
+            oneOf:
+            - type: number
+            - type: string
+              pattern: ^[-+]?\\d*\\.?\\d+%$
+        stacking_rules:
+          $ref: '#/components/schemas/EffectStackingRules'
+        visual_config:
+          type: object
+          properties:
+            icon_id:
+              type: string
+            color_hex:
+              type: string
+              pattern: ^#[0-9A-Fa-f]{6}$
+        balancing_config:
+          type: object
+          properties:
+            power_level:
+              type: integer
+              minimum: 1
+              maximum: 100
+            target_difficulty:
+              type: string
+              enum:
+              - easy
+              - normal
+              - hard
+              - expert
+        is_active:
+          type: boolean
+    EffectBalancingAdjustmentRequest:
+      description: Request payload for effect balancing adjustments
+      type: object
+      required:
+      - adjustments
+      properties:
+        adjustments:
+          type: array
+          items:
+            type: object
+            required:
+            - template_ids
+            - adjustment_type
+            properties:
+              template_ids:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+                description: Templates to adjust
+              adjustment_type:
+                type: string
+                enum:
+                - strength_multiplier
+                - duration_multiplier
+                - stat_modifier_adjustment
+                description: Type of adjustment
+              value:
+                type: number
+                description: Adjustment value
+              effect_types:
+                type: array
+                items:
+                  type: string
+                  enum:
+                  - buff
+                  - debuff
+                  - crowd_control
+                  - healing
+                  - damage_over_time
+                description: Effect types to adjust (alternative to template_ids)
+          description: Balancing adjustments to apply
+        apply_to_active_effects:
+          type: boolean
+          default: false
+          description: Apply adjustments to currently active effects
+        balancing_version:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: New balancing version identifier
+  responses:
+    OK:
+      $ref: ../common/responses/success.yaml#/OK
+    Created:
+      $ref: ../common/responses/success.yaml#/Created
+    Updated:
+      $ref: ../common/responses/success.yaml#/Updated
+    BadRequest:
+      $ref: ../common/responses/error.yaml#/BadRequest
+    NotFound:
+      $ref: ../common/responses/error.yaml#/NotFound
+    Conflict:
+      $ref: ../common/responses/error.yaml#/Conflict
+  securitySchemes:
+    BearerAuth:
+      $ref: ../common/security/security.yaml#/BearerAuth
+    ServiceAuth:
+      $ref: ../common/security/security.yaml#/ServiceAuth

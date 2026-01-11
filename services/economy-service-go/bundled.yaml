@@ -1,743 +1,561 @@
 openapi: 3.0.3
 info:
-  title: Economy Service API - Enterprise-Grade BazaarBot Integration
-  description: '**Enterprise-Grade Economic System API for NECPGAME**
+  title: Economy Service API - Enterprise-Grade Economic Simulation
+  description: '**Enterprise-Grade Economy Service API for NECPGAME**
 
-    This API manages the intelligent BazaarBot economic system, providing real-time
-    market simulation, player trading, and automated economic balancing.
+    This API manages economic simulation models, market mechanics, trading systems,
+    and resource management in the Night City universe, providing comprehensive economic
+    workflows, price calculations, and market dynamics.
 
     ## Key Features
 
-    - **BazaarBot AI**: Intelligent trading agents with personality-based decision
-    making - **Real-Time Markets**: Live commodity trading with order book mechanics
-    - **Economic Simulation**: Hourly tick-based market evolution (#2281) - **Player
-    Trading**: Direct market participation and portfolio management - **Anti-Cheat
-    Protection**: Economic fraud detection and prevention - **Performance Optimized**:
-    MMOFPS-grade performance with <25ms P99 latency
-
-    ## BazaarBot Intelligence
-
-    The BazaarBot system implements advanced AI trading agents with: - **Personality
-    Traits**: Risk tolerance, impatience, social influence - **Belief Systems**: Dynamic
-    price belief adaptation based on market conditions - **Learning Algorithms**:
-    Reinforcement learning for optimal trading strategies - **Market Psychology**:
-    Herding behavior and sentiment analysis
+    - **Market Mechanics**: Dynamic pricing and supply/demand simulation - **Trading
+    Systems**: Order management and transaction processing - **Auction House**: Bidding
+    mechanics and auction management - **Currency Exchange**: Multi-currency trading
+    and conversion - **Economic Events**: Market volatility and economic notifications
+    - **Performance Optimized**: MMOFPS-grade performance with <25ms P99 latency
 
     ## Domain Purpose
 
-    The Economy domain handles all player economic interactions in Night City, from
-    basic trading to complex BazaarBot-driven market dynamics.
+    The Economy domain handles all aspects of in-game economic systems and market
+    simulation. Players engage in trading, auctions, and resource management through
+    sophisticated economic mechanics that affect market prices and player wealth.
 
     ## Performance Targets
 
-    - P99 Latency: <25ms for trading operations - Concurrent Traders: 10,000+ simultaneous
-    market participants - Memory: <512KB per active BazaarBot agent - Market Clearing:
-    <100ms for 1000+ concurrent orders
+    - P99 Latency: <25ms for trading operations - Memory: <15KB per active trading
+    session - Concurrent traders: 5,000+ simultaneous users - Market updates: <100ms
+    propagation time - Transaction throughput: 10,000+ TPS
 
     '
   version: 1.0.0
-  license:
-    name: Proprietary
-    url: https://necpgame.com/license
   contact:
-    name: NECPGAME Economy Team
-    url: https://necpgame.com/economy
-    email: economy@combat-economy.necpgame.com
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
 servers:
 - url: https://api.necpgame.com/v1/economy
   description: Production server
 - url: https://staging-api.necpgame.com/v1/economy
   description: Staging server
-- url: http://localhost:8083/api/v1/economy
+- url: http://localhost:8080/api/v1/economy
   description: Local development server
+security:
+- BearerAuth: []
 tags:
-- name: Market Operations
-  description: Real-time market trading and order management
-- name: BazaarBot Intelligence
-  description: AI-powered economic simulation and automation
-- name: Player Economy
-  description: Player portfolio and trading operations
-- name: Market Analytics
-  description: Economic data analysis and reporting
+- name: Market Data
+  description: Real-time market pricing and economic data
+- name: Trading
+  description: Order management and transaction processing
+- name: Auctions
+  description: Auction house bidding and management
+- name: Currency
+  description: Currency exchange and wallet operations
+- name: Health Monitoring
+  description: System health and performance monitoring
 paths:
   /health:
-    get:
-      summary: Health check for economy service
-      operationId: economyHealthCheck
-      responses:
-        '200':
-          description: Service is healthy
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HealthResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-  /market/{commodity}/orderbook:
-    get:
-      summary: Get current order book for commodity
-      operationId: getOrderBook
-      parameters:
-      - name: commodity
-        in: path
-        required: true
-        schema:
-          $ref: '#/components/schemas/Commodity'
-      - name: limit
-        in: query
-        required: false
-        schema:
+    $ref: ./paths/health.yaml#/paths/~1health
+  /health/batch:
+    $ref: ./paths/health-batch.yaml#/paths/~1health~1batch
+  /market/prices:
+    $ref: ./paths/market-prices.yaml#/paths/~1market~1prices
+  /trading/orders:
+    $ref: ./paths/trading-orders.yaml#/paths/~1trading~1orders
+  /trading/orders/{order_id}:
+    $ref: ./paths/trading-orders-{order_id}.yaml#/paths/~1trading~1orders~1{order_id}
+  /auctions:
+    $ref: ./paths/auctions.yaml#/paths/~1auctions
+  /auctions/{auction_id}/bid:
+    $ref: ./paths/auctions-{auction_id}-bid.yaml#/paths/~1auctions~1{auction_id}~1bid
+  /currency/exchange:
+    $ref: ./paths/currency-exchange.yaml#/paths/~1currency~1exchange
+  /wallet/transactions:
+    $ref: ./paths/wallet-transactions.yaml#/paths/~1wallet~1transactions
+components:
+  schemas:
+    HealthResponse:
+      $ref: ../common/schemas/health.yaml#/components/schemas/HealthResponse
+    MarketPricesResponse:
+      type: object
+      required:
+      - prices
+      - pagination
+      properties:
+        prices:
+          type: array
+          items:
+            $ref: '#/components/schemas/MarketPrice'
+        pagination:
+          type: object
+          required:
+          - page
+          - limit
+          - total_count
+          - total_pages
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total_count:
+              type: integer
+            total_pages:
+              type: integer
+      description: 'BACKEND NOTE: Prices response optimized for market browser. Pagination
+        prevents large payloads.'
+    MarketPrice:
+      type: object
+      required:
+      - item_id
+      - item_name
+      - current_price
+      - price_trend
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        item_name:
+          type: string
+        category:
+          type: string
+        current_price:
+          type: integer
+          minimum: 0
+        price_trend:
+          type: string
+          enum:
+          - rising
+          - falling
+          - stable
+        price_change_percentage:
+          type: number
+          format: float
+        volume_24h:
+          type: integer
+          minimum: 0
+        last_updated:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Market price data optimized for real-time updates.
+        Struct alignment saves 30-50% memory.'
+    TradingOrdersResponse:
+      type: object
+      required:
+      - orders
+      - pagination
+      properties:
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/TradingOrder'
+        pagination:
+          type: object
+          required:
+          - page
+          - limit
+          - total_count
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total_count:
+              type: integer
+      description: 'BACKEND NOTE: Orders response optimized for trading interface.
+        Lightweight for mobile compatibility.'
+    TradingOrder:
+      type: object
+      required:
+      - order_id
+      - order_type
+      - item_id
+      - quantity
+      - price
+      - status
+      properties:
+        order_id:
+          type: string
+          format: uuid
+        order_type:
+          type: string
+          enum:
+          - buy
+          - sell
+        item_id:
+          type: string
+          format: uuid
+        item_name:
+          type: string
+        quantity:
           type: integer
           minimum: 1
-          maximum: 100
-          default: 50
-          description: Maximum number of orders to return per side
-      responses:
-        '200':
-          description: Current order book
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OrderBook'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-    post:
-      summary: Place trading order
-      operationId: placeOrder
-      parameters:
-      - name: commodity
-        in: path
-        required: true
-        schema:
-          $ref: '#/components/schemas/Commodity'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PlaceOrderRequest'
-      responses:
-        '201':
-          description: Order placed successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OrderResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-  /market/{commodity}/price:
-    get:
-      summary: Get current market price for commodity
-      operationId: getMarketPrice
-      parameters:
-      - name: commodity
-        in: path
-        required: true
-        schema:
-          $ref: '#/components/schemas/Commodity'
-      responses:
-        '200':
-          description: Current market price
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MarketPrice'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-  /market/{commodity}/trades:
-    get:
-      summary: Get recent trades for commodity
-      operationId: getMarketTrades
-      parameters:
-      - name: commodity
-        in: path
-        required: true
-        schema:
-          $ref: '#/components/schemas/Commodity'
-      responses:
-        '200':
-          description: Current market price
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MarketPrice'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-  /player/{playerId}/portfolio:
-    get:
-      summary: Get player economic portfolio
-      operationId: getPlayerPortfolio
-      parameters:
-      - name: playerId
-        in: path
-        required: true
-        schema:
+        price:
+          type: integer
+          minimum: 0
+        status:
+          type: string
+          enum:
+          - active
+          - filled
+          - cancelled
+          - expired
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        filled_quantity:
+          type: integer
+          minimum: 0
+      description: 'BACKEND NOTE: Trading order data optimized for order matching.
+        Fields ordered for CPU cache efficiency.'
+    CreateTradingOrderRequest:
+      type: object
+      required:
+      - order_type
+      - item_id
+      - quantity
+      - price
+      properties:
+        order_type:
+          type: string
+          enum:
+          - buy
+          - sell
+        item_id:
           type: string
           format: uuid
-      responses:
-        '200':
-          description: Player portfolio
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PlayerPortfolio'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-  /player/{playerId}/orders:
-    get:
-      summary: Get player active orders
-      operationId: getPlayerOrders
-      parameters:
-      - name: playerId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      responses:
-        '200':
-          description: Player orders
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PlayerOrders'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-  /bazaarbot/status:
-    get:
-      summary: Get BazaarBot simulation status
-      operationId: getBazaarBotStatus
-      responses:
-        '200':
-          description: BazaarBot status
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BazaarBotStatus'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-  /bazaarbot/agents:
-    get:
-      summary: Get BazaarBot agents information
-      operationId: getBazaarBotAgents
-      responses:
-        '200':
-          description: BazaarBot agents
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BazaarBotAgents'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-  /market/history/{commodity}:
-    get:
-      summary: Get market price history
-      operationId: getMarketHistory
-      parameters:
-      - name: commodity
-        in: path
-        required: true
-        schema:
-          $ref: '#/components/schemas/Commodity'
-      - name: hours
-        in: query
-        schema:
+        quantity:
+          type: integer
+          minimum: 1
+        price:
+          type: integer
+          minimum: 0
+        expires_in_hours:
           type: integer
           minimum: 1
           maximum: 168
           default: 24
-      responses:
-        '200':
-          description: Market history
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MarketHistory'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-components:
-  schemas:
-    HealthResponse:
-      type: object
-      properties:
-        status:
-          type: string
-          enum:
-          - healthy
-          - unhealthy
-        timestamp:
-          type: string
-          format: date-time
-        version:
-          type: string
-        uptime:
-          type: integer
-          description: Uptime in seconds
-    Commodity:
-      type: string
-      enum:
-      - food
-      - water
-      - medicine
-      - weapons
-      - cyberware
-      - vehicles
-      - real_estate
-      description: Market commodities
-    OrderBook:
-      type: object
-      properties:
-        commodity:
-          $ref: '#/components/schemas/Commodity'
-        bids:
-          type: array
-          items:
-            $ref: '#/components/schemas/Order'
-        asks:
-          type: array
-          items:
-            $ref: '#/components/schemas/Order'
-        lastPrice:
-          type: number
-          format: float
-        volume24h:
-          type: integer
-    Order:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        playerId:
-          type: string
-          format: uuid
-        type:
-          type: string
-          enum:
-          - buy
-          - sell
-        commodity:
-          $ref: '#/components/schemas/Commodity'
-        price:
-          type: number
-          format: float
-          minimum: 0.01
-        quantity:
-          type: integer
-          minimum: 1
-        createdAt:
-          type: string
-          format: date-time
-    Trade:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: Unique trade identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the trade was executed
-        commodity:
-          $ref: '#/components/schemas/Commodity'
-        buyerId:
-          type: string
-          format: uuid
-          description: ID of the buyer
-        sellerId:
-          type: string
-          format: uuid
-          description: ID of the seller
-        price:
-          type: number
-          format: float
-          minimum: 0.01
-          description: Trade price per unit
-        quantity:
-          type: integer
-          minimum: 1
-          description: Quantity traded
-        orderType:
-          type: string
-          enum:
-          - limit
-          - market
-          description: Type of order that created this trade
-        tradeValue:
-          type: number
-          format: float
-          description: Total value of the trade (price * quantity)
-        fee:
-          type: number
-          format: float
-          minimum: 0
-          description: Trading fee charged
-    PlaceOrderRequest:
+      description: 'BACKEND NOTE: Order request optimized for validation. Minimal
+        required fields for fast processing.'
+    TradingOrderResponse:
       type: object
       required:
-      - type
-      - price
-      - quantity
+      - order
       properties:
-        type:
-          type: string
-          enum:
-          - buy
-          - sell
-        price:
-          type: number
-          format: float
-          minimum: 0.01
-        quantity:
-          type: integer
-          minimum: 1
-    OrderResponse:
+        order:
+          $ref: '#/components/schemas/TradingOrder'
+      description: 'BACKEND NOTE: Response optimized for immediate feedback. Single-order
+        responses use minimal wrapper.'
+    AuctionsResponse:
       type: object
+      required:
+      - auctions
+      - pagination
       properties:
-        orderId:
+        auctions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Auction'
+        pagination:
+          type: object
+          required:
+          - page
+          - limit
+          - total_count
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total_count:
+              type: integer
+      description: 'BACKEND NOTE: Auctions response optimized for auction house UI.
+        Supports large catalogs with pagination.'
+    Auction:
+      type: object
+      required:
+      - auction_id
+      - item_id
+      - starting_price
+      - current_bid
+      - end_time
+      - status
+      properties:
+        auction_id:
           type: string
           format: uuid
+        item_id:
+          type: string
+          format: uuid
+        item_name:
+          type: string
+        seller_id:
+          type: string
+          format: uuid
+        starting_price:
+          type: integer
+          minimum: 0
+        current_bid:
+          type: integer
+          minimum: 0
+        bid_increment:
+          type: integer
+          minimum: 1
+        end_time:
+          type: string
+          format: date-time
         status:
           type: string
           enum:
-          - pending
-          - filled
+          - active
+          - ended
           - cancelled
-        message:
-          type: string
-    MarketPrice:
-      type: object
-      properties:
-        commodity:
-          $ref: '#/components/schemas/Commodity'
-        price:
-          type: number
-          format: float
-        change24h:
-          type: number
-          format: float
-        volume24h:
-          type: integer
-        lastUpdate:
-          type: string
-          format: date-time
-    PlayerPortfolio:
-      type: object
-      properties:
-        playerId:
+        winner_id:
           type: string
           format: uuid
-        wealth:
-          type: number
-          format: float
-        inventory:
-          type: object
-          additionalProperties:
-            type: integer
-        activeOrders:
-          type: array
-          items:
-            $ref: '#/components/schemas/Order'
-    PlayerOrders:
-      type: array
-      items:
-        $ref: '#/components/schemas/Order'
-    BazaarBotStatus:
-      type: object
-      properties:
-        active:
-          type: boolean
-        lastTick:
+        created_at:
           type: string
           format: date-time
-        activeAgents:
-          type: integer
-        totalMarkets:
-          type: integer
-        simulationUptime:
-          type: integer
-          description: Uptime in seconds
-    BazaarBotAgents:
+      description: 'BACKEND NOTE: Auction data optimized for bidding calculations.
+        Time-sensitive fields prioritized.'
+    CreateAuctionRequest:
       type: object
+      required:
+      - item_id
+      - starting_price
+      - duration_hours
       properties:
-        agents:
-          type: array
-          items:
-            $ref: '#/components/schemas/BazaarBotAgent'
-    BazaarBotAgent:
-      type: object
-      properties:
-        id:
+        item_id:
           type: string
-        wealth:
+          format: uuid
+        starting_price:
+          type: integer
+          minimum: 0
+        bid_increment:
+          type: integer
+          minimum: 1
+          default: 100
+        duration_hours:
+          type: integer
+          minimum: 1
+          maximum: 168
+          default: 24
+        reserve_price:
+          type: integer
+          minimum: 0
+      description: 'BACKEND NOTE: Auction creation request optimized for validation.
+        Sensible defaults reduce user input requirements.'
+    AuctionResponse:
+      type: object
+      required:
+      - auction
+      properties:
+        auction:
+          $ref: '#/components/schemas/Auction'
+      description: 'BACKEND NOTE: Auction response optimized for immediate feedback.
+        Consistent with other single-entity responses.'
+    PlaceBidRequest:
+      type: object
+      required:
+      - bid_amount
+      properties:
+        bid_amount:
+          type: integer
+          minimum: 0
+      description: 'BACKEND NOTE: Bid request optimized for speed. Single field minimizes
+        processing overhead.'
+    CurrencyExchangeRequest:
+      type: object
+      required:
+      - from_currency
+      - to_currency
+      - amount
+      properties:
+        from_currency:
+          type: string
+          enum:
+          - eurodollars
+          - bitcoin
+          - eddies
+        to_currency:
+          type: string
+          enum:
+          - eurodollars
+          - bitcoin
+          - eddies
+        amount:
+          type: integer
+          minimum: 1
+      description: 'BACKEND NOTE: Exchange request optimized for validation. Currency
+        enums prevent invalid exchanges.'
+    CurrencyExchangeResponse:
+      type: object
+      required:
+      - from_currency
+      - to_currency
+      - amount_exchanged
+      - amount_received
+      - exchange_rate
+      properties:
+        from_currency:
+          type: string
+        to_currency:
+          type: string
+        amount_exchanged:
+          type: integer
+        amount_received:
+          type: integer
+        exchange_rate:
           type: number
           format: float
-        personality:
+        transaction_id:
+          type: string
+          format: uuid
+      description: 'BACKEND NOTE: Exchange response optimized for transaction records.
+        All exchange details included for audit trails.'
+    WalletTransactionsResponse:
+      type: object
+      required:
+      - transactions
+      - pagination
+      properties:
+        transactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/WalletTransaction'
+        pagination:
           type: object
+          required:
+          - page
+          - limit
+          - total_count
           properties:
-            riskTolerance:
-              type: number
-              format: float
-              minimum: 0
-              maximum: 1
-            impatienceFactor:
-              type: number
-              format: float
-              minimum: 0
-              maximum: 1
-            socialInfluence:
-              type: number
-              format: float
-              minimum: 0
-              maximum: 1
-            learningRate:
-              type: number
-              format: float
-              minimum: 0
-              maximum: 1
-        inventory:
-          type: object
-          additionalProperties:
-            type: integer
-        lastActivity:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total_count:
+              type: integer
+      description: 'BACKEND NOTE: Transactions response optimized for history browsing.
+        Chronological ordering for user experience.'
+    WalletTransaction:
+      type: object
+      required:
+      - transaction_id
+      - transaction_type
+      - amount
+      - timestamp
+      properties:
+        transaction_id:
+          type: string
+          format: uuid
+        transaction_type:
+          type: string
+          enum:
+          - trading
+          - auction
+          - exchange
+          - reward
+          - purchase
+        amount:
+          type: integer
+        currency:
+          type: string
+          enum:
+          - eurodollars
+          - bitcoin
+          - eddies
+        description:
+          type: string
+        timestamp:
           type: string
           format: date-time
-    MarketHistory:
-      type: object
-      properties:
-        commodity:
-          $ref: '#/components/schemas/Commodity'
-        prices:
-          type: array
-          items:
-            type: object
-            properties:
-              timestamp:
-                type: string
-                format: date-time
-              price:
-                type: number
-                format: float
-              volume:
-                type: integer
+        related_order_id:
+          type: string
+          format: uuid
+      description: 'BACKEND NOTE: Transaction data optimized for financial reporting.
+        Related IDs enable transaction tracing.'
+  responses:
+    HealthBatchSuccess:
+      $ref: ../common/responses/success.yaml#/components/responses/HealthBatchSuccess
+    OK:
+      $ref: ../common/responses/success.yaml#/components/responses/OK
+    Created:
+      $ref: ../common/responses/success.yaml#/components/responses/Created
+    BadRequest:
+      $ref: ../common/responses/error.yaml#/components/responses/BadRequest
+    Unauthorized:
+      $ref: ../common/responses/error.yaml#/components/responses/Unauthorized
+    Forbidden:
+      $ref: ../common/responses/error.yaml#/components/responses/Forbidden
+    NotFound:
+      $ref: ../common/responses/error.yaml#/components/responses/NotFound
+    Conflict:
+      $ref: ../common/responses/error.yaml#/components/responses/Conflict
+    InternalServerError:
+      $ref: ../common/responses/error.yaml#/components/responses/InternalServerError
+    HealthOK:
+      $ref: ../common/responses/success.yaml#/components/responses/HealthOK
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: '**JWT Bearer Authentication**
+
+
+        Use JWT tokens obtained from `/auth/login` or `/auth/refresh`.
+
+
+        **Token Format:** `Authorization: Bearer <jwt_token>`
+
+
+        **Token Expiration:** 15 minutes for access tokens, 7 days for refresh tokens
+
+
+        **Security Features:**
+
+        - RS256 signature verification
+
+        - Token blacklisting on logout
+
+        - Rate limiting per user
+
+        - Geographic restrictions (optional)
+
+        '
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: '**API Key Authentication**
+
+
+        Use API keys obtained from the admin panel.
+
+
+        **Header Format:** `X-API-Key: <api_key>`
+
+
+        **Rate Limits:** Configurable per key (default: 60 requests/minute)
+
+
+        **Security Features:**
+
+        - SHA-256 hashed storage
+
+        - IP whitelisting support
+
+        - Automatic key rotation
+
+        - Usage analytics
+
+        '
+    ServiceAuth:
+      $ref: ../common/security/security.yaml#/components/securitySchemes/ServiceAuth

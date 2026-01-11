@@ -672,7 +672,7 @@ func (s *ErrResp) Encode(e *jx.Encoder) {
 func (s *ErrResp) encodeFields(e *jx.Encoder) {
 	{
 		e.FieldStart("code")
-		e.Int32(s.Code)
+		e.Int(s.Code)
 	}
 	{
 		e.FieldStart("message")
@@ -704,8 +704,8 @@ func (s *ErrResp) Decode(d *jx.Decoder) error {
 		case "code":
 			requiredBitSet[0] |= 1 << 0
 			if err := func() error {
-				v, err := d.Int32()
-				s.Code = int32(v)
+				v, err := d.Int()
+				s.Code = int(v)
 				if err != nil {
 					return err
 				}

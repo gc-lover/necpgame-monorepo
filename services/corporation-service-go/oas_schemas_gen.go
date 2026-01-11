@@ -356,16 +356,15 @@ func (s *CreateCorporationRequest) SetCapital(val OptDecimal) {
 // DeleteCorporationNoContent is response for DeleteCorporation operation.
 type DeleteCorporationNoContent struct{}
 
-// Standard error response format.
 type ErrResp struct {
-	Code    int32  `json:"code"`
+	Code    int    `json:"code"`
 	Message string `json:"message"`
 	// Additional error details.
 	Details *ErrRespDetails `json:"details"`
 }
 
 // GetCode returns the value of Code.
-func (s *ErrResp) GetCode() int32 {
+func (s *ErrResp) GetCode() int {
 	return s.Code
 }
 
@@ -380,7 +379,7 @@ func (s *ErrResp) GetDetails() *ErrRespDetails {
 }
 
 // SetCode sets the value of Code.
-func (s *ErrResp) SetCode(val int32) {
+func (s *ErrResp) SetCode(val int) {
 	s.Code = val
 }
 

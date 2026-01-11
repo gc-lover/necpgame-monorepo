@@ -1,0 +1,420 @@
+openapi: 3.0.3
+info:
+  title: Time Trials Service API - Enterprise-Grade Domain Service
+  description: '**Enterprise-Grade Time Trials API for NECPGAME**
+
+    This API manages competitive time-based challenges, speedrun mechanics, and leaderboard
+    systems, providing players with competitive gameplay experiences and achievement
+    tracking.
+
+    ## Key Features
+
+    - **Trial Management**: Full CRUD operations for time trial configurations with
+    validation - **Timer Engine**: High-precision timing with server-side validation
+    and anti-cheat protection - **Leaderboard System**: Real-time rankings, personal
+    records, and seasonal competitions - **Reward Distribution**: Automated reward
+    calculation and distribution based on performance - **Analytics**: Comprehensive
+    telemetry for competitive gameplay insights - **Live Updates**: WebSocket integration
+    for real-time leaderboard updates and live timing
+
+    ## Domain Purpose
+
+    The Time Trials domain provides competitive speedrunning mechanics for raids,
+    dungeons, and special challenges, creating engaging competitive gameplay with
+    fair play validation and rewarding achievements.
+
+    ## Performance Targets
+
+    - P99 Latency: <30ms for timer operations, <10ms for leaderboard queries - Memory:
+    <5MB for trial configurations, <2KB per active trial session - Concurrent trials:
+    5000+ simultaneous time trials with real-time tracking - Response time: <50ms
+    P95 for API endpoints, <5ms for timer queries
+
+    ## Security Features
+
+    - Server-side time validation (zero trust model for timing) - Anti-cheat protection
+    for speedrun manipulation - Audit trails for all trial operations and rewards
+    - Rate limiting for leaderboard queries and trial starts
+
+    ## Integration Points
+
+    - **Gameplay Service**: Trial configuration and content integration - **Leaderboard
+    Service**: Rankings management and statistics aggregation - **Achievement Service**:
+    Trial completion achievements and rewards - **Analytics Service**: Performance
+    metrics and competitive insights - **Realtime Gateway**: WebSocket synchronization
+    for live timing and updates - **Economy Service**: Reward distribution and currency
+    management
+
+    ## Trial Types
+
+    - **Speedrun Raids**: Competitive raid completion with time tracking - **Time
+    Attack Dungeons**: Dungeon speed challenges with tiered rewards - **Weekly Challenges**:
+    Limited-time competitive events - **Seasonal Trials**: Special event-based time
+    challenges
+
+    ## Validation System
+
+    Server-side validation ensures fair play with comprehensive anti-cheat measures,
+    including route validation, timing verification, and community reporting systems.
+
+    '
+  version: 1.0.0
+  license:
+    name: Proprietary
+    url: https://necpgame.com/license
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@time-trials.necpgame.com
+servers:
+- url: https://api.necpgame.com/v1/time-trials
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/time-trials
+  description: Staging server
+- url: http://localhost:8085/api/v1/time-trials
+  description: Local development server
+security:
+- bearerAuth: []
+tags:
+- name: Trial Management
+  description: Core time trial CRUD operations and configuration
+- name: Timer Engine
+  description: High-precision timing operations and session management
+- name: Leaderboard System
+  description: Rankings, personal records, and competitive statistics
+- name: Reward System
+  description: Achievement tracking and reward distribution
+- name: Analytics
+  description: Trial performance and competitive metrics
+- name: Health Monitoring
+  description: System health and performance monitoring
+- name: Validation System
+  description: Anti-cheat validation and fair play enforcement
+paths:
+  /health:
+    $ref: ./paths/health.yaml#/paths/~1health
+  /trials:
+    $ref: ./paths/trials.yaml#/paths/~1trials
+  /trials/{trialId}:
+    $ref: ./paths/trials-{trialId}.yaml#/paths/~1trials~1{trialId}
+  /trials/{trialId}/start:
+    $ref: ./paths/trials-{trialId}-start.yaml#/paths/~1trials~1{trialId}~1start
+  /trials/{trialId}/complete:
+    $ref: ./paths/trials-{trialId}-complete.yaml#/paths/~1trials~1{trialId}~1complete
+  /leaderboards/{trialId}:
+    $ref: ./paths/leaderboards-{trialId}.yaml#/paths/~1leaderboards~1{trialId}
+  /leaderboards/{trialId}/personal/{playerId}:
+    $ref: ./paths/leaderboards-{trialId}-personal-{playerId}.yaml#/paths/~1leaderboards~1{trialId}~1personal~1{playerId}
+  /analytics/trials/{trialId}/performance:
+    $ref: ./paths/analytics-trials-{trialId}-performance.yaml#/paths/~1analytics~1trials~1{trialId}~1performance
+  /validation/sessions/{sessionId}/report:
+    $ref: ./paths/validation-sessions-{sessionId}-report.yaml#/paths/~1validation~1sessions~1{sessionId}~1report
+components:
+  schemas:
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          enum:
+          - VALIDATION_ERROR
+          - NOT_FOUND
+          - UNAUTHORIZED
+          - FORBIDDEN
+          - INTERNAL_ERROR
+          - TIMEOUT
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: object
+          description: Additional error details
+    SuccessResponse:
+      type: object
+      required:
+      - success
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          description: Response data
+        metadata:
+          type: object
+          description: Response metadata
+    TimeTrial:
+      type: object
+      required:
+      - id
+      - name
+      - type
+      - content_id
+      - difficulty
+      - status
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique trial identifier
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Trial display name
+        description:
+          type: string
+          maxLength: 500
+          description: Trial description
+        type:
+          type: string
+          enum:
+          - speedrun_raid
+          - time_attack_dungeon
+          - weekly_challenge
+          - seasonal_trial
+          description: Trial type
+        content_id:
+          type: string
+          description: Reference to game content (raid/dungeon ID)
+        difficulty:
+          type: string
+          enum:
+          - normal
+          - heroic
+          - mythic
+          - legendary
+          description: Trial difficulty level
+        status:
+          type: string
+          enum:
+          - active
+          - inactive
+          - deprecated
+          description: Trial status
+        time_limit:
+          type: integer
+          minimum: 0
+          description: Time limit in seconds (0 = unlimited)
+        min_players:
+          type: integer
+          minimum: 1
+          maximum: 40
+          description: Minimum players required
+        max_players:
+          type: integer
+          minimum: 1
+          maximum: 40
+          description: Maximum players allowed
+        rewards:
+          $ref: '#/components/schemas/TrialRewards'
+        validation_rules:
+          $ref: '#/components/schemas/ValidationRules'
+        created_at:
+          type: string
+          format: date-time
+          description: Trial creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Trial last update timestamp
+    TrialRewards:
+      type: object
+      properties:
+        bronze_time:
+          type: integer
+          minimum: 0
+          description: Bronze tier completion time (seconds)
+        silver_time:
+          type: integer
+          minimum: 0
+          description: Silver tier completion time (seconds)
+        gold_time:
+          type: integer
+          minimum: 0
+          description: Gold tier completion time (seconds)
+        platinum_time:
+          type: integer
+          minimum: 0
+          description: Platinum tier completion time (seconds)
+        bronze_rewards:
+          $ref: '#/components/schemas/RewardTiers'
+        silver_rewards:
+          $ref: '#/components/schemas/RewardTiers'
+        gold_rewards:
+          $ref: '#/components/schemas/RewardTiers'
+        platinum_rewards:
+          $ref: '#/components/schemas/RewardTiers'
+    RewardTiers:
+      type: object
+      properties:
+        experience:
+          type: integer
+          minimum: 0
+          description: Experience points
+        currency:
+          type: object
+          description: Currency rewards
+          properties:
+            gold:
+              type: integer
+              minimum: 0
+            seasonal_tokens:
+              type: integer
+              minimum: 0
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              item_id:
+                type: string
+              quantity:
+                type: integer
+                minimum: 1
+          description: Item rewards
+        achievements:
+          type: array
+          items:
+            type: string
+          description: Achievement IDs to unlock
+    ValidationRules:
+      type: object
+      properties:
+        allow_cheats:
+          type: boolean
+          default: false
+          description: Whether cheats are allowed
+        validate_route:
+          type: boolean
+          default: true
+          description: Whether route validation is required
+        min_completion_percentage:
+          type: integer
+          minimum: 0
+          maximum: 100
+          default: 100
+          description: Minimum completion percentage required
+        allowed_modifiers:
+          type: array
+          items:
+            type: string
+            enum:
+            - speed_boost
+            - damage_mod
+            - health_mod
+            - ability_mod
+          description: Allowed game modifiers
+    TrialSession:
+      type: object
+      required:
+      - id
+      - trial_id
+      - player_id
+      - status
+      - start_time
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Session unique identifier
+        trial_id:
+          type: string
+          format: uuid
+          description: Reference to time trial
+        player_id:
+          type: string
+          description: Player identifier
+        party_id:
+          type: string
+          format: uuid
+          description: Party/group identifier
+        status:
+          type: string
+          enum:
+          - starting
+          - active
+          - paused
+          - completed
+          - failed
+          - invalidated
+          description: Session status
+        start_time:
+          type: string
+          format: date-time
+          description: Session start timestamp
+        end_time:
+          type: string
+          format: date-time
+          description: Session end timestamp
+        completion_time:
+          type: integer
+          minimum: 0
+          description: Total completion time in seconds
+        progress_percentage:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Completion percentage
+        validation_status:
+          type: string
+          enum:
+          - pending
+          - valid
+          - invalid
+          - disputed
+          description: Validation status
+        metadata:
+          type: object
+          description: Additional session data
+    LeaderboardEntry:
+      type: object
+      required:
+      - player_id
+      - completion_time
+      - rank
+      properties:
+        player_id:
+          type: string
+          description: Player identifier
+        player_name:
+          type: string
+          description: Player display name
+        completion_time:
+          type: integer
+          minimum: 0
+          description: Completion time in seconds
+        rank:
+          type: integer
+          minimum: 1
+          description: Current rank
+        rank_change:
+          type: integer
+          description: Rank change from previous period
+        completed_at:
+          type: string
+          format: date-time
+          description: Completion timestamp
+        party_size:
+          type: integer
+          minimum: 1
+          description: Party size
+        trial_difficulty:
+          type: string
+          enum:
+          - normal
+          - heroic
+          - mythic
+          - legendary
+          description: Trial difficulty
+  responses: {}
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token for API authentication

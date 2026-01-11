@@ -1,69 +1,68 @@
 openapi: 3.0.3
 info:
   title: Skill Service API
-  description: 'Enterprise-grade Skill System для NECPGAME платформы.
+  description: 'Enterprise-grade Skill System  NECPGAME .
 
 
     ## 🎯 **Skill Service Overview**
 
 
-    Skill Service предоставляет комплексную систему навыков и специализаций для платформы
-    NECPGAME с enterprise-grade производительностью и масштабируемостью.
+    Skill Service NECPGAME  enterprise-grade   .
 
 
-    ### **Ключевые Возможности**
+    ### ** **
 
-    - **Skill Tree Management**: Управление деревьями навыков
+    - **Skill Tree Management**:
 
-    - **Skill Progression**: Прогрессия и развитие навыков
+    - **Skill Progression**:
 
-    - **Specialization System**: Система специализаций
+    - **Specialization System**:
 
-    - **Skill Balancing**: Балансировка навыков
-
-
-    ### **Типы Навыков**
-
-    - **Combat Skills**: Боевые навыки
-
-    - **Crafting Skills**: Ремесленные навыки
-
-    - **Social Skills**: Социальные навыки
-
-    - **Exploration Skills**: Навыки исследования
+    - **Skill Balancing**:
 
 
-    ### **Расширенные Возможности**
+    ### ** **
 
-    - **Skill Combinations**: Комбинации навыков
+    - **Combat Skills**:
 
-    - **Mastery System**: Система мастерства
+    - **Crafting Skills**:
 
-    - **Skill Prerequisites**: Система требований
+    - **Social Skills**:
 
-    - **Dynamic Scaling**: Динамическое масштабирование
+    - **Exploration Skills**:
+
+
+    ### ** **
+
+    - **Skill Combinations**:
+
+    - **Mastery System**:
+
+    - **Skill Prerequisites**:
+
+    - **Dynamic Scaling**:
 
 
     ## 📊 **Performance Targets**
 
-    - **P99 Latency**: <25ms для операций с навыками
+    - **P99 Latency**: <25ms
 
     - **Throughput**: 30,000+ skill operations/second
 
-    - **Concurrent Players**: 500,000+ активных игроков
+    - **Concurrent Players**: 500,000+
 
-    - **Memory per Player**: <2KB для навыков
+    - **Memory per Player**: <2KB
 
 
     ## 🔐 **Security**
 
-    - JWT RS256 аутентификация
+    - JWT RS256
 
-    - Rate limiting для предотвращения спама
+    - Rate limiting
 
-    - Input validation и sanitization
+    - Input validation  sanitization
 
-    - Audit logging всех операций
+    - Audit logging
 
     '
   version: 1.0.0
@@ -84,1065 +83,61 @@ security:
 - BearerAuth: []
 tags:
 - name: Skill Management
-  description: Управление навыками
+  description: null
 - name: Skill Trees
-  description: Деревья навыков
+  description: null
 - name: Progression
-  description: Прогрессия навыков
+  description: null
 - name: Specialization
-  description: Специализации
+  description: null
 - name: Health
-  description: Мониторинг здоровья сервиса
+  description: null
 paths:
   /health:
-    get:
-      summary: Проверка здоровья сервиса
-      operationId: healthCheck
-      tags:
-      - Health
-      responses:
-        '200':
-          description: Сервис работает корректно
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HealthResponse'
-        '503':
-          description: Сервис недоступен
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    minimum: 100
-                    maximum: 599
-                    example: 400
-                  message:
-                    type: string
-                    example: Bad request
-                  details:
-                    type: object
-                    description: Additional error details
+    $ref: ./paths/health.yaml#/paths/~1health
   /health/batch:
-    post:
-      summary: Пакетная проверка здоровья
-      operationId: healthBatchCheck
-      tags:
-      - Health
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/HealthBatchRequest'
-      responses:
-        '200':
-          description: Результаты проверки здоровья
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HealthBatchResponse'
-        '400':
-          description: Некорректный запрос
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    minimum: 100
-                    maximum: 599
-                    example: 400
-                  message:
-                    type: string
-                    example: Bad request
-                  details:
-                    type: object
-                    description: Additional error details
+    $ref: ./paths/health-batch.yaml#/paths/~1health~1batch
   /health/ws:
-    get:
-      summary: WebSocket проверка здоровья
-      operationId: healthWebSocketCheck
-      tags:
-      - Health
-      responses:
-        '101':
-          description: WebSocket соединение установлено
-        '503':
-          description: WebSocket недоступен
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    minimum: 100
-                    maximum: 599
-                    example: 400
-                  message:
-                    type: string
-                    example: Bad request
-                  details:
-                    type: object
-                    description: Additional error details
+    $ref: ./paths/health-ws.yaml#/paths/~1health~1ws
   /skills:
-    post:
-      summary: Создание нового навыка
-      operationId: createSkill
-      tags:
-      - Skill Management
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateSkillRequest'
-      responses:
-        '201':
-          description: Навык создан
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SkillResponse'
-        '400':
-          description: Некорректные данные
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '403':
-          description: Недостаточно прав
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    minimum: 100
-                    maximum: 599
-                    example: 400
-                  message:
-                    type: string
-                    example: Bad request
-                  details:
-                    type: object
-                    description: Additional error details
-    get:
-      summary: Получение списка навыков
-      operationId: getSkills
-      tags:
-      - Skill Management
-      parameters:
-      - name: category
-        in: query
-        schema:
-          type: string
-          enum:
-          - combat
-          - crafting
-          - social
-          - exploration
-      - name: treeId
-        in: query
-        schema:
-          type: string
-          format: uuid
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 20
-      - name: offset
-        in: query
-        schema:
-          type: integer
-          minimum: 0
-          default: 0
-      responses:
-        '200':
-          description: Список навыков
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SkillListResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    minimum: 100
-                    maximum: 599
-                    example: 400
-                  message:
-                    type: string
-                    example: Bad request
-                  details:
-                    type: object
-                    description: Additional error details
+    $ref: ./paths/skills.yaml#/paths/~1skills
   /skills/{skillId}:
-    get:
-      summary: Получение навыка по ID
-      operationId: getSkill
-      tags:
-      - Skill Management
-      parameters:
-      - name: skillId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      responses:
-        '200':
-          description: Навык найден
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SkillResponse'
-        '404':
-          description: Навык не найден
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    minimum: 100
-                    maximum: 599
-                    example: 400
-                  message:
-                    type: string
-                    example: Bad request
-                  details:
-                    type: object
-                    description: Additional error details
-    put:
-      summary: Обновление навыка
-      operationId: updateSkill
-      tags:
-      - Skill Management
-      parameters:
-      - name: skillId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateSkillRequest'
-      responses:
-        '200':
-          description: Навык обновлен
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SkillResponse'
-        '403':
-          description: Недостаточно прав
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: Навык не найден
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    minimum: 100
-                    maximum: 599
-                    example: 400
-                  message:
-                    type: string
-                    example: Bad request
-                  details:
-                    type: object
-                    description: Additional error details
+    $ref: ./paths/skills-{skillId}.yaml#/paths/~1skills~1{skillId}
   /skill-trees:
-    post:
-      summary: Создание дерева навыков
-      operationId: createSkillTree
-      tags:
-      - Skill Trees
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateSkillTreeRequest'
-      responses:
-        '201':
-          description: Дерево навыков создано
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SkillTreeResponse'
-        '400':
-          description: Некорректные данные
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    minimum: 100
-                    maximum: 599
-                    example: 400
-                  message:
-                    type: string
-                    example: Bad request
-                  details:
-                    type: object
-                    description: Additional error details
-    get:
-      summary: Получение списка деревьев навыков
-      operationId: getSkillTrees
-      tags:
-      - Skill Trees
-      parameters:
-      - name: category
-        in: query
-        schema:
-          type: string
-          enum:
-          - combat
-          - crafting
-          - social
-          - exploration
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 50
-          default: 20
-      - name: offset
-        in: query
-        schema:
-          type: integer
-          minimum: 0
-          default: 0
-      responses:
-        '200':
-          description: Список деревьев навыков
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SkillTreeListResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    minimum: 100
-                    maximum: 599
-                    example: 400
-                  message:
-                    type: string
-                    example: Bad request
-                  details:
-                    type: object
-                    description: Additional error details
+    $ref: ./paths/skill-trees.yaml#/paths/~1skill-trees
   /skill-trees/{treeId}:
-    get:
-      summary: Получение дерева навыков по ID
-      operationId: getSkillTree
-      tags:
-      - Skill Trees
-      parameters:
-      - name: treeId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      responses:
-        '200':
-          description: Дерево навыков найдено
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SkillTreeResponse'
-        '404':
-          description: Дерево навыков не найдено
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    minimum: 100
-                    maximum: 599
-                    example: 400
-                  message:
-                    type: string
-                    example: Bad request
-                  details:
-                    type: object
-                    description: Additional error details
-    put:
-      summary: Обновление дерева навыков
-      operationId: updateSkillTree
-      tags:
-      - Skill Trees
-      parameters:
-      - name: treeId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateSkillTreeRequest'
-      responses:
-        '200':
-          description: Дерево навыков обновлено
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SkillTreeResponse'
-        '403':
-          description: Недостаточно прав
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: Дерево навыков не найдено
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    minimum: 100
-                    maximum: 599
-                    example: 400
-                  message:
-                    type: string
-                    example: Bad request
-                  details:
-                    type: object
-                    description: Additional error details
+    $ref: ./paths/skill-trees-{treeId}.yaml#/paths/~1skill-trees~1{treeId}
   /players/{playerId}/skills:
-    get:
-      summary: Получение навыков игрока
-      operationId: getPlayerSkills
-      tags:
-      - Progression
-      parameters:
-      - name: playerId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: category
-        in: query
-        schema:
-          type: string
-          enum:
-          - combat
-          - crafting
-          - social
-          - exploration
-      - name: learnedOnly
-        in: query
-        schema:
-          type: boolean
-          default: true
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 20
-      - name: offset
-        in: query
-        schema:
-          type: integer
-          minimum: 0
-          default: 0
-      responses:
-        '200':
-          description: Навыки игрока
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PlayerSkillListResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    minimum: 100
-                    maximum: 599
-                    example: 400
-                  message:
-                    type: string
-                    example: Bad request
-                  details:
-                    type: object
-                    description: Additional error details
+    $ref: ./paths/players-{playerId}-skills.yaml#/paths/~1players~1{playerId}~1skills
   /players/{playerId}/skills/learn:
-    post:
-      summary: Изучение навыка
-      operationId: learnSkill
-      tags:
-      - Progression
-      parameters:
-      - name: playerId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/LearnSkillRequest'
-      responses:
-        '200':
-          description: Навык изучен
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LearnSkillResponse'
-        '400':
-          description: Невозможно изучить навык
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: Навык не найден
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    minimum: 100
-                    maximum: 599
-                    example: 400
-                  message:
-                    type: string
-                    example: Bad request
-                  details:
-                    type: object
-                    description: Additional error details
+    $ref: ./paths/players-{playerId}-skills-learn.yaml#/paths/~1players~1{playerId}~1skills~1learn
   /players/{playerId}/skills/{skillId}/upgrade:
-    post:
-      summary: Улучшение навыка
-      operationId: upgradeSkill
-      tags:
-      - Progression
-      parameters:
-      - name: playerId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: skillId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpgradeSkillRequest'
-      responses:
-        '200':
-          description: Навык улучшен
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UpgradeSkillResponse'
-        '400':
-          description: Невозможно улучшить навык
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: Навык не найден
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    minimum: 100
-                    maximum: 599
-                    example: 400
-                  message:
-                    type: string
-                    example: Bad request
-                  details:
-                    type: object
-                    description: Additional error details
+    $ref: ./paths/players-{playerId}-skills-{skillId}-upgrade.yaml#/paths/~1players~1{playerId}~1skills~1{skillId}~1upgrade
   /players/{playerId}/specializations:
-    get:
-      summary: Получение специализаций игрока
-      operationId: getPlayerSpecializations
-      tags:
-      - Specialization
-      parameters:
-      - name: playerId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      responses:
-        '200':
-          description: Специализации игрока
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PlayerSpecializationResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    minimum: 100
-                    maximum: 599
-                    example: 400
-                  message:
-                    type: string
-                    example: Bad request
-                  details:
-                    type: object
-                    description: Additional error details
-    post:
-      summary: Выбор специализации
-      operationId: chooseSpecialization
-      tags:
-      - Specialization
-      parameters:
-      - name: playerId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ChooseSpecializationRequest'
-      responses:
-        '200':
-          description: Специализация выбрана
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ChooseSpecializationResponse'
-        '400':
-          description: Невозможно выбрать специализацию
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    minimum: 100
-                    maximum: 599
-                    example: 400
-                  message:
-                    type: string
-                    example: Bad request
-                  details:
-                    type: object
-                    description: Additional error details
+    $ref: ./paths/players-{playerId}-specializations.yaml#/paths/~1players~1{playerId}~1specializations
   /skills/mastery/{skillId}:
-    get:
-      summary: Получение мастерства навыка
-      operationId: getSkillMastery
-      tags:
-      - Progression
-      parameters:
-      - name: skillId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      responses:
-        '200':
-          description: Мастерство навыка
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SkillMasteryResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    minimum: 100
-                    maximum: 599
-                    example: 400
-                  message:
-                    type: string
-                    example: Bad request
-                  details:
-                    type: object
-                    description: Additional error details
+    $ref: ./paths/skills-mastery-{skillId}.yaml#/paths/~1skills~1mastery~1{skillId}
   /skills/analytics/popular:
-    get:
-      summary: Популярные навыки
-      operationId: getPopularSkills
-      tags:
-      - Skill Management
-      parameters:
-      - name: period
-        in: query
-        schema:
-          type: string
-          enum:
-          - daily
-          - weekly
-          - monthly
-          default: weekly
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 50
-          default: 20
-      responses:
-        '200':
-          description: Популярные навыки
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PopularSkillsResponse'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    minimum: 100
-                    maximum: 599
-                    example: 400
-                  message:
-                    type: string
-                    example: Bad request
-                  details:
-                    type: object
-                    description: Additional error details
+    $ref: ./paths/skills-analytics-popular.yaml#/paths/~1skills~1analytics~1popular
 components:
-  securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
   schemas:
     CharacterEntity:
-      allOf:
-      - $ref: '#/components/schemas/GameEntity'
-      - type: object
-        required:
-        - level
-        - experience
-        - stats
-        properties:
-          level:
-            type: integer
-            minimum: 1
-            maximum: 100
-            description: Character level
-            example: 25
-          experience:
-            type: integer
-            minimum: 0
-            description: Current experience points
-            example: 15420
-          stats:
-            $ref: '#/components/schemas/CharacterStats'
-          cyberware_level:
-            type: integer
-            minimum: 0
-            maximum: 20
-            description: Cyberware enhancement level
-            example: 8
-          reputation:
-            type: integer
-            minimum: -1000
-            maximum: 1000
-            description: Faction reputation score
-            example: 450
+      $ref: ../common/schemas/game-entities.yaml#/components/schemas/CharacterEntity
     BaseEntity:
-      type: object
-      required:
-      - id
-      - created_at
-      - updated_at
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: Unique identifier
-          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
-        created_at:
-          type: string
-          format: date-time
-          description: Creation timestamp
-          example: '2024-01-15T10:30:00Z'
-        updated_at:
-          type: string
-          format: date-time
-          description: Last modification timestamp
-          example: '2024-01-15T14:20:00Z'
+      $ref: ../common/schemas/game-entities.yaml#/components/schemas/BaseEntity
     OptimisticLock:
-      type: object
-      properties:
-        version:
-          type: integer
-          minimum: 1
-          description: Version for optimistic locking
-          example: 1
+      $ref: ../common/schemas/game-entities.yaml#/components/schemas/OptimisticLock
     ErrorResponse:
-      type: object
-      required:
-      - code
-      - message
-      properties:
-        code:
-          type: integer
-          minimum: 100
-          maximum: 599
-          example: 400
-        message:
-          type: string
-          example: Bad request
-        details:
-          type: object
-          description: Additional error details
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
     HealthResponse:
-      type: object
-      required:
-      - status
-      - timestamp
-      properties:
-        status:
-          type: string
-          enum:
-          - ok
-          - degraded
-          - critical
-          example: ok
-        message:
-          type: string
-          example: Service is healthy
-        timestamp:
-          type: string
-          format: date-time
-          example: '2024-01-15T10:30:00Z'
-        version:
-          type: string
-          example: 1.0.0
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthResponse
     HealthBatchRequest:
-      type: object
-      properties:
-        services:
-          type: array
-          items:
-            type: string
-          description: List of services to check
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthBatchRequest
     HealthBatchResponse:
-      type: object
-      properties:
-        results:
-          type: object
-          additionalProperties:
-            $ref: '#/components/schemas/HealthResponse'
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthBatchResponse
     SkillEntity:
       type: object
-      description: Сущность навыка
+      description: null
       allOf:
       - $ref: '#/components/schemas/BaseEntity'
       - type: object
@@ -1154,17 +149,17 @@ components:
         properties:
           name:
             type: string
-            description: Название навыка
+            description: null
             maxLength: 100
-            example: Мечное Мастерство
+            example: null
           description:
             type: string
-            description: Описание навыка
+            description: null
             maxLength: 500
-            example: Увеличивает урон от мечей и точность
+            example: null
           category:
             type: string
-            description: Категория навыка
+            description: null
             enum:
             - combat
             - crafting
@@ -1173,22 +168,22 @@ components:
             example: combat
           treeId:
             type: string
-            description: ID дерева навыков
+            description: ID
             format: uuid
           iconUrl:
             type: string
-            description: URL иконки навыка
+            description: URL
             format: uri
             example: https://cdn.necpgame.com/skills/sword-mastery.png
           maxLevel:
             type: integer
-            description: Максимальный уровень навыка
+            description: null
             minimum: 1
             maximum: 100
             example: 50
           prerequisites:
             type: array
-            description: Требования для изучения
+            description: null
             items:
               type: object
               properties:
@@ -1206,7 +201,7 @@ components:
                   - item
           effects:
             type: array
-            description: Эффекты навыка по уровням
+            description: null
             items:
               type: object
               properties:
@@ -1227,7 +222,7 @@ components:
                   maxLength: 200
           costFormula:
             type: string
-            description: Формула стоимости улучшения
+            description: null
             example: level * 100 + level^2 * 10
           isActive:
             type: boolean
@@ -1236,7 +231,7 @@ components:
           $ref: '#/components/schemas/OptimisticLock'
     SkillTreeEntity:
       type: object
-      description: Сущность дерева навыков
+      description: null
       allOf:
       - $ref: '#/components/schemas/BaseEntity'
       - type: object
@@ -1247,16 +242,16 @@ components:
         properties:
           name:
             type: string
-            description: Название дерева навыков
+            description: null
             maxLength: 100
-            example: Боевые Навыки
+            example: null
           description:
             type: string
-            description: Описание дерева навыков
+            description: null
             maxLength: 500
           category:
             type: string
-            description: Категория дерева
+            description: null
             enum:
             - combat
             - crafting
@@ -1265,11 +260,11 @@ components:
             example: combat
           rootSkillId:
             type: string
-            description: ID корневого навыка
+            description: ID
             format: uuid
           specializations:
             type: array
-            description: Доступные специализации
+            description: null
             items:
               type: object
               properties:
@@ -1290,12 +285,12 @@ components:
                     type: number
           isActive:
             type: boolean
-            description: Активно ли дерево
+            description: null
             default: true
           $ref: '#/components/schemas/OptimisticLock'
     PlayerSkillEntity:
       type: object
-      description: Навык игрока
+      description: null
       allOf:
       - $ref: '#/components/schemas/BaseEntity'
       - type: object
@@ -1307,45 +302,45 @@ components:
         properties:
           playerId:
             type: string
-            description: ID игрока
+            description: ID
             format: uuid
             example: 123e4567-e89b-12d3-a456-426614174000
           skillId:
             type: string
-            description: ID навыка
+            description: ID
             format: uuid
             example: 456e7890-e89b-12d3-a456-426614174001
           level:
             type: integer
-            description: Текущий уровень навыка
+            description: null
             minimum: 0
             example: 15
           experience:
             type: integer
-            description: Опыт в навыке
+            description: null
             minimum: 0
             example: 2500
           experienceToNext:
             type: integer
-            description: Опыт до следующего уровня
+            description: null
             minimum: 0
             example: 500
           learnedAt:
             type: string
-            description: Время изучения
+            description: null
             format: date-time
           lastUsedAt:
             type: string
-            description: Последнее использование
+            description: null
             format: date-time
           specializationBonus:
             type: number
-            description: Бонус от специализации
+            description: null
             default: 1.0
           $ref: '#/components/schemas/OptimisticLock'
     PlayerSpecializationEntity:
       type: object
-      description: Специализация игрока
+      description: null
       allOf:
       - $ref: '#/components/schemas/BaseEntity'
       - type: object
@@ -1356,24 +351,24 @@ components:
         properties:
           playerId:
             type: string
-            description: ID игрока
+            description: ID
             format: uuid
           treeId:
             type: string
-            description: ID дерева навыков
+            description: ID
             format: uuid
           specializationName:
             type: string
-            description: Название специализации
+            description: null
             maxLength: 50
-            example: Мастер Меча
+            example: null
           chosenAt:
             type: string
-            description: Время выбора специализации
+            description: null
             format: date-time
           bonuses:
             type: object
-            description: Бонусы специализации
+            description: null
             additionalProperties:
               type: number
           $ref: '#/components/schemas/OptimisticLock'
@@ -1731,7 +726,7 @@ components:
       properties:
         levels:
           type: integer
-          description: Количество уровней для улучшения
+          description: null
           minimum: 1
           maximum: 10
           default: 1
@@ -1812,7 +807,7 @@ components:
           $ref: '#/components/schemas/PlayerSpecializationEntity'
         bonusesApplied:
           type: object
-          description: Примененные бонусы
+          description: null
           additionalProperties:
             type: number
         chosenAt:
@@ -1841,23 +836,23 @@ components:
             novice:
               type: integer
               minimum: 0
-              description: Уровни 1-10
+              description: 1-10
             intermediate:
               type: integer
               minimum: 0
-              description: Уровни 11-25
+              description: 11-25
             advanced:
               type: integer
               minimum: 0
-              description: Уровни 26-40
+              description: 26-40
             expert:
               type: integer
               minimum: 0
-              description: Уровни 41-50
+              description: 41-50
             master:
               type: integer
               minimum: 0
-              description: Уровень 50+
+              description: 50+
     PopularSkillsResponse:
       type: object
       properties:
@@ -1888,1205 +883,9 @@ components:
               popularityRank:
                 type: integer
                 minimum: 1
-    InfrastructureEntity:
-      type: object
-      required:
-      - id
-      - created_at
-      - updated_at
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: Unique identifier for infrastructure entity
-          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
-        created_at:
-          type: string
-          format: date-time
-          description: Entity creation timestamp
-          example: '2024-01-15T10:30:00Z'
-        updated_at:
-          type: string
-          format: date-time
-          description: Last modification timestamp
-          example: '2024-01-15T14:20:00Z'
-        version:
-          type: integer
-          minimum: 1
-          description: Optimistic locking version for concurrent operations
-          example: 1
-    ConfigurationEntity:
-      allOf:
-      - $ref: '#/components/schemas/InfrastructureEntity'
-      - type: object
-        required:
-        - config_key
-        - config_value
-        - config_type
-        - environment
-        properties:
-          config_key:
-            type: string
-            minLength: 1
-            maxLength: 100
-            pattern: ^[a-zA-Z0-9_\-\.]+$
-            description: Configuration key
-            example: game.max_players_per_server
-          config_value:
-            type: string
-            description: Configuration value (stored as string)
-            example: '1000'
-          config_type:
-            type: string
-            enum:
-            - string
-            - integer
-            - float
-            - boolean
-            - json
-            description: Data type of the value
-            example: integer
-          environment:
-            type: string
-            enum:
-            - development
-            - staging
-            - production
-            - all
-            description: Environment this config applies to
-            example: production
-          description:
-            type: string
-            maxLength: 500
-            description: Description of what this config controls
-            example: Maximum number of players allowed per game server
-          default_value:
-            type: string
-            description: Default value if not set
-            example: '500'
-          validation_rules:
-            type: object
-            description: Validation rules for the value
-            properties:
-              min_value:
-                type: number
-                description: Minimum allowed value
-                example: 1
-              max_value:
-                type: number
-                description: Maximum allowed value
-                example: 10000
-              allowed_values:
-                type: array
-                items:
-                  type: string
-                description: List of allowed values
-                example:
-                - '100'
-                - '500'
-                - '1000'
-                - '2000'
-          is_encrypted:
-            type: boolean
-            description: Whether value is encrypted
-            example: false
-          last_modified_by:
-            type: string
-            format: uuid
-            description: User who last modified this config
-            example: g7h8i9j0-k1l2-3456-0123-456789012345
-          requires_restart:
-            type: boolean
-            description: Whether server restart is required after change
-            example: true
-    AuditLogEntity:
-      allOf:
-      - $ref: '#/components/schemas/InfrastructureEntity'
-      - type: object
-        required:
-        - event_type
-        - actor_id
-        - resource_type
-        - action
-        - severity
-        properties:
-          event_type:
-            type: string
-            enum:
-            - user_action
-            - system_event
-            - security_event
-            - admin_action
-            - api_call
-            description: Category of audit event
-            example: user_action
-          actor_id:
-            type: string
-            format: uuid
-            description: User/system that performed the action
-            example: b2c3d4e5-f6g7-8901-bcde-f23456789012
-          actor_type:
-            type: string
-            enum:
-            - user
-            - system
-            - admin
-            - api_client
-            description: Type of actor
-            example: user
-          resource_type:
-            type: string
-            enum:
-            - user
-            - session
-            - character
-            - guild
-            - item
-            - transaction
-            - quest
-            - chat
-            - file
-            description: Type of resource affected
-            example: character
-          resource_id:
-            type: string
-            format: uuid
-            description: Specific resource that was affected
-            example: c3d4e5f6-g7h8-9012-cdef-345678901234
-          action:
-            type: string
-            enum:
-            - create
-            - read
-            - update
-            - delete
-            - login
-            - logout
-            - ban
-            - unban
-            - transfer
-            - execute
-            description: Action performed
-            example: update
-          old_values:
-            type: object
-            description: Previous state of modified fields
-            example:
-              level: 24
-              experience: 12000
-          new_values:
-            type: object
-            description: New state of modified fields
-            example:
-              level: 25
-              experience: 12500
-          severity:
-            type: string
-            enum:
-            - low
-            - medium
-            - high
-            - critical
-            description: Security/impact severity
-            example: low
-          ip_address:
-            type: string
-            description: IP address of the actor
-            example: 192.168.1.100
-          user_agent:
-            type: string
-            description: User agent of the actor
-            example: NECPGAME Client v1.2.3
-          location:
-            type: string
-            description: Approximate location
-            example: Night City, NC
-          success:
-            type: boolean
-            description: Whether the action succeeded
-            example: true
-          error_message:
-            type: string
-            description: Error message if action failed
-            example: Insufficient permissions
-          metadata:
-            type: object
-            description: Additional audit data
-            properties:
-              request_id:
-                type: string
-                description: Unique request identifier
-                example: req_abc123def456
-              session_id:
-                type: string
-                format: uuid
-                description: Associated session ID
-                example: d4e5f6g7-h8i9-0123-def0-456789012345
-              api_endpoint:
-                type: string
-                description: API endpoint called
-                example: /api/v1/characters/upgrade
-              response_time_ms:
-                type: integer
-                description: API response time
-                example: 45
-    UserAccountEntity:
-      allOf:
-      - $ref: '#/components/schemas/InfrastructureEntity'
-      - type: object
-        required:
-        - username
-        - email
-        - account_status
-        - registration_method
-        properties:
-          username:
-            type: string
-            minLength: 3
-            maxLength: 30
-            pattern: ^[a-zA-Z0-9_-]+$
-            description: Unique username for login
-            example: nightrunner2077
-          email:
-            type: string
-            format: email
-            description: Primary email address
-            example: nightrunner@necpgame.com
-          email_verified:
-            type: boolean
-            description: Whether email is verified
-            example: true
-          email_verification_token:
-            type: string
-            description: Token for email verification
-            example: abc123def456
-          password_hash:
-            type: string
-            description: Bcrypt password hash
-            example: $2b$10$...
-          account_status:
-            type: string
-            enum:
-            - active
-            - suspended
-            - banned
-            - pending_verification
-            - deactivated
-            description: Account status
-            example: active
-          registration_method:
-            type: string
-            enum:
-            - email_password
-            - google_oauth
-            - discord_oauth
-            - steam_oauth
-            - guest
-            description: How user registered
-            example: email_password
-          registration_ip:
-            type: string
-            description: IP address used during registration
-            example: 192.168.1.100
-          last_login_ip:
-            type: string
-            description: IP address of last login
-            example: 10.0.0.50
-          last_login_at:
-            type: string
-            format: date-time
-            description: Timestamp of last successful login
-            example: '2024-01-15T14:20:00Z'
-          login_count:
-            type: integer
-            minimum: 0
-            description: Total number of logins
-            example: 147
-          failed_login_attempts:
-            type: integer
-            minimum: 0
-            description: Recent failed login attempts
-            example: 0
-          account_locked_until:
-            type: string
-            format: date-time
-            description: When account lock expires
-            example: '2024-01-15T16:00:00Z'
-          two_factor_enabled:
-            type: boolean
-            description: Whether 2FA is enabled
-            example: true
-          two_factor_secret:
-            type: string
-            description: TOTP secret for 2FA
-            example: JBSWY3DPEHPK3PXP
-          recovery_email:
-            type: string
-            format: email
-            description: Backup email for account recovery
-            example: backup@necpgame.com
-          preferred_language:
-            type: string
-            enum:
-            - en
-            - es
-            - zh
-            - ja
-            - ru
-            - de
-            - fr
-            - pl
-            - ko
-            - pt
-            description: User's preferred language
-            example: en
-    SessionEntity:
-      allOf:
-      - $ref: '#/components/schemas/InfrastructureEntity'
-      - type: object
-        required:
-        - user_id
-        - session_token
-        - ip_address
-        - user_agent
-        - expires_at
-        properties:
-          user_id:
-            type: string
-            format: uuid
-            description: User this session belongs to
-            example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
-          session_token:
-            type: string
-            minLength: 32
-            maxLength: 128
-            description: Unique session identifier/token
-            example: abc123def456ghi789jkl012mno345pqr678stu901vwx
-          refresh_token:
-            type: string
-            minLength: 32
-            maxLength: 128
-            description: Token for refreshing session
-            example: yz234abc567def890ghi123jkl456mno789pqr012stu
-          ip_address:
-            type: string
-            description: Client IP address
-            example: 192.168.1.100
-          user_agent:
-            type: string
-            description: Client user agent string
-            example: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
-          device_fingerprint:
-            type: string
-            description: Unique device identifier
-            example: fp_abcdef1234567890
-          location:
-            type: string
-            description: Approximate location based on IP
-            example: New York, US
-          expires_at:
-            type: string
-            format: date-time
-            description: When session expires
-            example: '2024-01-15T16:20:00Z'
-          is_active:
-            type: boolean
-            description: Whether session is currently active
-            example: true
-          last_activity_at:
-            type: string
-            format: date-time
-            description: Last user activity in this session
-            example: '2024-01-15T15:45:00Z'
-          security_level:
-            type: string
-            enum:
-            - standard
-            - elevated
-            - maximum
-            description: Security level of session
-            example: standard
-          session_metadata:
-            type: object
-            description: Additional session data
-            properties:
-              game_version:
-                type: string
-                description: Client game version
-                example: 1.2.3
-              platform:
-                type: string
-                enum:
-                - windows
-                - macos
-                - linux
-                - ios
-                - android
-                - web
-                description: Client platform
-                example: windows
-              vpn_detected:
-                type: boolean
-                description: Whether VPN usage was detected
-                example: false
-    ApiKeyEntity:
-      allOf:
-      - $ref: '#/components/schemas/InfrastructureEntity'
-      - type: object
-        required:
-        - owner_id
-        - name
-        - key_hash
-        - permissions
-        - status
-        properties:
-          owner_id:
-            type: string
-            format: uuid
-            description: User or service that owns this API key
-            example: e5f6g7h8-i9j0-1234-ef01-567890123456
-          name:
-            type: string
-            minLength: 1
-            maxLength: 50
-            description: Human-readable name for the key
-            example: Mobile App Key
-          description:
-            type: string
-            maxLength: 200
-            description: Description of key usage
-            example: API key for mobile application authentication
-          key_hash:
-            type: string
-            description: SHA-256 hash of the actual API key
-            example: a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3
-          key_prefix:
-            type: string
-            minLength: 8
-            maxLength: 8
-            description: First 8 characters of API key for identification
-            example: ncp_1a2b
-          permissions:
-            type: array
-            items:
-              type: string
-              enum:
-              - read_user
-              - write_user
-              - read_character
-              - write_character
-              - read_inventory
-              - write_inventory
-              - admin
-            description: Granted permissions
-            example:
-            - read_user
-            - read_character
-            - read_inventory
-          status:
-            type: string
-            enum:
-            - active
-            - suspended
-            - revoked
-            - expired
-            description: API key status
-            example: active
-          expires_at:
-            type: string
-            format: date-time
-            description: When key expires (null = never)
-            example: '2025-01-15T10:30:00Z'
-          last_used_at:
-            type: string
-            format: date-time
-            description: Last time key was used
-            example: '2024-01-15T14:20:00Z'
-          usage_count:
-            type: integer
-            minimum: 0
-            description: Total API calls made with this key
-            example: 15420
-          rate_limit:
-            type: integer
-            minimum: 1
-            description: Requests per minute allowed
-            example: 60
-          allowed_ips:
-            type: array
-            items:
-              type: string
-            description: IP addresses allowed to use this key
-            example:
-            - 192.168.1.0/24
-            - 10.0.0.1
-          metadata:
-            type: object
-            description: Additional key metadata
-            properties:
-              created_by:
-                type: string
-                format: uuid
-                description: User who created this key
-                example: f6g7h8i9-j0k1-2345-f012-678901234567
-              application:
-                type: string
-                description: Application using this key
-                example: NECPGAME Mobile App
-              environment:
-                type: string
-                enum:
-                - development
-                - staging
-                - production
-                description: Environment this key is for
-                example: production
-    ServiceHealthEntity:
-      allOf:
-      - $ref: '#/components/schemas/InfrastructureEntity'
-      - type: object
-        required:
-        - service_name
-        - status
-        - response_time_ms
-        - timestamp
-        properties:
-          service_name:
-            type: string
-            minLength: 1
-            maxLength: 50
-            description: Name of the service being monitored
-            example: auth-service
-          status:
-            type: string
-            enum:
-            - healthy
-            - degraded
-            - unhealthy
-            - down
-            - maintenance
-            description: Current health status
-            example: healthy
-          response_time_ms:
-            type: integer
-            minimum: 0
-            description: Response time in milliseconds
-            example: 45
-          timestamp:
-            type: string
-            format: date-time
-            description: When this health check was performed
-            example: '2024-01-15T15:30:00Z'
-          uptime_seconds:
-            type: integer
-            minimum: 0
-            description: Service uptime in seconds
-            example: 86400
-          memory_usage_mb:
-            type: integer
-            minimum: 0
-            description: Current memory usage in MB
-            example: 256
-          memory_usage_percent:
-            type: number
-            minimum: 0
-            maximum: 100
-            description: Memory usage percentage
-            example: 23.5
-          cpu_usage_percent:
-            type: number
-            minimum: 0
-            maximum: 100
-            description: CPU usage percentage
-            example: 15.2
-          active_connections:
-            type: integer
-            minimum: 0
-            description: Number of active connections
-            example: 1250
-          queue_depth:
-            type: integer
-            minimum: 0
-            description: Number of queued requests
-            example: 5
-          error_rate_percent:
-            type: number
-            minimum: 0
-            maximum: 100
-            description: Error rate percentage
-            example: 0.1
-          version:
-            type: string
-            description: Service version
-            example: 1.2.3
-          environment:
-            type: string
-            enum:
-            - development
-            - staging
-            - production
-            description: Deployment environment
-            example: production
-          checks:
-            type: array
-            items:
-              $ref: '#/components/schemas/HealthCheck'
-            description: Detailed health checks
-    HealthCheck:
-      type: object
-      required:
-      - check_name
-      - status
-      - response_time_ms
-      properties:
-        check_name:
-          type: string
-          minLength: 1
-          maxLength: 50
-          description: Name of the health check
-          example: database_connection
-        status:
-          type: string
-          enum:
-          - pass
-          - warn
-          - fail
-          description: Health check result
-          example: pass
-        response_time_ms:
-          type: integer
-          minimum: 0
-          description: Check response time
-          example: 12
-        message:
-          type: string
-          maxLength: 200
-          description: Check result message
-          example: Database connection successful
-        details:
-          type: object
-          description: Additional check details
-          example:
-            connection_pool_size: 10
-            active_connections: 3
-    NotificationQueueEntity:
-      allOf:
-      - $ref: '#/components/schemas/InfrastructureEntity'
-      - type: object
-        required:
-        - notification_type
-        - recipient_id
-        - content
-        - priority
-        - status
-        properties:
-          notification_type:
-            type: string
-            enum:
-            - email
-            - push
-            - in_game
-            - sms
-            - webhook
-            description: Type of notification
-            example: email
-          recipient_id:
-            type: string
-            format: uuid
-            description: User receiving the notification
-            example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
-          recipient_contact:
-            type: string
-            description: Contact info (email, phone, etc.)
-            example: user@necpgame.com
-          content:
-            type: object
-            description: Notification content
-            required:
-            - subject
-            - body
-            properties:
-              subject:
-                type: string
-                minLength: 1
-                maxLength: 100
-                description: Notification subject/title
-                example: Quest Completed!
-              body:
-                type: string
-                minLength: 1
-                maxLength: 2000
-                description: Notification body/content
-                example: Congratulations! You have completed the 'Corporate Espionage'
-                  quest.
-              template_id:
-                type: string
-                description: Template used for notification
-                example: quest_completion_v2
-          priority:
-            type: string
-            enum:
-            - low
-            - normal
-            - high
-            - critical
-            description: Notification priority
-            example: normal
-          status:
-            type: string
-            enum:
-            - queued
-            - processing
-            - sent
-            - delivered
-            - failed
-            - cancelled
-            description: Delivery status
-            example: queued
-          scheduled_for:
-            type: string
-            format: date-time
-            description: When to send notification (null = immediate)
-            example: '2024-01-15T16:00:00Z'
-          sent_at:
-            type: string
-            format: date-time
-            description: When notification was sent
-            example: '2024-01-15T15:45:00Z'
-          delivered_at:
-            type: string
-            format: date-time
-            description: When notification was delivered
-            example: '2024-01-15T15:45:02Z'
-          retry_count:
-            type: integer
-            minimum: 0
-            description: Number of delivery attempts
-            example: 0
-          max_retries:
-            type: integer
-            minimum: 0
-            maximum: 5
-            description: Maximum retry attempts
-            example: 3
-          error_message:
-            type: string
-            description: Delivery error message
-            example: SMTP server timeout
-          metadata:
-            type: object
-            description: Additional notification data
-            properties:
-              campaign_id:
-                type: string
-                description: Marketing campaign ID
-                example: quest_reminder_2024
-              source_service:
-                type: string
-                description: Service that triggered notification
-                example: quest-service
-              user_preferences:
-                type: object
-                description: User's notification preferences
-                example:
-                  email_enabled: true
-                  push_enabled: false
-    GameEntity:
-      type: object
-      required:
-      - id
-      - created_at
-      - updated_at
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: Unique identifier for game entity
-          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
-        created_at:
-          type: string
-          format: date-time
-          description: Entity creation timestamp
-          example: '2024-01-15T10:30:00Z'
-        updated_at:
-          type: string
-          format: date-time
-          description: Last modification timestamp
-          example: '2024-01-15T14:20:00Z'
-        version:
-          type: integer
-          minimum: 1
-          description: Optimistic locking version for concurrent operations
-          example: 1
-    CharacterStats:
-      type: object
-      required:
-      - health
-      - stamina
-      - strength
-      - agility
-      - intelligence
-      - charisma
-      properties:
-        health:
-          type: integer
-          minimum: 0
-          maximum: 1000
-          description: Current health points
-          example: 850
-        max_health:
-          type: integer
-          minimum: 1
-          maximum: 1000
-          description: Maximum health points
-          example: 900
-        stamina:
-          type: integer
-          minimum: 0
-          maximum: 500
-          description: Current stamina points
-          example: 320
-        max_stamina:
-          type: integer
-          minimum: 1
-          maximum: 500
-          description: Maximum stamina points
-          example: 350
-        strength:
-          type: integer
-          minimum: 1
-          maximum: 100
-          description: Physical strength attribute
-          example: 75
-        agility:
-          type: integer
-          minimum: 1
-          maximum: 100
-          description: Speed and reflexes attribute
-          example: 68
-        intelligence:
-          type: integer
-          minimum: 1
-          maximum: 100
-          description: Mental acuity attribute
-          example: 82
-        charisma:
-          type: integer
-          minimum: 1
-          maximum: 100
-          description: Social influence attribute
-          example: 45
-        perception:
-          type: integer
-          minimum: 1
-          maximum: 100
-          description: Awareness and detection attribute
-          example: 71
-        luck:
-          type: integer
-          minimum: 1
-          maximum: 100
-          description: Fortune and probability modifier
-          example: 33
-    CombatActionEntity:
-      allOf:
-      - $ref: '#/components/schemas/GameEntity'
-      - type: object
-        required:
-        - action_type
-        - source_character_id
-        - target_character_id
-        - damage_dealt
-        properties:
-          action_type:
-            type: string
-            enum:
-            - attack
-            - defend
-            - ability
-            - item
-            - flee
-            description: Type of combat action
-            example: attack
-          source_character_id:
-            type: string
-            format: uuid
-            description: Character performing the action
-            example: f47ac10b-58cc-4372-a567-0e02b2c3d479
-          target_character_id:
-            type: string
-            format: uuid
-            description: Character receiving the action
-            example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
-          damage_dealt:
-            type: integer
-            minimum: 0
-            description: Damage points inflicted
-            example: 145
-          accuracy_roll:
-            type: integer
-            minimum: 0
-            maximum: 100
-            description: Accuracy percentage for the action
-            example: 87
-          critical_hit:
-            type: boolean
-            description: Whether this was a critical hit
-            example: false
-          status_effects:
-            type: array
-            items:
-              $ref: '#/components/schemas/StatusEffect'
-            description: Status effects applied by this action
-    StatusEffect:
-      type: object
-      required:
-      - effect_type
-      - duration
-      - potency
-      properties:
-        effect_type:
-          type: string
-          enum:
-          - poison
-          - bleed
-          - stun
-          - buff_strength
-          - buff_agility
-          - heal_over_time
-          - damage_over_time
-          description: Type of status effect
-          example: buff_strength
-        duration:
-          type: integer
-          minimum: 0
-          description: Effect duration in combat rounds
-          example: 3
-        potency:
-          type: integer
-          minimum: 1
-          maximum: 100
-          description: Effect strength percentage
-          example: 25
-        source:
-          type: string
-          enum:
-          - ability
-          - item
-          - environment
-          - cyberware
-          description: Source of the effect
-          example: ability
-    AbilityEntity:
-      allOf:
-      - $ref: '#/components/schemas/GameEntity'
-      - type: object
-        required:
-        - name
-        - ability_type
-        - cooldown
-        - mana_cost
-        properties:
-          name:
-            type: string
-            minLength: 1
-            maxLength: 50
-            description: Ability name
-            example: Neural Overload
-          ability_type:
-            type: string
-            enum:
-            - offensive
-            - defensive
-            - healing
-            - utility
-            - passive
-            description: Category of ability
-            example: offensive
-          cooldown:
-            type: integer
-            minimum: 0
-            description: Cooldown in combat rounds
-            example: 3
-          mana_cost:
-            type: integer
-            minimum: 0
-            description: Mana/stamina cost to use
-            example: 45
-          damage_type:
-            type: string
-            enum:
-            - physical
-            - energy
-            - chemical
-            - cyber
-            - elemental
-            description: Type of damage dealt
-            example: cyber
-          range:
-            type: integer
-            minimum: 0
-            description: Ability range in game units
-            example: 25
-          area_effect:
-            type: boolean
-            description: Whether ability affects multiple targets
-            example: false
-    InventoryItemEntity:
-      allOf:
-      - $ref: '#/components/schemas/GameEntity'
-      - type: object
-        required:
-        - item_id
-        - quantity
-        - durability
-        properties:
-          item_id:
-            type: string
-            format: uuid
-            description: Reference to item definition
-            example: b2c3d4e5-f6g7-8901-bcde-f23456789012
-          quantity:
-            type: integer
-            minimum: 1
-            description: Number of items in stack
-            example: 5
-          durability:
-            type: integer
-            minimum: 0
-            maximum: 100
-            description: Item condition percentage
-            example: 87
-          equipped:
-            type: boolean
-            description: Whether item is currently equipped
-            example: true
-          enhancement_level:
-            type: integer
-            minimum: 0
-            maximum: 10
-            description: Item enhancement/modification level
-            example: 2
-    QuestEntity:
-      allOf:
-      - $ref: '#/components/schemas/GameEntity'
-      - type: object
-      - type: object
-        required:
-        - title
-        - description
-        - quest_type
-        - status
-        - objectives
-        properties:
-          title:
-            type: string
-            minLength: 1
-            maxLength: 100
-            description: Quest title
-            example: Corporate Espionage
-          description:
-            type: string
-            minLength: 1
-            maxLength: 1000
-            description: Detailed quest description
-            example: Infiltrate Arasaka corporation headquarters and extract sensitive
-              data...
-          quest_type:
-            type: string
-            enum:
-            - main_story
-            - side_quest
-            - daily
-            - event
-            - faction
-            description: Category of quest
-            example: faction
-          status:
-            type: string
-            enum:
-            - available
-            - active
-            - completed
-            - failed
-            - expired
-            description: Current quest status
-            example: active
-          objectives:
-            type: array
-            items:
-              $ref: '#/components/schemas/QuestObjective'
-            minItems: 1
-            description: Quest completion objectives
-          rewards:
-            $ref: '#/components/schemas/QuestRewards'
-          time_limit:
-            type: integer
-            minimum: 0
-            description: Time limit in hours (0 = no limit)
-            example: 168
-          faction_id:
-            type: string
-            format: uuid
-            description: Associated faction
-            example: c3d4e5f6-g7h8-9012-cdef-345678901234
-    QuestObjective:
-      type: object
-      required:
-      - description
-      - objective_type
-      - current_progress
-      - target_progress
-      properties:
-        description:
-          type: string
-          minLength: 1
-          maxLength: 200
-          description: Objective description
-          example: Hack 3 corporate terminals
-        objective_type:
-          type: string
-          enum:
-          - kill
-          - collect
-          - deliver
-          - explore
-          - interact
-          - hack
-          - craft
-          description: Type of objective
-          example: hack
-        current_progress:
-          type: integer
-          minimum: 0
-          description: Current completion progress
-          example: 2
-        target_progress:
-          type: integer
-          minimum: 1
-          description: Required completion target
-          example: 3
-    QuestRewards:
-      type: object
-      properties:
-        experience:
-          type: integer
-          minimum: 0
-          description: Experience points reward
-          example: 2500
-        currency:
-          type: integer
-          minimum: 0
-          description: Currency reward
-          example: 15000
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/InventoryItemEntity'
-          description: Item rewards
-        reputation:
-          type: integer
-          minimum: -1000
-          maximum: 1000
-          description: Faction reputation change
-          example: 150
+  responses: {}
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

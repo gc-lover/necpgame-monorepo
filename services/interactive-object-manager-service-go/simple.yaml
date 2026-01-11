@@ -1,0 +1,192 @@
+openapi: 3.0.3
+info:
+  title: Interactive Object Manager Service API
+  description: Interactive Object Manager API
+  version: "1.0.0"
+
+servers:
+  - url: http://localhost:8080/api/v1/interactive-object-manager
+    description: Local development
+
+security:
+  - BearerAuth: []
+
+paths:
+  /health:
+    get:
+      operationId: interactiveObjectManagerHealthCheck
+      summary: Basic health check
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /objects:
+    get:
+      operationId: listInteractiveObjects
+      summary: List interactive objects
+      parameters:
+        - name: zone_id
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of objects
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  objects:
+                    type: array
+                    items:
+                      type: object
+                  total:
+                    type: integer
+
+    post:
+      operationId: createInteractiveObject
+      summary: Create object
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - object_type
+                - zone_id
+              properties:
+                object_type:
+                  type: string
+                zone_id:
+                  type: string
+                position:
+                  type: object
+      responses:
+        '201':
+          description: Object created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  object_type:
+                    type: string
+
+  /objects/{objectId}:
+    get:
+      operationId: getInteractiveObject
+      summary: Get object
+      parameters:
+        - name: objectId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Object details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  object_type:
+                    type: string
+        '404':
+          description: Object not found
+
+    put:
+      operationId: updateInteractiveObject
+      summary: Update object
+      parameters:
+        - name: objectId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+      responses:
+        '200':
+          description: Object updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+
+    delete:
+      operationId: deleteInteractiveObject
+      summary: Delete object
+      parameters:
+        - name: objectId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Object deleted
+
+components:
+  schemas:
+    InteractiveObject:
+      type: object
+      properties:
+        id:
+          type: string
+        object_type:
+          type: string
+        zone_id:
+          type: string
+        position:
+          type: object
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer

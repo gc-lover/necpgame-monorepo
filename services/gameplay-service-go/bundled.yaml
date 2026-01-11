@@ -3,8 +3,9 @@ info:
   title: Gameplay Service API - Enterprise-Grade Domain Service
   description: '**Enterprise-Grade Gameplay API for NECPGAME**
 
-    This API manages gameplay systems including affixes and difficulty rating, providing
-    comprehensive game mechanics, player skill assessment, and dynamic content adaptation.
+    This API manages gameplay systems including affixes, difficulty rating, and combat
+    abilities, providing comprehensive game mechanics, player skill assessment, dynamic
+    content adaptation, and advanced combat systems.
 
     ## Key Features
 
@@ -12,8 +13,11 @@ info:
     - **Rotation System**: Automated weekly affix rotation with manual triggers -
     **Instance Application**: Dynamic affix application to dungeon/raid instances
     - **Difficulty Rating**: Player skill assessment, content difficulty rating, and
-    automatic adjustments - **Analytics**: Comprehensive telemetry and performance
-    metrics - **Real-time Effects**: WebSocket integration for live game effects
+    automatic adjustments - **Combat Abilities**: Complete ability system with catalog,
+    loadouts, activation, cooldowns, synergies - **Cyberpsychosis Tracking**: Real-time
+    tracking of cybernetic implant effects - **Analytics**: Comprehensive telemetry
+    and performance metrics - **Real-time Effects**: WebSocket integration for live
+    game effects
 
     ## Domain Purpose
 
@@ -86,658 +90,72 @@ tags:
   description: System health and performance monitoring
 - name: Difficulty Rating
   description: Player skill rating, content difficulty assessment, and automatic adjustments
-- name: Difficulty Rating
-  description: Player skill rating, content difficulty assessment, and automatic adjustments
+- name: Combat Abilities
+  description: Ability catalog, loadouts, activation, cooldowns, and synergies management
+- name: Ability Catalog
+  description: Ability catalog browsing and management operations
+- name: Ability Loadouts
+  description: Player ability loadout configuration and management
+- name: Ability Activation
+  description: Real-time ability activation and execution
+- name: Ability Cooldowns
+  description: Cooldown management and synchronization
+- name: Ability Synergies
+  description: Synergy calculation and application
+- name: Cyberpsychosis
+  description: Cyberpsychosis tracking and management
 paths:
   /health:
-    get:
-      summary: Health check endpoint
-      description: Returns service health status and basic metrics
-      tags:
-      - Health Monitoring
-      responses:
-        '200':
-          description: Service is healthy
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HealthResponse'
-        '503':
-          description: Service is unhealthy
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+    $ref: ./paths/health.yaml#/paths/~1health
   /api/v1/gameplay/affixes/active:
-    get:
-      summary: Get active affixes for current week
-      description: Returns list of currently active affixes in the rotation system
-      tags:
-      - Affix Management
-      responses:
-        '200':
-          description: List of active affixes
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ActiveAffixesResponse'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+    $ref: ./paths/api-v1-gameplay-affixes-active.yaml#/paths/~1api~1v1~1gameplay~1affixes~1active
   /api/v1/gameplay/affixes/{id}:
-    get:
-      summary: Get affix details
-      description: Returns detailed information about a specific affix
-      tags:
-      - Affix Management
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Affix UUID
-      responses:
-        '200':
-          description: Affix details
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AffixDetailsResponse'
-        '404':
-          description: Affix not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+    $ref: ./paths/api-v1-gameplay-affixes-{id}.yaml#/paths/~1api~1v1~1gameplay~1affixes~1{id}
   /api/v1/gameplay/instances/{instanceId}/affixes:
-    get:
-      summary: Get affixes for instance
-      description: Returns affixes applied to a specific game instance
-      tags:
-      - Instance Operations
-      parameters:
-      - name: instanceId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Instance UUID
-      responses:
-        '200':
-          description: Instance affixes
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/InstanceAffixesResponse'
-        '404':
-          description: Instance not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+    $ref: ./paths/api-v1-gameplay-instances-{instanceId}-affixes.yaml#/paths/~1api~1v1~1gameplay~1instances~1{instanceId}~1affixes
   /api/v1/gameplay/affixes/rotation/current:
-    get:
-      summary: Get current rotation
-      description: Returns information about the current affix rotation
-      tags:
-      - Rotation System
-      responses:
-        '200':
-          description: Current rotation details
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CurrentRotationResponse'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+    $ref: ./paths/api-v1-gameplay-affixes-rotation-current.yaml#/paths/~1api~1v1~1gameplay~1affixes~1rotation~1current
   /api/v1/gameplay/affixes/rotation/history:
-    get:
-      summary: Get rotation history
-      description: Returns history of past affix rotations
-      tags:
-      - Rotation System
-      parameters:
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 50
-          default: 10
-        description: Number of rotations to return
-      - name: offset
-        in: query
-        schema:
-          type: integer
-          minimum: 0
-          default: 0
-        description: Offset for pagination
-      responses:
-        '200':
-          description: Rotation history
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RotationHistoryResponse'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+    $ref: ./paths/api-v1-gameplay-affixes-rotation-history.yaml#/paths/~1api~1v1~1gameplay~1affixes~1rotation~1history
   /api/v1/gameplay/affixes/rotation/trigger:
-    post:
-      summary: Trigger manual rotation
-      description: Manually trigger a new affix rotation (admin only)
-      tags:
-      - Rotation System
-      security:
-      - bearerAuth: []
-      responses:
-        '200':
-          description: Rotation triggered successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RotationTriggerResponse'
-        '403':
-          description: Insufficient permissions
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+    $ref: ./paths/api-v1-gameplay-affixes-rotation-trigger.yaml#/paths/~1api~1v1~1gameplay~1affixes~1rotation~1trigger
   /api/v1/gameplay/affixes:
-    post:
-      summary: Create new affix
-      description: Create a new affix in the system (admin only)
-      tags:
-      - Affix Management
-      security:
-      - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateAffixRequest'
-      responses:
-        '201':
-          description: Affix created successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Affix'
-        '400':
-          description: Invalid request data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '403':
-          description: Insufficient permissions
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-    get:
-      summary: List affixes
-      description: Get paginated list of all affixes (admin only)
-      tags:
-      - Affix Management
-      security:
-      - bearerAuth: []
-      parameters:
-      - name: category
-        in: query
-        schema:
-          type: string
-          enum:
-          - combat
-          - environmental
-          - debuff
-          - defensive
-        description: Filter by category
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 20
-        description: Number of items per page
-      - name: offset
-        in: query
-        schema:
-          type: integer
-          minimum: 0
-          default: 0
-        description: Offset for pagination
-      responses:
-        '200':
-          description: List of affixes
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ListAffixesResponse'
-        '403':
-          description: Insufficient permissions
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+    $ref: ./paths/api-v1-gameplay-affixes.yaml#/paths/~1api~1v1~1gameplay~1affixes
   /api/v1/admin/gameplay/affixes/{id}:
-    put:
-      summary: Update affix
-      description: Update an existing affix configuration (admin only)
-      tags:
-      - Affix Management
-      security:
-      - bearerAuth: []
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Affix UUID
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateAffixRequest'
-      responses:
-        '200':
-          description: Affix updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Affix'
-        '400':
-          description: Invalid request data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '403':
-          description: Insufficient permissions
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Affix not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-    delete:
-      summary: Delete affix
-      description: Delete an affix from the system (admin only)
-      tags:
-      - Affix Management
-      security:
-      - bearerAuth: []
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Affix UUID
-      responses:
-        '204':
-          description: Affix deleted successfully
-        '403':
-          description: Insufficient permissions
-          content:
-            application/json:
-              schema: null
-              $ref: '#/components/schemas/Error'
-        '404':
-          description: Affix not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+    $ref: ./paths/api-v1-admin-gameplay-affixes-{id}.yaml#/paths/~1api~1v1~1admin~1gameplay~1affixes~1{id}
   /api/v1/analytics/affixes/popularity:
-    get:
-      summary: Get affix popularity metrics
-      description: Returns popularity statistics for affixes
-      tags:
-      - Analytics
-      security:
-      - bearerAuth: []
-      parameters:
-      - name: period
-        in: query
-        schema:
-          type: string
-          enum:
-          - week
-          - month
-          - quarter
-          default: week
-        description: Time period for analysis
-      responses:
-        '200':
-          description: Popularity metrics
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PopularityMetricsResponse'
-        '403':
-          description: Insufficient permissions
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+    $ref: ./paths/api-v1-analytics-affixes-popularity.yaml#/paths/~1api~1v1~1analytics~1affixes~1popularity
   /api/v1/analytics/affixes/difficulty:
-    get:
-      summary: Get difficulty metrics
-      description: Returns difficulty analysis for affixes
-      tags:
-      - Analytics
-      security:
-      - bearerAuth: []
-      parameters:
-      - name: period
-        in: query
-        schema:
-          type: string
-          enum:
-          - week
-          - month
-          - quarter
-          default: week
-        description: Time period for analysis
-      responses:
-        '200':
-          description: Difficulty metrics
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DifficultyMetricsResponse'
-        '403':
-          description: Insufficient permissions
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+    $ref: ./paths/api-v1-analytics-affixes-difficulty.yaml#/paths/~1api~1v1~1analytics~1affixes~1difficulty
   /api/v1/analytics/affixes/combinations:
-    get:
-      summary: Get combination analysis
-      description: Returns analysis of affix combinations and their success rates
-      tags:
-      - Analytics
-      security:
-      - bearerAuth: []
-      parameters:
-      - name: min_combinations
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 4
-          default: 2
-        description: Minimum number of affixes in combination
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 50
-          default: 20
-        description: Number of combinations to return
-      responses:
-        '200':
-          description: Combination analysis
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CombinationAnalysisResponse'
-        '403':
-          description: Insufficient permissions
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+    $ref: ./paths/api-v1-analytics-affixes-combinations.yaml#/paths/~1api~1v1~1analytics~1affixes~1combinations
   /api/v1/gameplay/difficulty-rating/player/{playerId}:
-    get:
-      summary: Get player skill rating
-      description: Returns the current skill rating for a specific player based on
-        their gameplay history and performance
-      tags:
-      - Difficulty Rating
-      parameters:
-      - name: playerId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Player UUID
-      responses:
-        '200':
-          description: Player skill rating information
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  player_id:
-                    type: string
-                    format: uuid
-                  skill_rating:
-                    type: number
-                    format: float
-        '404':
-          description: Player not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+    $ref: ./paths/api-v1-gameplay-difficulty-rating-player-{playerId}.yaml#/paths/~1api~1v1~1gameplay~1difficulty-rating~1player~1{playerId}
   /api/v1/gameplay/difficulty-rating/content/{contentId}:
-    get:
-      summary: Get content difficulty rating
-      description: Returns the current difficulty rating for specific game content
-        (dungeon, raid, mission)
-      tags:
-      - Difficulty Rating
-      parameters:
-      - name: contentId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Content UUID
-      responses:
-        '200':
-          description: Content difficulty rating information
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ContentDifficultyRatingResponse'
-        '404':
-          description: Content not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+    $ref: ./paths/api-v1-gameplay-difficulty-rating-content-{contentId}.yaml#/paths/~1api~1v1~1gameplay~1difficulty-rating~1content~1{contentId}
   /api/v1/gameplay/difficulty-rating/recommendations/{playerId}:
-    get:
-      summary: Get difficulty recommendations for player
-      description: Returns recommended difficulty levels and content suggestions based
-        on player's skill rating
-      tags:
-      - Difficulty Rating
-      parameters:
-      - name: playerId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Player UUID
-      - name: contentType
-        in: query
-        required: false
-        schema:
-          type: string
-          enum:
-          - dungeon
-          - raid
-          - mission
-          - pvp
-        description: Filter recommendations by content type
-      responses:
-        '200':
-          description: Difficulty recommendations for the player
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DifficultyRecommendationsResponse'
-        '404':
-          description: Player not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+    $ref: ./paths/api-v1-gameplay-difficulty-rating-recommendations-{playerId}.yaml#/paths/~1api~1v1~1gameplay~1difficulty-rating~1recommendations~1{playerId}
   /api/v1/gameplay/difficulty-rating/adjust:
-    post:
-      summary: Adjust difficulty for content instance
-      description: Automatically adjusts difficulty modifiers for a specific content
-        instance based on player team composition
-      tags:
-      - Difficulty Rating
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DifficultyAdjustmentRequest'
-      responses:
-        '200':
-          description: Difficulty adjustment applied successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DifficultyAdjustmentResponse'
-        '400':
-          description: Invalid request parameters
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Content instance or players not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+    $ref: ./paths/api-v1-gameplay-difficulty-rating-adjust.yaml#/paths/~1api~1v1~1gameplay~1difficulty-rating~1adjust
+  /api/v1/gameplay/combat/abilities/catalog:
+    $ref: ./paths/api-v1-gameplay-combat-abilities-catalog.yaml#/paths/~1api~1v1~1gameplay~1combat~1abilities~1catalog
+  /api/v1/gameplay/combat/abilities/{abilityId}:
+    $ref: ./paths/api-v1-gameplay-combat-abilities-{abilityId}.yaml#/paths/~1api~1v1~1gameplay~1combat~1abilities~1{abilityId}
+  /api/v1/gameplay/combat/abilities/loadouts:
+    $ref: ./paths/api-v1-gameplay-combat-abilities-loadouts.yaml#/paths/~1api~1v1~1gameplay~1combat~1abilities~1loadouts
+  /api/v1/gameplay/combat/abilities/activate:
+    $ref: ./paths/api-v1-gameplay-combat-abilities-activate.yaml#/paths/~1api~1v1~1gameplay~1combat~1abilities~1activate
+  /api/v1/gameplay/combat/abilities/cooldowns:
+    $ref: ./paths/api-v1-gameplay-combat-abilities-cooldowns.yaml#/paths/~1api~1v1~1gameplay~1combat~1abilities~1cooldowns
+  /api/v1/gameplay/combat/abilities/synergies:
+    $ref: ./paths/api-v1-gameplay-combat-abilities-synergies.yaml#/paths/~1api~1v1~1gameplay~1combat~1abilities~1synergies
+  /api/v1/gameplay/combat/abilities/synergies/apply:
+    $ref: ./paths/api-v1-gameplay-combat-abilities-synergies-apply.yaml#/paths/~1api~1v1~1gameplay~1combat~1abilities~1synergies~1apply
+  /api/v1/gameplay/combat/abilities/cyberpsychosis:
+    $ref: ./paths/api-v1-gameplay-combat-abilities-cyberpsychosis.yaml#/paths/~1api~1v1~1gameplay~1combat~1abilities~1cyberpsychosis
+  /api/v1/gameplay/combat/abilities/metrics:
+    $ref: ./paths/api-v1-gameplay-combat-abilities-metrics.yaml#/paths/~1api~1v1~1gameplay~1combat~1abilities~1metrics
 components:
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
   schemas:
     Error:
       type: object
@@ -1221,3 +639,722 @@ components:
           type: string
           format: date-time
           description: When the rating was last updated
+    Ability:
+      type: object
+      required:
+      - id
+      - name
+      - description
+      - category
+      - source
+      - level_requirement
+      - cooldown_seconds
+      - energy_cost
+      - is_active
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        name:
+          type: string
+          maxLength: 100
+          example: Quick Hack
+        description:
+          type: string
+          maxLength: 500
+          example: Instantly hack an enemy device
+        category:
+          type: string
+          enum:
+          - combat
+          - stealth
+          - hacking
+          - cyberware
+          - weapon
+          - support
+          example: hacking
+        source:
+          type: string
+          enum:
+          - equipment
+          - implants
+          - progression
+          - cyberdeck
+          - purchased
+          example: cyberdeck
+        level_requirement:
+          type: integer
+          minimum: 1
+          maximum: 100
+          example: 15
+        cooldown_seconds:
+          type: integer
+          minimum: 0
+          maximum: 3600
+          example: 30
+        energy_cost:
+          type: integer
+          minimum: 0
+          maximum: 1000
+          example: 50
+        is_active:
+          type: boolean
+          example: true
+        icon_url:
+          type: string
+          format: uri
+          example: https://cdn.necpgame.com/abilities/quick-hack.png
+        effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/AbilityEffect'
+          maxItems: 10
+        synergies:
+          type: array
+          items:
+            $ref: '#/components/schemas/Synergy'
+          maxItems: 5
+    AbilityEffect:
+      type: object
+      required:
+      - type
+      - target
+      - duration_seconds
+      - value
+      properties:
+        type:
+          type: string
+          enum:
+          - damage
+          - heal
+          - buff
+          - debuff
+          - stun
+          - slow
+          - stealth
+          - hack
+          example: damage
+        target:
+          type: string
+          enum:
+          - self
+          - enemy
+          - ally
+          - area
+          example: enemy
+        duration_seconds:
+          type: integer
+          minimum: 0
+          maximum: 300
+          example: 10
+        value:
+          type: number
+          format: float
+          example: 150.5
+        conditions:
+          type: object
+          additionalProperties: true
+    Synergy:
+      type: object
+      required:
+      - ability_ids
+      - effect_type
+      - multiplier
+      - is_active
+      properties:
+        ability_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 2
+          maxItems: 5
+          example:
+          - 550e8400-e29b-41d4-a716-446655440001
+          - 550e8400-e29b-41d4-a716-446655440002
+        effect_type:
+          type: string
+          enum:
+          - damage_boost
+          - cooldown_reduction
+          - energy_efficiency
+          - critical_chance
+          example: damage_boost
+        multiplier:
+          type: number
+          format: float
+          minimum: 1.0
+          maximum: 5.0
+          example: 1.25
+        is_active:
+          type: boolean
+          example: true
+    Loadout:
+      type: object
+      required:
+      - id
+      - name
+      - player_id
+      - slots
+      - created_at
+      - is_active
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440003
+        name:
+          type: string
+          maxLength: 50
+          example: Stealth Assassin
+        player_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440004
+        slots:
+          type: object
+          properties:
+            q_slot:
+              $ref: '#/components/schemas/AbilitySlot'
+            e_slot:
+              $ref: '#/components/schemas/AbilitySlot'
+            r_slot:
+              $ref: '#/components/schemas/AbilitySlot'
+            passive_1:
+              $ref: '#/components/schemas/AbilitySlot'
+            passive_2:
+              $ref: '#/components/schemas/AbilitySlot'
+            hacking_1:
+              $ref: '#/components/schemas/AbilitySlot'
+            hacking_2:
+              $ref: '#/components/schemas/AbilitySlot'
+        created_at:
+          type: string
+          format: date-time
+          example: '2025-01-05T10:00:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          example: '2025-01-05T12:00:00Z'
+        is_active:
+          type: boolean
+          example: true
+    AbilitySlot:
+      type: object
+      properties:
+        ability_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        equipped_at:
+          type: string
+          format: date-time
+          example: '2025-01-05T10:00:00Z'
+    CooldownState:
+      type: object
+      required:
+      - ability_id
+      - remaining_seconds
+      - total_cooldown
+      - is_ready
+      properties:
+        ability_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        remaining_seconds:
+          type: integer
+          minimum: 0
+          example: 15
+        total_cooldown:
+          type: integer
+          minimum: 0
+          example: 30
+        is_ready:
+          type: boolean
+          example: false
+        last_used_at:
+          type: string
+          format: date-time
+          example: '2025-01-05T10:00:00Z'
+    CyberpsychosisState:
+      type: object
+      required:
+      - player_id
+      - current_level
+      - max_level
+      - effects
+      - last_updated
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440004
+        current_level:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          example: 25.5
+        max_level:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          example: 80.0
+        effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/CyberpsychosisEffect'
+          maxItems: 10
+        last_updated:
+          type: string
+          format: date-time
+          example: '2025-01-05T10:00:00Z'
+    CyberpsychosisEffect:
+      type: object
+      required:
+      - type
+      - severity
+      - description
+      - is_active
+      properties:
+        type:
+          type: string
+          enum:
+          - hallucinations
+          - reduced_accuracy
+          - increased_damage
+          - random_effects
+          - system_crash
+          example: hallucinations
+        severity:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          example: 0.3
+        description:
+          type: string
+          maxLength: 200
+          example: Visual hallucinations affecting target identification
+        is_active:
+          type: boolean
+          example: true
+    AbilityCatalogResponse:
+      type: object
+      required:
+      - abilities
+      - pagination
+      properties:
+        abilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/Ability'
+        pagination:
+          type: object
+          required:
+          - total
+          - limit
+          - offset
+          - page
+          properties:
+            total:
+              type: integer
+              minimum: 0
+              example: 150
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 100
+              example: 20
+            offset:
+              type: integer
+              minimum: 0
+              example: 0
+            page:
+              type: integer
+              minimum: 1
+              example: 1
+    AbilityDetailsResponse:
+      type: object
+      required:
+      - ability
+      properties:
+        ability:
+          $ref: '#/components/schemas/Ability'
+    PlayerLoadoutsResponse:
+      type: object
+      required:
+      - loadouts
+      properties:
+        loadouts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Loadout'
+          maxItems: 10
+    LoadoutResponse:
+      type: object
+      required:
+      - loadout
+      properties:
+        loadout:
+          $ref: '#/components/schemas/Loadout'
+    CreateLoadoutRequest:
+      type: object
+      required:
+      - name
+      - slots
+      properties:
+        name:
+          type: string
+          maxLength: 50
+          example: Stealth Assassin
+        slots:
+          type: object
+          properties:
+            q_slot:
+              $ref: '#/components/schemas/AbilitySlot'
+            e_slot:
+              $ref: '#/components/schemas/AbilitySlot'
+            r_slot:
+              $ref: '#/components/schemas/AbilitySlot'
+            passive_1:
+              $ref: '#/components/schemas/AbilitySlot'
+            passive_2:
+              $ref: '#/components/schemas/AbilitySlot'
+            hacking_1:
+              $ref: '#/components/schemas/AbilitySlot'
+            hacking_2:
+              $ref: '#/components/schemas/AbilitySlot'
+    ActivateAbilityRequest:
+      type: object
+      required:
+      - ability_id
+      - target_info
+      properties:
+        ability_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        target_info:
+          type: object
+          properties:
+            target_type:
+              type: string
+              enum:
+              - self
+              - enemy
+              - ally
+              - position
+              example: enemy
+            target_id:
+              type: string
+              format: uuid
+              example: 550e8400-e29b-41d4-a716-446655440005
+            position:
+              type: object
+              properties:
+                x:
+                  type: number
+                  format: float
+                  example: 100.5
+                y:
+                  type: number
+                  format: float
+                  example: 200.3
+                z:
+                  type: number
+                  format: float
+                  example: 50.0
+    ActivationResponse:
+      type: object
+      required:
+      - success
+      - ability_id
+      - activation_id
+      - effects_applied
+      properties:
+        success:
+          type: boolean
+          example: true
+        ability_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        activation_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440006
+        effects_applied:
+          type: array
+          items:
+            $ref: '#/components/schemas/AbilityEffect'
+        cooldown_started:
+          type: integer
+          description: Cooldown in seconds
+          example: 30
+    CheckCooldownsRequest:
+      type: object
+      required:
+      - ability_ids
+      properties:
+        ability_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          maxItems: 20
+          example:
+          - 550e8400-e29b-41d4-a716-446655440001
+          - 550e8400-e29b-41d4-a716-446655440002
+    CooldownsResponse:
+      type: object
+      required:
+      - cooldowns
+      properties:
+        cooldowns:
+          type: array
+          items:
+            $ref: '#/components/schemas/CooldownState'
+    SynergiesResponse:
+      type: object
+      required:
+      - synergies
+      - active_synergies
+      properties:
+        synergies:
+          type: array
+          items:
+            $ref: '#/components/schemas/Synergy'
+        active_synergies:
+          type: array
+          items:
+            type: string
+            format: uuid
+          example:
+          - 550e8400-e29b-41d4-a716-446655440007
+    ApplySynergyRequest:
+      type: object
+      required:
+      - synergy_id
+      properties:
+        synergy_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440007
+    SynergyResponse:
+      type: object
+      required:
+      - synergy
+      - applied_effects
+      properties:
+        synergy:
+          $ref: '#/components/schemas/Synergy'
+        applied_effects:
+          type: array
+          items:
+            type: string
+          example:
+          - damage_boost
+          - cooldown_reduction
+    CyberpsychosisResponse:
+      type: object
+      required:
+      - state
+      properties:
+        state:
+          $ref: '#/components/schemas/CyberpsychosisState'
+    UpdateCyberpsychosisRequest:
+      type: object
+      required:
+      - change_amount
+      - reason
+      properties:
+        change_amount:
+          type: number
+          format: float
+          minimum: -50
+          maximum: 50
+          example: 5.5
+        reason:
+          type: string
+          enum:
+          - ability_activation
+          - time_decay
+          - medical_treatment
+          - implant_removal
+          example: ability_activation
+        ability_id:
+          type: string
+          format: uuid
+          description: Required when reason is ability_activation
+          example: 550e8400-e29b-41d4-a716-446655440001
+    AbilityMetricsResponse:
+      type: object
+      required:
+      - period
+      - metrics
+      properties:
+        period:
+          type: string
+          enum:
+          - hour
+          - day
+          - week
+          - month
+          example: day
+        metrics:
+          type: array
+          items:
+            type: object
+            required:
+            - ability_id
+            - name
+            - usage_count
+            - success_rate
+            - avg_cooldown_efficiency
+            properties:
+              ability_id:
+                type: string
+                format: uuid
+                example: 550e8400-e29b-41d4-a716-446655440001
+              name:
+                type: string
+                example: Quick Hack
+              usage_count:
+                type: integer
+                minimum: 0
+                example: 1250
+              success_rate:
+                type: number
+                format: float
+                minimum: 0
+                maximum: 1
+                example: 0.87
+              avg_cooldown_efficiency:
+                type: number
+                format: float
+                minimum: 0
+                maximum: 1
+                example: 0.92
+              avg_damage_dealt:
+                type: number
+                format: float
+                example: 185.5
+    ContentDifficultyRatingResponse:
+      type: object
+      required:
+      - content_id
+      - difficulty_score
+      - player_ratings
+      properties:
+        content_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        difficulty_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          example: 75.5
+        player_ratings:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerSkillRatingResponse'
+          maxItems: 100
+    DifficultyRecommendationsResponse:
+      type: object
+      required:
+      - player_id
+      - recommendations
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        recommendations:
+          type: array
+          items:
+            type: object
+            required:
+            - content_id
+            - recommended_difficulty
+            - reason
+            properties:
+              content_id:
+                type: string
+                format: uuid
+                example: 550e8400-e29b-41d4-a716-446655440001
+              recommended_difficulty:
+                type: number
+                format: float
+                minimum: 0
+                maximum: 100
+                example: 85.0
+              reason:
+                type: string
+                example: Based on player's skill rating and recent performance
+          maxItems: 20
+    DifficultyAdjustmentRequest:
+      type: object
+      required:
+      - content_id
+      - adjustment_type
+      - adjustment_value
+      properties:
+        content_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        adjustment_type:
+          type: string
+          enum:
+          - absolute
+          - relative
+          - percentage
+          example: relative
+        adjustment_value:
+          type: number
+          format: float
+          example: 10.5
+        reason:
+          type: string
+          maxLength: 200
+          example: Player requested difficulty increase
+    DifficultyAdjustmentResponse:
+      type: object
+      required:
+      - content_id
+      - old_difficulty
+      - new_difficulty
+      - adjustment_applied
+      properties:
+        content_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        old_difficulty:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          example: 75.0
+        new_difficulty:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          example: 85.5
+        adjustment_applied:
+          type: boolean
+          example: true
+  responses: {}
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

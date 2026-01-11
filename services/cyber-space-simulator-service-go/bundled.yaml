@@ -1,0 +1,2699 @@
+openapi: 3.0.3
+info:
+  title: Cyber Space Simulator Service API
+  description: '**Enterprise-grade API for Cyber Space Simulator Service**
+
+
+    ## Domain Purpose
+
+    Digital reality engine managing cyberspace missions, ICE combat systems,
+
+    data manipulation frameworks, and consciousness transfer mechanics.
+
+
+    ## Performance Targets
+
+    - P99 Latency: <25ms for all endpoints (ultra-low latency requirement)
+
+    - Memory per Mission: <200MB baseline
+
+    - ICE Entities per Mission: 1000+ supported simultaneously
+
+    - Consciousness Transfers: 100+ concurrent
+
+    - Uptime: 99.9% SLA
+
+
+    ## Domain Inheritance
+
+    This service inherits from game-entities.yaml providing:
+
+    - Consistent base entity structure (id, timestamps, version) - НЕ ДУБЛИРУЕМ!
+
+    - Game-specific business entities (Player, Character, etc.)
+
+    - Optimistic locking for concurrent operations
+
+    - Strict typing with validation rules
+
+
+    ## Architecture Patterns
+
+    - Digital Reality Simulator with event-driven architecture
+
+    - Real-time synchronization (<25ms P99 target)
+
+    - Network topology generation and management
+
+    - ICE combat resolution with quantum-like processing
+
+    '
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Team
+    email: api@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+- url: https://api.necpgame.com/v1/cyber-space-simulator
+  description: Production environment
+- url: https://staging-api.necpgame.com/v1/cyber-space-simulator
+  description: Staging environment
+- url: http://localhost:8080/api/v1/cyber-space-simulator
+  description: Local development
+security:
+- BearerAuth: []
+tags:
+- name: Mission Management
+  description: Cyber mission lifecycle and state management
+- name: Network Topology
+  description: Dynamic cyberspace generation and navigation
+- name: ICE Combat
+  description: Digital entity battles and ICE barrier systems
+- name: Data Manipulation
+  description: Virtual object interactions and data operations
+- name: Consciousness Transfer
+  description: Mind upload mechanics and digital consciousness
+- name: Real-time Sync
+  description: Ultra-low latency synchronization
+- name: Event Sourcing
+  description: CQRS event store operations
+- name: Health Monitoring
+  description: Service health and performance monitoring
+- name: Administration
+  description: Administrative operations
+paths:
+  /health:
+    get:
+      operationId: cyberSpaceSimulatorHealthCheck
+      summary: Basic health check
+      description: Returns service health status
+      tags:
+      - Health Monitoring
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - status
+                - timestamp
+                properties:
+                  status:
+                    type: string
+                    enum:
+                    - ok
+                    - degraded
+                    - critical
+                    example: ok
+                    description: Current health status
+                  message:
+                    type: string
+                    example: Service is healthy
+                    description: Human-readable status message
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2024-01-15T10:30:00Z'
+                    description: Time when health check was performed
+                  version:
+                    type: string
+                    example: 1.0.0
+                    description: Service version
+                  uptime:
+                    type: integer
+                    example: 3600
+                    description: Service uptime in seconds
+                  checks:
+                    type: object
+                    description: Detailed health checks
+                    additionalProperties:
+                      type: object
+                      properties:
+                        status:
+                          type: string
+                          enum:
+                          - ok
+                          - degraded
+                          - critical
+                        message:
+                          type: string
+                        response_time:
+                          type: integer
+                          description: Response time in milliseconds
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/ServiceUnavailable
+  /health/detailed:
+    get:
+      operationId: cyberSpaceSimulatorDetailedHealthCheck
+      summary: Detailed health check with mission metrics
+      description: Returns comprehensive health status including active missions and
+        ICE entity counts
+      tags:
+      - Health Monitoring
+      responses:
+        '200':
+          description: Detailed health information
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/HealthResponse'
+                - type: object
+                  properties:
+                    dependencies:
+                      type: object
+                      description: Health status of service dependencies
+                      properties:
+                        database:
+                          $ref: '#/components/schemas/HealthResponse'
+                        redis:
+                          $ref: '#/components/schemas/HealthResponse'
+                        external_services:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              name:
+                                type: string
+                                example: payment-service
+                              status:
+                                type: string
+                                enum:
+                                - ok
+                                - degraded
+                                - critical
+                              response_time:
+                                type: integer
+                    metrics:
+                      type: object
+                      description: Service performance metrics
+                      properties:
+                        active_connections:
+                          type: integer
+                          example: 150
+                        requests_per_second:
+                          type: number
+                          example: 45.2
+                        average_response_time:
+                          type: integer
+                          example: 25
+                        error_rate:
+                          type: number
+                          example: 0.001
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/ServiceUnavailable
+  /missions:
+    get:
+      operationId: listMissions
+      summary: List active cyber missions
+      description: 'Retrieve paginated list of active cyber missions with filtering.
+
+
+        **Performance Notes:**
+
+        - Uses spatial indexes for network topology filtering
+
+        - Ultra-low latency required (<25ms P99)
+
+        - Real-time mission state updates
+
+        '
+      tags:
+      - Mission Management
+      parameters:
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - initializing
+          - active
+          - paused
+          - completed
+          - failed
+          - aborted
+        description: Filter by mission status
+      - name: player_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter by player ID
+      - name: mission_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - data_theft
+          - system_infiltration
+          - ice_combat
+          - consciousness_transfer
+          - network_mapping
+        description: Filter by mission type
+      - name: network_zone
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter by network zone ID
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
+        description: Number of missions to return
+      - name: cursor
+        in: query
+        schema:
+          type: string
+        description: Pagination cursor
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/PaginatedResponse
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/MissionSummary'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      operationId: createMission
+      summary: Create new cyber mission
+      description: 'Initialize a new cyber mission with network topology generation.
+
+
+        **Business Rules:**
+
+        - Validates player cyberware compatibility
+
+        - Generates unique network topology
+
+        - Initializes ICE entities and barriers
+
+        - Sets up consciousness transfer protocols
+
+        '
+      tags:
+      - Mission Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMissionRequest'
+      responses:
+        '201':
+          description: Mission created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/SuccessResponse
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/CyberMission'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: Mission creation conflict
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/Conflict
+  /missions/{mission_id}:
+    get:
+      operationId: getMission
+      summary: Get detailed mission information
+      description: Retrieve comprehensive mission details including network topology
+        and ICE entities
+      tags:
+      - Mission Management
+      parameters:
+      - name: mission_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Mission instance ID
+      responses:
+        '200':
+          description: Mission details retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/SuccessResponse
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/CyberMission'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    put:
+      operationId: updateMission
+      summary: Update mission configuration
+      description: Update mission parameters with optimistic locking
+      tags:
+      - Mission Management
+      parameters:
+      - name: mission_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Mission instance ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMissionRequest'
+      responses:
+        '200':
+          description: Mission updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/SuccessResponse
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/CyberMission'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Optimistic lock conflict
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/Conflict
+    delete:
+      operationId: abortMission
+      summary: Abort cyber mission
+      description: Abort an active mission and clean up all digital entities
+      tags:
+      - Mission Management
+      parameters:
+      - name: mission_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Mission instance ID
+      responses:
+        '204':
+          description: Mission aborted successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /missions/{mission_id}/topology:
+    get:
+      operationId: getNetworkTopology
+      summary: Get mission network topology
+      description: Retrieve current network topology for the mission
+      tags:
+      - Network Topology
+      parameters:
+      - name: mission_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Mission instance ID
+      - name: include_nodes
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Include node details
+      - name: include_connections
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Include connection details
+      responses:
+        '200':
+          description: Network topology retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/SuccessResponse
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/NetworkTopology'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      operationId: modifyTopology
+      summary: Modify network topology
+      description: Dynamically modify network topology during mission
+      tags:
+      - Network Topology
+      parameters:
+      - name: mission_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Mission instance ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TopologyModificationRequest'
+      responses:
+        '200':
+          description: Topology modified successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/SuccessResponse
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/NetworkTopology'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /missions/{mission_id}/navigation:
+    post:
+      operationId: navigateNetwork
+      summary: Navigate through network nodes
+      description: 'Process player navigation through cyberspace network.
+
+
+        **Performance Requirements:**
+
+        - Ultra-low latency (<25ms P99)
+
+        - Real-time collision detection
+
+        - Dynamic path recalculation
+
+        '
+      tags:
+      - Network Topology
+      parameters:
+      - name: mission_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Mission instance ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NavigationRequest'
+      responses:
+        '200':
+          description: Navigation processed
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/SuccessResponse
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/NavigationResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /missions/{mission_id}/ice:
+    get:
+      operationId: getIceEntities
+      summary: Get ICE entities in mission
+      description: Retrieve all ICE entities and their current state
+      tags:
+      - ICE Combat
+      parameters:
+      - name: mission_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Mission instance ID
+      - name: active_only
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Return only active ICE entities
+      responses:
+        '200':
+          description: ICE entities retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/SuccessResponse
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/IceEntity'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      operationId: spawnIceEntity
+      summary: Spawn new ICE entity
+      description: Create and spawn a new ICE entity in the mission
+      tags:
+      - ICE Combat
+      parameters:
+      - name: mission_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Mission instance ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpawnIceRequest'
+      responses:
+        '201':
+          description: ICE entity spawned
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/SuccessResponse
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/IceEntity'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /missions/{mission_id}/combat:
+    post:
+      operationId: processIceCombat
+      summary: Process ICE combat interaction
+      description: 'Process combat interaction between player and ICE entity.
+
+
+        **Performance Requirements:**
+
+        - Ultra-low latency combat resolution
+
+        - Atomic damage calculations
+
+        - Real-time state synchronization
+
+        '
+      tags:
+      - ICE Combat
+      parameters:
+      - name: mission_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Mission instance ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CombatRequest'
+      responses:
+        '200':
+          description: Combat processed successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/SuccessResponse
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/CombatResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /missions/{mission_id}/data:
+    get:
+      operationId: getVirtualData
+      summary: Get virtual data objects
+      description: Retrieve virtual data objects in the mission space
+      tags:
+      - Data Manipulation
+      parameters:
+      - name: mission_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Mission instance ID
+      - name: data_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - files
+          - databases
+          - security_logs
+          - encryption_keys
+          - system_configs
+        description: Filter by data type
+      responses:
+        '200':
+          description: Virtual data retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/SuccessResponse
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/VirtualDataObject'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      operationId: manipulateData
+      summary: Manipulate virtual data
+      description: Perform data manipulation operations on virtual objects
+      tags:
+      - Data Manipulation
+      parameters:
+      - name: mission_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Mission instance ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataManipulationRequest'
+      responses:
+        '200':
+          description: Data manipulation completed
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/SuccessResponse
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/DataManipulationResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /missions/{mission_id}/consciousness:
+    get:
+      operationId: getConsciousnessState
+      summary: Get consciousness transfer state
+      description: Retrieve current consciousness transfer status
+      tags:
+      - Consciousness Transfer
+      parameters:
+      - name: mission_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Mission instance ID
+      responses:
+        '200':
+          description: Consciousness state retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/SuccessResponse
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/ConsciousnessState'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      operationId: initiateTransfer
+      summary: Initiate consciousness transfer
+      description: 'Initiate mind upload and consciousness transfer sequence.
+
+
+        **Critical Operations:**
+
+        - Validates consciousness compatibility
+
+        - Initializes digital consciousness container
+
+        - Sets up real-time sync protocols
+
+        - Prepares rollback mechanisms
+
+        '
+      tags:
+      - Consciousness Transfer
+      parameters:
+      - name: mission_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Mission instance ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferInitiationRequest'
+      responses:
+        '201':
+          description: Consciousness transfer initiated
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/SuccessResponse
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/ConsciousnessTransfer'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Transfer already in progress
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/Conflict
+  /missions/{mission_id}/consciousness/{transfer_id}/progress:
+    post:
+      operationId: updateTransferProgress
+      summary: Update consciousness transfer progress
+      description: 'Update progress of ongoing consciousness transfer.
+
+
+        **Performance Requirements:**
+
+        - Real-time progress synchronization
+
+        - Atomic progress state updates
+
+        - Failure recovery mechanisms
+
+        '
+      tags:
+      - Consciousness Transfer
+      parameters:
+      - name: mission_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Mission instance ID
+      - name: transfer_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Transfer instance ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferProgressUpdate'
+      responses:
+        '200':
+          description: Transfer progress updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/SuccessResponse
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/ConsciousnessTransfer'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /sync/mission/{mission_id}:
+    post:
+      operationId: syncMissionState
+      summary: Synchronize mission state (ultra-low latency)
+      description: 'Real-time synchronization of mission state across clients.
+
+
+        **Performance Requirements:**
+
+        - P99 latency <25ms (ultra-low requirement)
+
+        - Atomic state updates with conflict resolution
+
+        - Event-driven state propagation
+
+        '
+      tags:
+      - Real-time Sync
+      parameters:
+      - name: mission_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Mission instance ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MissionStateSyncRequest'
+      responses:
+        '200':
+          description: Mission state synchronized
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/SuccessResponse
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/MissionStateSyncResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Synchronization conflict
+          content:
+            application/json:
+              schema:
+                $ref: ../common/responses/error.yaml#/Conflict
+  /events/missions:
+    get:
+      operationId: getMissionEvents
+      summary: Query mission events (CQRS)
+      description: Retrieve mission events from event store with filtering
+      tags:
+      - Event Sourcing
+      parameters:
+      - name: mission_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter by mission ID
+      - name: player_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter by player ID
+      - name: event_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - MissionStarted
+          - IceCombatInitiated
+          - DataManipulated
+          - ConsciousnessTransferInitiated
+          - NetworkNodeAccessed
+          - MissionCompleted
+        description: Filter by event type
+      - name: from_timestamp
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: Start timestamp for filtering
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 100
+        description: Maximum events to return
+      responses:
+        '200':
+          description: Events retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: ../common/responses/success.yaml#/SuccessResponse
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/MissionEvent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /ws/missions/{mission_id}:
+    get:
+      operationId: missionWebSocket
+      summary: WebSocket connection for mission updates
+      description: 'Establish WebSocket connection for ultra-low latency mission updates.
+
+
+        **Supported Events:**
+
+        - mission_state_changed
+
+        - ice_combat_update
+
+        - data_manipulation_result
+
+        - consciousness_transfer_progress
+
+        - network_navigation_update
+
+        - mission_completed
+
+        '
+      tags:
+      - Real-time Sync
+      parameters:
+      - name: mission_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Mission instance ID
+      responses:
+        '101':
+          description: WebSocket connection established
+components:
+  schemas:
+    CyberMission:
+      allOf:
+      - type: object
+        required:
+        - id
+        - created_at
+        - updated_at
+        properties:
+          id:
+            type: string
+            format: uuid
+            description: Unique identifier for game entity
+            example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+          created_at:
+            type: string
+            format: date-time
+            description: Entity creation timestamp
+            example: '2024-01-15T10:30:00Z'
+          updated_at:
+            type: string
+            format: date-time
+            description: Last modification timestamp
+            example: '2024-01-15T14:20:00Z'
+          version:
+            type: integer
+            minimum: 1
+            description: Optimistic locking version for concurrent operations
+            example: 1
+      - type: object
+        required:
+        - mission_type
+        - status
+        - player_id
+        - network_topology
+        - started_at
+        properties:
+          mission_type:
+            type: string
+            enum:
+            - data_theft
+            - system_infiltration
+            - ice_combat
+            - consciousness_transfer
+            - network_mapping
+            description: Type of cyber mission
+            example: system_infiltration
+          status:
+            type: string
+            enum:
+            - initializing
+            - active
+            - paused
+            - completed
+            - failed
+            - aborted
+            description: Current mission status
+            example: active
+          player_id:
+            type: string
+            format: uuid
+            description: Player who owns this mission instance
+          network_topology:
+            $ref: '#/components/schemas/NetworkTopology'
+          ice_entities:
+            type: array
+            items:
+              $ref: '#/components/schemas/IceEntity'
+            description: ICE entities in this mission
+          virtual_data:
+            type: array
+            items:
+              $ref: '#/components/schemas/VirtualDataObject'
+            description: Virtual data objects in mission space
+          consciousness_transfer:
+            $ref: '#/components/schemas/ConsciousnessTransfer'
+          started_at:
+            type: string
+            format: date-time
+            description: When mission was started
+          completed_at:
+            type: string
+            format: date-time
+            description: When mission was completed (if applicable)
+          objectives:
+            type: array
+            items:
+              $ref: '#/components/schemas/MissionObjective'
+            description: Mission objectives to complete
+          statistics:
+            $ref: '#/components/schemas/MissionStatistics'
+    MissionSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Mission instance ID
+        mission_type:
+          type: string
+          enum:
+          - data_theft
+          - system_infiltration
+          - ice_combat
+          - consciousness_transfer
+          - network_mapping
+        status:
+          type: string
+          enum:
+          - initializing
+          - active
+          - paused
+          - completed
+          - failed
+          - aborted
+        player_id:
+          type: string
+          format: uuid
+        progress_percentage:
+          type: number
+          minimum: 0
+          maximum: 100
+        started_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    NetworkTopology:
+      type: object
+      required:
+      - nodes
+      - connections
+      - entry_point
+      properties:
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/NetworkNode'
+          description: Network nodes in topology
+        connections:
+          type: array
+          items:
+            $ref: '#/components/schemas/NetworkConnection'
+          description: Connections between nodes
+        entry_point:
+          type: string
+          format: uuid
+          description: Entry node ID
+        security_level:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - maximum
+          description: Overall network security level
+        last_modified:
+          type: string
+          format: date-time
+    NetworkNode:
+      type: object
+      required:
+      - id
+      - node_type
+      - position
+      - security_level
+      properties:
+        id:
+          type: string
+          format: uuid
+        node_type:
+          type: string
+          enum:
+          - data_node
+          - ice_barrier
+          - firewall
+          - database
+          - control_system
+          - exit_point
+        position:
+          $ref: '#/components/schemas/NetworkPosition'
+        security_level:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: Security level (1-10)
+        connected_nodes:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: IDs of connected nodes
+        data_objects:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Virtual data objects at this node
+    NetworkConnection:
+      type: object
+      required:
+      - from_node_id
+      - to_node_id
+      - connection_type
+      - security_level
+      properties:
+        from_node_id:
+          type: string
+          format: uuid
+        to_node_id:
+          type: string
+          format: uuid
+        connection_type:
+          type: string
+          enum:
+          - standard
+          - encrypted
+          - firewall
+          - backdoor
+          - quantum
+        security_level:
+          type: integer
+          minimum: 1
+          maximum: 10
+        traversal_time_ms:
+          type: integer
+          minimum: 0
+          description: Time to traverse connection (ms)
+    NetworkPosition:
+      type: object
+      required:
+      - x
+      - y
+      - z
+      properties:
+        x:
+          type: number
+          description: X coordinate in network space
+        y:
+          type: number
+          description: Y coordinate in network space
+        z:
+          type: number
+          description: Z coordinate in network space
+    IceEntity:
+      allOf:
+      - type: object
+        required:
+        - id
+        - created_at
+        - updated_at
+        properties:
+          id:
+            type: string
+            format: uuid
+            description: Unique identifier for game entity
+            example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+          created_at:
+            type: string
+            format: date-time
+            description: Entity creation timestamp
+            example: '2024-01-15T10:30:00Z'
+          updated_at:
+            type: string
+            format: date-time
+            description: Last modification timestamp
+            example: '2024-01-15T14:20:00Z'
+          version:
+            type: integer
+            minimum: 1
+            description: Optimistic locking version for concurrent operations
+            example: 1
+      - type: object
+        required:
+        - ice_type
+        - security_level
+        - current_health
+        - max_health
+        - position
+        properties:
+          ice_type:
+            type: string
+            enum:
+            - black_ice
+            - white_ice
+            - grey_ice
+            - suicide_ice
+            - guardian_ice
+            description: Type of ICE entity
+          security_level:
+            type: integer
+            minimum: 1
+            maximum: 10
+            description: ICE security level
+          current_health:
+            type: integer
+            minimum: 0
+            description: Current health points
+          max_health:
+            type: integer
+            minimum: 1
+            description: Maximum health points
+          position:
+            $ref: '#/components/schemas/NetworkPosition'
+          behavior_pattern:
+            type: string
+            enum:
+            - patrol
+            - guard
+            - aggressive
+            - passive
+            description: ICE behavior pattern
+          abilities:
+            type: array
+            items:
+              type: string
+              enum:
+              - combat
+              - tracking
+              - alarm
+              - self_destruct
+              - data_corruption
+            description: ICE abilities
+          last_combat_time:
+            type: string
+            format: date-time
+    VirtualDataObject:
+      allOf:
+      - type: object
+        required:
+        - id
+        - created_at
+        - updated_at
+        properties:
+          id:
+            type: string
+            format: uuid
+            description: Unique identifier for game entity
+            example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+          created_at:
+            type: string
+            format: date-time
+            description: Entity creation timestamp
+            example: '2024-01-15T10:30:00Z'
+          updated_at:
+            type: string
+            format: date-time
+            description: Last modification timestamp
+            example: '2024-01-15T14:20:00Z'
+          version:
+            type: integer
+            minimum: 1
+            description: Optimistic locking version for concurrent operations
+            example: 1
+      - type: object
+        required:
+        - data_type
+        - size_bytes
+        - encryption_level
+        - position
+        properties:
+          data_type:
+            type: string
+            enum:
+            - files
+            - databases
+            - security_logs
+            - encryption_keys
+            - system_configs
+          size_bytes:
+            type: integer
+            minimum: 1
+            description: Data size in bytes
+          encryption_level:
+            type: integer
+            minimum: 0
+            maximum: 10
+            description: Encryption strength (0-10)
+          position:
+            $ref: '#/components/schemas/NetworkPosition'
+          access_permissions:
+            type: array
+            items:
+              type: string
+              enum:
+              - read
+              - write
+              - delete
+              - execute
+          corruption_status:
+            type: number
+            minimum: 0
+            maximum: 1
+            description: Data corruption level (0-1)
+    ConsciousnessTransfer:
+      type: object
+      required:
+      - transfer_id
+      - player_id
+      - status
+      - progress_percentage
+      - initiated_at
+      properties:
+        transfer_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - initiating
+          - uploading
+          - synchronizing
+          - active
+          - completed
+          - failed
+          - aborted
+        progress_percentage:
+          type: number
+          minimum: 0
+          maximum: 100
+        initiated_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+        digital_consciousness_id:
+          type: string
+          format: uuid
+          description: ID of created digital consciousness
+        rollback_available:
+          type: boolean
+          description: Whether rollback to physical body is possible
+        sync_latency_ms:
+          type: integer
+          minimum: 0
+          description: Current synchronization latency
+    ConsciousnessState:
+      type: object
+      properties:
+        active_transfers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConsciousnessTransfer'
+        total_capacity:
+          type: integer
+          minimum: 1
+          description: Maximum concurrent transfers supported
+        current_load:
+          type: integer
+          minimum: 0
+          description: Currently active transfers
+        average_sync_latency:
+          type: number
+          minimum: 0
+          description: Average synchronization latency (ms)
+    MissionObjective:
+      type: object
+      required:
+      - objective_type
+      - description
+      - target_value
+      - current_value
+      - is_completed
+      properties:
+        objective_type:
+          type: string
+          enum:
+          - data_extraction
+          - ice_destruction
+          - node_infiltration
+          - consciousness_sync
+          - network_mapping
+        description:
+          type: string
+        target_value:
+          type: integer
+          minimum: 1
+        current_value:
+          type: integer
+          minimum: 0
+        is_completed:
+          type: boolean
+        time_limit_seconds:
+          type: integer
+          minimum: 0
+    MissionStatistics:
+      type: object
+      properties:
+        ice_entities_destroyed:
+          type: integer
+          minimum: 0
+        data_objects_manipulated:
+          type: integer
+          minimum: 0
+        nodes_accessed:
+          type: integer
+          minimum: 0
+        consciousness_transfers_completed:
+          type: integer
+          minimum: 0
+        total_time_seconds:
+          type: integer
+          minimum: 0
+        security_breaches:
+          type: integer
+          minimum: 0
+    CreateMissionRequest:
+      type: object
+      required:
+      - mission_type
+      - player_id
+      properties:
+        mission_type:
+          type: string
+          enum:
+          - data_theft
+          - system_infiltration
+          - ice_combat
+          - consciousness_transfer
+          - network_mapping
+        player_id:
+          type: string
+          format: uuid
+        difficulty_level:
+          type: string
+          enum:
+          - easy
+          - medium
+          - hard
+          - nightmare
+          default: medium
+        time_limit_minutes:
+          type: integer
+          minimum: 5
+          maximum: 120
+        custom_objectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/MissionObjective'
+        network_complexity:
+          type: string
+          enum:
+          - simple
+          - moderate
+          - complex
+          - labyrinthine
+          default: moderate
+    UpdateMissionRequest:
+      allOf:
+      - type: object
+        properties:
+          version:
+            type: integer
+            minimum: 1
+            description: Version for optimistic locking
+            example: 1
+      - type: object
+        properties:
+          status:
+            type: string
+            enum:
+            - active
+            - paused
+            - aborted
+          time_limit_extension:
+            type: integer
+            minimum: 0
+            description: Additional minutes to add
+    TopologyModificationRequest:
+      type: object
+      required:
+      - modification_type
+      properties:
+        modification_type:
+          type: string
+          enum:
+          - add_node
+          - remove_node
+          - add_connection
+          - remove_connection
+          - change_security
+        target_node_id:
+          type: string
+          format: uuid
+        new_node:
+          $ref: '#/components/schemas/NetworkNode'
+        connection_changes:
+          type: array
+          items:
+            $ref: '#/components/schemas/NetworkConnection'
+        security_adjustment:
+          type: integer
+          minimum: -5
+          maximum: 5
+          description: Security level change (+/-)
+    NavigationRequest:
+      type: object
+      required:
+      - from_node_id
+      - to_node_id
+      - navigation_method
+      properties:
+        from_node_id:
+          type: string
+          format: uuid
+        to_node_id:
+          type: string
+          format: uuid
+        navigation_method:
+          type: string
+          enum:
+          - direct
+          - stealth
+          - brute_force
+          - backdoor
+        player_abilities:
+          type: array
+          items:
+            type: string
+            enum:
+            - hacking
+            - stealth
+            - combat
+            - social_engineering
+        resources_committed:
+          type: object
+          description: Resources used for navigation
+    NavigationResult:
+      type: object
+      required:
+      - success
+      - path_taken
+      - time_taken_ms
+      properties:
+        success:
+          type: boolean
+        path_taken:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Node IDs in navigation path
+        time_taken_ms:
+          type: integer
+          minimum: 0
+        security_alerts_triggered:
+          type: integer
+          minimum: 0
+        ice_entities_encountered:
+          type: array
+          items:
+            type: string
+            format: uuid
+        resources_consumed:
+          type: object
+    SpawnIceRequest:
+      type: object
+      required:
+      - ice_type
+      - security_level
+      - spawn_position
+      properties:
+        ice_type:
+          type: string
+          enum:
+          - black_ice
+          - white_ice
+          - grey_ice
+          - suicide_ice
+          - guardian_ice
+        security_level:
+          type: integer
+          minimum: 1
+          maximum: 10
+        spawn_position:
+          $ref: '#/components/schemas/NetworkPosition'
+        behavior_pattern:
+          type: string
+          enum:
+          - patrol
+          - guard
+          - aggressive
+          - passive
+        abilities:
+          type: array
+          items:
+            type: string
+            enum:
+            - combat
+            - tracking
+            - alarm
+            - self_destruct
+            - data_corruption
+    CombatRequest:
+      type: object
+      required:
+      - ice_entity_id
+      - attack_type
+      - attack_power
+      properties:
+        ice_entity_id:
+          type: string
+          format: uuid
+        attack_type:
+          type: string
+          enum:
+          - cyber_attack
+          - ice_break
+          - override
+          - social_engineering
+        attack_power:
+          type: integer
+          minimum: 1
+        player_abilities:
+          type: array
+          items:
+            type: string
+        special_modifiers:
+          type: object
+          description: Special combat modifiers
+    CombatResult:
+      type: object
+      required:
+      - ice_entity_id
+      - damage_dealt
+      - damage_received
+      - combat_outcome
+      properties:
+        ice_entity_id:
+          type: string
+          format: uuid
+        damage_dealt:
+          type: integer
+          minimum: 0
+        damage_received:
+          type: integer
+          minimum: 0
+        combat_outcome:
+          type: string
+          enum:
+          - victory
+          - defeat
+          - stalemate
+          - retreat
+        ice_status:
+          type: string
+          enum:
+          - active
+          - defeated
+          - destroyed
+          - corrupted
+        special_effects:
+          type: array
+          items:
+            type: string
+          description: Combat special effects triggered
+    DataManipulationRequest:
+      type: object
+      required:
+      - data_object_id
+      - operation_type
+      properties:
+        data_object_id:
+          type: string
+          format: uuid
+        operation_type:
+          type: string
+          enum:
+          - read
+          - write
+          - delete
+          - copy
+          - corrupt
+          - encrypt
+          - decrypt
+        manipulation_parameters:
+          type: object
+          description: Operation-specific parameters
+        player_abilities:
+          type: array
+          items:
+            type: string
+            enum:
+            - hacking
+            - cryptography
+            - data_analysis
+    DataManipulationResult:
+      type: object
+      required:
+      - data_object_id
+      - operation_success
+      - security_alerts_triggered
+      properties:
+        data_object_id:
+          type: string
+          format: uuid
+        operation_success:
+          type: boolean
+        data_modified:
+          type: object
+          description: Modified data content
+        security_alerts_triggered:
+          type: integer
+          minimum: 0
+        ice_response_time_seconds:
+          type: number
+          minimum: 0
+        corruption_level:
+          type: number
+          minimum: 0
+          maximum: 1
+    TransferInitiationRequest:
+      type: object
+      required:
+      - player_id
+      - consciousness_type
+      - sync_requirements
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        consciousness_type:
+          type: string
+          enum:
+          - full_transfer
+          - partial_sync
+          - emergency_backup
+          - simulation_mode
+        sync_requirements:
+          type: object
+          properties:
+            max_latency_ms:
+              type: integer
+              minimum: 1
+              default: 50
+            data_priority:
+              type: array
+              items:
+                type: string
+                enum:
+                - motor_control
+                - sensory_input
+                - memory_access
+                - emotional_state
+            rollback_enabled:
+              type: boolean
+              default: true
+    TransferProgressUpdate:
+      type: object
+      required:
+      - progress_percentage
+      - sync_status
+      properties:
+        progress_percentage:
+          type: number
+          minimum: 0
+          maximum: 100
+        sync_status:
+          type: string
+          enum:
+          - synchronizing
+          - stable
+          - desync_detected
+          - recovering
+        current_latency_ms:
+          type: integer
+          minimum: 0
+        data_streams_active:
+          type: array
+          items:
+            type: string
+            enum:
+            - motor_control
+            - sensory_input
+            - memory_access
+            - emotional_state
+        error_conditions:
+          type: array
+          items:
+            type: string
+    MissionStateSyncRequest:
+      type: object
+      required:
+      - mission_id
+      - client_version
+      - requested_updates
+      properties:
+        mission_id:
+          type: string
+          format: uuid
+        client_version:
+          type: integer
+          minimum: 1
+        requested_updates:
+          type: array
+          items:
+            type: string
+            enum:
+            - topology
+            - ice_entities
+            - data_objects
+            - consciousness_state
+            - objectives
+        player_position:
+          $ref: '#/components/schemas/NetworkPosition'
+    MissionStateSyncResponse:
+      type: object
+      required:
+      - server_version
+      - applied_updates
+      properties:
+        server_version:
+          type: integer
+        applied_updates:
+          type: object
+          properties:
+            topology:
+              $ref: '#/components/schemas/NetworkTopology'
+            ice_entities:
+              type: array
+              items:
+                $ref: '#/components/schemas/IceEntity'
+            data_objects:
+              type: array
+              items:
+                $ref: '#/components/schemas/VirtualDataObject'
+            consciousness_state:
+              $ref: '#/components/schemas/ConsciousnessState'
+            objectives:
+              type: array
+              items:
+                $ref: '#/components/schemas/MissionObjective'
+        conflicts:
+          type: array
+          items:
+            type: object
+            properties:
+              aspect:
+                type: string
+                enum:
+                - topology
+                - ice_entities
+                - data_objects
+                - consciousness_state
+              client_version:
+                type: integer
+              server_version:
+                type: integer
+              resolution:
+                type: string
+                enum:
+                - client_wins
+                - server_wins
+                - merged
+    MissionEvent:
+      allOf:
+      - type: object
+        required:
+        - id
+        - created_at
+        - updated_at
+        properties:
+          id:
+            type: string
+            format: uuid
+            description: Unique identifier for game entity
+            example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+          created_at:
+            type: string
+            format: date-time
+            description: Entity creation timestamp
+            example: '2024-01-15T10:30:00Z'
+          updated_at:
+            type: string
+            format: date-time
+            description: Last modification timestamp
+            example: '2024-01-15T14:20:00Z'
+          version:
+            type: integer
+            minimum: 1
+            description: Optimistic locking version for concurrent operations
+            example: 1
+      - type: object
+        required:
+        - event_type
+        - mission_id
+        - player_id
+        - event_data
+        - timestamp
+        properties:
+          event_type:
+            type: string
+            enum:
+            - MissionStarted
+            - IceCombatInitiated
+            - DataManipulated
+            - ConsciousnessTransferInitiated
+            - NetworkNodeAccessed
+            - MissionCompleted
+            description: Type of mission event
+          mission_id:
+            type: string
+            format: uuid
+            description: Mission instance ID
+          player_id:
+            type: string
+            format: uuid
+            description: Player ID
+          event_data:
+            type: object
+            description: Event-specific data
+            additionalProperties: true
+          timestamp:
+            type: string
+            format: date-time
+            description: Event timestamp
+    HealthResponse:
+      type: object
+      required:
+      - status
+      - timestamp
+      properties:
+        status:
+          type: string
+          enum:
+          - ok
+          - degraded
+          - critical
+          example: ok
+          description: Current health status
+        message:
+          type: string
+          example: Service is healthy
+          description: Human-readable status message
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-01-15T10:30:00Z'
+          description: Time when health check was performed
+        version:
+          type: string
+          example: 1.0.0
+          description: Service version
+        uptime:
+          type: integer
+          example: 3600
+          description: Service uptime in seconds
+        checks:
+          type: object
+          description: Detailed health checks
+          additionalProperties:
+            type: object
+            properties:
+              status:
+                type: string
+                enum:
+                - ok
+                - degraded
+                - critical
+              message:
+                type: string
+              response_time:
+                type: integer
+                description: Response time in milliseconds
+    DetailedHealthResponse:
+      allOf:
+      - $ref: '#/components/schemas/HealthResponse'
+      - type: object
+        properties:
+          dependencies:
+            type: object
+            description: Health status of service dependencies
+            properties:
+              database:
+                $ref: '#/components/schemas/HealthResponse'
+              redis:
+                $ref: '#/components/schemas/HealthResponse'
+              external_services:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      example: payment-service
+                    status:
+                      type: string
+                      enum:
+                      - ok
+                      - degraded
+                      - critical
+                    response_time:
+                      type: integer
+          metrics:
+            type: object
+            description: Service performance metrics
+            properties:
+              active_connections:
+                type: integer
+                example: 150
+              requests_per_second:
+                type: number
+                example: 45.2
+              average_response_time:
+                type: integer
+                example: 25
+              error_rate:
+                type: number
+                example: 0.001
+    HealthBatchRequest:
+      type: object
+      properties:
+        services:
+          type: array
+          items:
+            type: string
+            example: database
+          description: List of services to check
+        timeout:
+          type: integer
+          minimum: 1
+          maximum: 30
+          default: 5
+          description: Timeout for each health check in seconds
+    HealthBatchResponse:
+      type: object
+      properties:
+        overall_status:
+          type: string
+          enum:
+          - ok
+          - degraded
+          - critical
+          example: ok
+          description: Overall health status across all checked services
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-01-15T10:30:00Z'
+        results:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/HealthResponse'
+          description: Health results for each service
+    GameEntity:
+      type: object
+      required:
+      - id
+      - created_at
+      - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for game entity
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        created_at:
+          type: string
+          format: date-time
+          description: Entity creation timestamp
+          example: '2024-01-15T10:30:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: Last modification timestamp
+          example: '2024-01-15T14:20:00Z'
+        version:
+          type: integer
+          minimum: 1
+          description: Optimistic locking version for concurrent operations
+          example: 1
+    BaseEntity:
+      type: object
+      required:
+      - id
+      - created_at
+      - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: '2024-01-15T10:30:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: Last modification timestamp
+          example: '2024-01-15T14:20:00Z'
+    OptimisticLock:
+      type: object
+      properties:
+        version:
+          type: integer
+          minimum: 1
+          description: Version for optimistic locking
+          example: 1
+    CharacterEntity:
+      allOf:
+      - $ref: '#/components/schemas/GameEntity'
+      - type: object
+        required:
+        - level
+        - experience
+        - stats
+        properties:
+          level:
+            type: integer
+            minimum: 1
+            maximum: 100
+            description: Character level
+            example: 25
+          experience:
+            type: integer
+            minimum: 0
+            description: Current experience points
+            example: 15420
+          stats:
+            $ref: '#/components/schemas/CharacterStats'
+          cyberware_level:
+            type: integer
+            minimum: 0
+            maximum: 20
+            description: Cyberware enhancement level
+            example: 8
+          reputation:
+            type: integer
+            minimum: -1000
+            maximum: 1000
+            description: Faction reputation score
+            example: 450
+    CharacterStats:
+      type: object
+      required:
+      - health
+      - stamina
+      - strength
+      - agility
+      - intelligence
+      - charisma
+      properties:
+        health:
+          type: integer
+          minimum: 0
+          maximum: 1000
+          description: Current health points
+          example: 850
+        max_health:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          description: Maximum health points
+          example: 900
+        stamina:
+          type: integer
+          minimum: 0
+          maximum: 500
+          description: Current stamina points
+          example: 320
+        max_stamina:
+          type: integer
+          minimum: 1
+          maximum: 500
+          description: Maximum stamina points
+          example: 350
+        strength:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Physical strength attribute
+          example: 75
+        agility:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Speed and reflexes attribute
+          example: 68
+        intelligence:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Mental acuity attribute
+          example: 82
+        charisma:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Social influence attribute
+          example: 45
+        perception:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Awareness and detection attribute
+          example: 71
+        luck:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Fortune and probability modifier
+          example: 33
+    CombatActionEntity:
+      allOf:
+      - $ref: '#/components/schemas/GameEntity'
+      - type: object
+        required:
+        - action_type
+        - source_character_id
+        - target_character_id
+        - damage_dealt
+        properties:
+          action_type:
+            type: string
+            enum:
+            - attack
+            - defend
+            - ability
+            - item
+            - flee
+            description: Type of combat action
+            example: attack
+          source_character_id:
+            type: string
+            format: uuid
+            description: Character performing the action
+            example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+          target_character_id:
+            type: string
+            format: uuid
+            description: Character receiving the action
+            example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+          damage_dealt:
+            type: integer
+            minimum: 0
+            description: Damage points inflicted
+            example: 145
+          accuracy_roll:
+            type: integer
+            minimum: 0
+            maximum: 100
+            description: Accuracy percentage for the action
+            example: 87
+          critical_hit:
+            type: boolean
+            description: Whether this was a critical hit
+            example: false
+          status_effects:
+            type: array
+            items:
+              $ref: '#/components/schemas/StatusEffect'
+            description: Status effects applied by this action
+    StatusEffect:
+      type: object
+      required:
+      - effect_type
+      - duration
+      - potency
+      properties:
+        effect_type:
+          type: string
+          enum:
+          - poison
+          - bleed
+          - stun
+          - buff_strength
+          - buff_agility
+          - heal_over_time
+          - damage_over_time
+          description: Type of status effect
+          example: buff_strength
+        duration:
+          type: integer
+          minimum: 0
+          description: Effect duration in combat rounds
+          example: 3
+        potency:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Effect strength percentage
+          example: 25
+        source:
+          type: string
+          enum:
+          - ability
+          - item
+          - environment
+          - cyberware
+          description: Source of the effect
+          example: ability
+    AbilityEntity:
+      allOf:
+      - $ref: '#/components/schemas/GameEntity'
+      - type: object
+        required:
+        - name
+        - ability_type
+        - cooldown
+        - mana_cost
+        properties:
+          name:
+            type: string
+            minLength: 1
+            maxLength: 50
+            description: Ability name
+            example: Neural Overload
+          ability_type:
+            type: string
+            enum:
+            - offensive
+            - defensive
+            - healing
+            - utility
+            - passive
+            description: Category of ability
+            example: offensive
+          cooldown:
+            type: integer
+            minimum: 0
+            description: Cooldown in combat rounds
+            example: 3
+          mana_cost:
+            type: integer
+            minimum: 0
+            description: Mana/stamina cost to use
+            example: 45
+          damage_type:
+            type: string
+            enum:
+            - physical
+            - energy
+            - chemical
+            - cyber
+            - elemental
+            description: Type of damage dealt
+            example: cyber
+          range:
+            type: integer
+            minimum: 0
+            description: Ability range in game units
+            example: 25
+          area_effect:
+            type: boolean
+            description: Whether ability affects multiple targets
+            example: false
+    InventoryItemEntity:
+      allOf:
+      - $ref: '#/components/schemas/GameEntity'
+      - type: object
+        required:
+        - item_id
+        - quantity
+        - durability
+        properties:
+          item_id:
+            type: string
+            format: uuid
+            description: Reference to item definition
+            example: b2c3d4e5-f6g7-8901-bcde-f23456789012
+          quantity:
+            type: integer
+            minimum: 1
+            description: Number of items in stack
+            example: 5
+          durability:
+            type: integer
+            minimum: 0
+            maximum: 100
+            description: Item condition percentage
+            example: 87
+          equipped:
+            type: boolean
+            description: Whether item is currently equipped
+            example: true
+          enhancement_level:
+            type: integer
+            minimum: 0
+            maximum: 10
+            description: Item enhancement/modification level
+            example: 2
+    QuestEntity:
+      allOf:
+      - $ref: '#/components/schemas/GameEntity'
+      - type: object
+      - type: object
+        required:
+        - title
+        - description
+        - quest_type
+        - status
+        - objectives
+        properties:
+          title:
+            type: string
+            minLength: 1
+            maxLength: 100
+            description: Quest title
+            example: Corporate Espionage
+          description:
+            type: string
+            minLength: 1
+            maxLength: 1000
+            description: Detailed quest description
+            example: Infiltrate Arasaka corporation headquarters and extract sensitive
+              data...
+          quest_type:
+            type: string
+            enum:
+            - main_story
+            - side_quest
+            - daily
+            - event
+            - faction
+            description: Category of quest
+            example: faction
+          status:
+            type: string
+            enum:
+            - available
+            - active
+            - completed
+            - failed
+            - expired
+            description: Current quest status
+            example: active
+          objectives:
+            type: array
+            items:
+              $ref: '#/components/schemas/QuestObjective'
+            minItems: 1
+            description: Quest completion objectives
+          rewards:
+            $ref: '#/components/schemas/QuestRewards'
+          time_limit:
+            type: integer
+            minimum: 0
+            description: Time limit in hours (0 = no limit)
+            example: 168
+          faction_id:
+            type: string
+            format: uuid
+            description: Associated faction
+            example: c3d4e5f6-g7h8-9012-cdef-345678901234
+    QuestObjective:
+      type: object
+      required:
+      - description
+      - objective_type
+      - current_progress
+      - target_progress
+      properties:
+        description:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Objective description
+          example: Hack 3 corporate terminals
+        objective_type:
+          type: string
+          enum:
+          - kill
+          - collect
+          - deliver
+          - explore
+          - interact
+          - hack
+          - craft
+          description: Type of objective
+          example: hack
+        current_progress:
+          type: integer
+          minimum: 0
+          description: Current completion progress
+          example: 2
+        target_progress:
+          type: integer
+          minimum: 1
+          description: Required completion target
+          example: 3
+    QuestRewards:
+      type: object
+      properties:
+        experience:
+          type: integer
+          minimum: 0
+          description: Experience points reward
+          example: 2500
+        currency:
+          type: integer
+          minimum: 0
+          description: Currency reward
+          example: 15000
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InventoryItemEntity'
+          description: Item rewards
+        reputation:
+          type: integer
+          minimum: -1000
+          maximum: 1000
+          description: Faction reputation change
+          example: 150
+  responses:
+    BadRequest:
+      description: Bad request - invalid parameters
+      content:
+        application/json:
+          schema:
+            $ref: ../common/responses/error.yaml#/BadRequest
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: ../common/responses/error.yaml#/Unauthorized
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: ../common/responses/error.yaml#/NotFound
+    TooManyRequests:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: ../common/responses/error.yaml#/TooManyRequests
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

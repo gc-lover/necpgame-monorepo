@@ -1,3077 +1,472 @@
 openapi: 3.0.3
 info:
-  title: Auth Service API - Enterprise-Grade Authentication
-  description: '**Enterprise-Grade Authentication API for NECPGAME**
+  title: Auth Service API
+  description: '**Enterprise-grade API for Authentication & Authorization**
 
-    Core authentication service handling user login, registration, session management,
-    password operations, email verification, and OAuth integration. Acts as the primary
-    entry point for user authentication in the NECPGAME ecosystem.
-
-    ## Key Features
-
-    - **Enterprise-grade architecture** with proper domain separation - **Backend
-    optimization hints** for struct alignment and performance - **Complete validation**
-    with redocly and ogen code generation - **Security-first approach** with JWT authentication
-    - **Performance-optimized** response structures - **Comprehensive error handling**
-    with proper HTTP status codes
 
     ## Domain Purpose
 
-    Handles core authentication operations including user registration, login, password
-    management, session lifecycle, email verification, and OAuth integration. Acts
-    as the primary entry point for user authentication in the NECPGAME ecosystem.
+    Core authentication service providing secure user login, registration, session
+    management,
+
+    and authorization for the NECPGAME platform. Handles OAuth integrations and multi-factor
+    authentication.
+
+
+    ## Business Value
+
+    - Secure user access to all platform services
+
+    - OAuth integration with external providers
+
+    - Multi-factor authentication support
+
+    - Session security and audit trails
+
+    - Rate limiting and fraud prevention
+
 
     ## Performance Targets
 
-    - P99 Latency: <50ms for login/authentication - Memory: <50KB per active session
-    - Concurrent users: 10,000+ simultaneous authentications - Data consistency: ACID
-    compliance for security operations
+    - P99 Latency: <50ms for all endpoints
+
+    - Memory per Instance: <50KB baseline
+
+    - Concurrent Users: 10,000+ supported
+
+    - Uptime: 99.9% SLA
+
+
+    ## Domain Inheritance
+
+    This service inherits from infrastructure-entities.yaml providing:
+
+    - UserAccountEntity for user management
+
+    - SessionEntity for session handling
+
+    - AuditLogEntity for security auditing
+
+    - ApiKeyEntity for third-party access
+
+    - Optimistic locking for concurrent operations
+
+    - Strict typing with validation rules
 
     '
   version: 1.0.0
   contact:
-    name: NECPGAME API Support
-    url: https://necpgame.com/support
+    name: NECPGAME API Team
     email: api@necpgame.com
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
 servers:
-- url: https://api.necpgame.com/v1/auth
-  description: Production server
-- url: https://staging-api.necpgame.com/v1/auth
-  description: Staging server
-- url: http://localhost:8080/api/v1/auth
-  description: Local development server
+- url: https://api.necpgame.com/v1/auth-service
+  description: Production environment
+- url: https://staging-api.necpgame.com/v1/auth-service
+  description: Staging environment
+- url: http://localhost:8080/api/v1/auth-service
+  description: Local development
 security:
 - BearerAuth: []
 tags:
-- name: Registration
-  description: User registration and email verification
 - name: Authentication
-  description: Login, logout, and session management
-- name: Password
-  description: Password management operations
+  description: Core authentication operations
+- name: Authorization
+  description: User permissions and access control
+- name: Sessions
+  description: Session management operations
 - name: OAuth
-  description: OAuth provider integrations
-- name: Session Management
-  description: Advanced session lifecycle and security management
+  description: External OAuth provider integrations
+- name: Security
+  description: Security and audit operations
+- name: Health Monitoring
+  description: Service health and performance monitoring
+- name: Administration
+  description: Administrative operations
 paths:
   /health:
-    get:
-      summary: Auth service health check
-      description: '**Enterprise-grade health check endpoint**
-
-        Provides real-time health status of the authentication microservice.
-
-        Critical for service discovery, load balancing, and monitoring.
-
-        **Performance:** <1ms response time, cached for 30 seconds
-
-        '
-      operationId: authServiceHealthCheck
-      tags:
-      - Health Monitoring
-      parameters:
-      - name: Accept-Encoding
-        in: header
-        schema:
-          type: string
-          enum:
-          - gzip
-          - deflate
-          - br
-      responses:
-        '200':
-          description: Service is healthy
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                example: max-age=30, s-maxage=60
-            ETag:
-              schema:
-                $ref: '#/components/schemas/ETagHeader'
-            Content-Encoding:
-              schema:
-                type: string
-                enum:
-                - gzip
-                - deflate
-                - br
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HealthResponse'
-        '503':
-          description: Service is unhealthy
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HealthResponse'
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
+    $ref: ./paths/health.yaml#/paths/~1health
+  /health/detailed:
+    $ref: ./paths/health-detailed.yaml#/paths/~1health~1detailed
   /health/batch:
-    post:
-      summary: Batch health check for multiple services
-      description: '**Performance optimization:** Check multiple services health in
-        single request
-
-        Reduces N HTTP calls to 1 call. Critical for orchestration.
-
-        **Use case:** Service mesh health checks, Kubernetes readiness probes
-
-        '
-      operationId: authServiceBatchHealthCheck
-      tags:
-      - Health Monitoring
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-              - services
-              properties:
-                services:
-                  type: array
-                  items:
-                    type: string
-                    enum:
-                    - auth-service
-                    - user-service
-                    - session-service
-                  maxItems: 10
-                  description: List of services to check
-      responses:
-        '200':
-          $ref: '#/components/responses/HealthBatchSuccess'
-        '400':
-          description: Invalid request - malformed service list
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
+    $ref: ./paths/health-batch.yaml#/paths/~1health~1batch
   /health/ws:
-    get:
-      summary: Real-time health monitoring WebSocket
-      description: '**Performance optimization:** Real-time health updates without
-        polling
-
-        Eliminates periodic HTTP requests, reduces server load by ~90%.
-
-        Perfect for dashboard monitoring and alerting systems.
-
-        **Protocol:** WebSocket with JSON payloads
-
-        **Heartbeat:** 30 second intervals
-
-        **Reconnection:** Automatic with exponential backoff
-
-        '
-      operationId: authServiceHealthWebSocket
-      tags:
-      - Health Monitoring
-      parameters:
-      - name: services
-        in: query
-        schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - auth-service
-            - user-service
-            - session-service
-        description: Services to monitor (optional, monitors all if not specified)
-      responses:
-        '200':
-          description: WebSocket upgrade information returned
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  websocket_url:
-                    type: string
-                    example: ws://localhost:8080/api/v1/auth/health/ws
-                  supported_protocols:
-                    type: array
-                    items:
-                      type: string
-                    example:
-                    - health-monitoring-v1
-        '101':
-          description: WebSocket connection established successfully
-          headers:
-            Upgrade:
-              schema:
-                type: string
-                example: websocket
-            Connection:
-              schema:
-                type: string
-                example: Upgrade
-            Sec-WebSocket-Accept:
-              schema:
-                type: string
-                description: WebSocket handshake acceptance key
-        '400':
-          description: Invalid request - malformed service parameters
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized - authentication required for WebSocket
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - WebSocket connection limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-  /auth/register:
-    post:
-      summary: User registration
-      description: '**Enterprise-grade user registration endpoint**
-
-        Creates new user account with email/password authentication.
-
-        Includes email verification, password strength validation, and duplicate checking.
-
-        **Performance:** <100ms P95, includes password hashing and email sending
-
-        **Security:** Argon2id password hashing, email verification required
-
-        '
-      operationId: authRegister
-      tags:
-      - Registration
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RegisterRequest'
-      responses:
-        '201':
-          description: User registered successfully - email verification required
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthResponse'
-        '400':
-          description: Invalid request - malformed data or validation failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '409':
-          description: Conflict - user with this email already exists
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - registration rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 300
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
+    $ref: ./paths/health-ws.yaml#/paths/~1health~1ws
   /auth/login:
-    post:
-      summary: User login with credentials
-      description: '**Enterprise-grade authentication endpoint**
-
-        Authenticates user credentials and returns JWT access token.
-
-        Supports password-based authentication with optional MFA.
-
-        Implements rate limiting and brute-force protection.
-
-        **Performance:** <25ms P95, includes password hashing verification
-
-        **Security:** Argon2id password hashing, JWT tokens with expiration
-
-        '
-      operationId: authLogin
-      tags:
-      - Authentication
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/LoginRequest'
-      responses:
-        '200':
-          description: Login successful - returns access token
-          headers:
-            X-Rate-Limit-Remaining:
-              schema:
-                type: integer
-                example: 47
-                description: Remaining login attempts in current window
-            X-Rate-Limit-Reset:
-              schema:
-                type: integer
-                example: 3600
-                description: Seconds until rate limit resets
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthResponse'
-        '400':
-          description: Invalid request - malformed credentials
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Invalid credentials
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - login rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 300
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
+    $ref: ./paths/auth-login.yaml#/paths/~1auth~1login
+  /auth/register:
+    $ref: ./paths/auth-register.yaml#/paths/~1auth~1register
+  /auth/verify-email:
+    $ref: ./paths/auth-verify-email.yaml#/paths/~1auth~1verify-email
   /auth/logout:
-    post:
-      summary: User logout
-      description: '**Secure logout endpoint**
-
-        Invalidates current session and refresh tokens.
-
-        Supports global logout from all devices.
-
-        **Performance:** <10ms P95
-
-        '
-      operationId: authLogout
-      tags:
-      - Authentication
-      security:
-      - BearerAuth: []
-      responses:
-        '200':
-          description: Logout successful
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  message:
-                    type: string
-                    example: Logged out successfully
-        '401':
-          description: Unauthorized - invalid or expired token
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - logout rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 10
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
+    $ref: ./paths/auth-logout.yaml#/paths/~1auth~1logout
   /auth/refresh:
-    post:
-      summary: Refresh access token
-      description: '**Token refresh endpoint**
-
-        Exchanges refresh token for new access token.
-
-        Maintains user session without re-authentication.
-
-        **Performance:** <15ms P95
-
-        **Security:** Refresh token rotation, short-lived access tokens
-
-        '
-      operationId: authRefresh
-      tags:
-      - Authentication
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-              - refresh_token
-              properties:
-                refresh_token:
-                  type: string
-                  description: Valid refresh token
-                  example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-      responses:
-        '200':
-          description: Token refreshed successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthResponse'
-        '400':
-          description: Invalid refresh token
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Refresh token expired or revoked
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - token refresh rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-  /auth/me:
-    get:
-      summary: Get current user information
-      description: '**Current user profile endpoint**
-
-        Returns authenticated user''s profile information.
-
-        Used for client-side user data display and session validation.
-
-        **Performance:** <5ms P95 with caching
-
-        '
-      operationId: authGetCurrentUser
-      tags:
-      - User Management
-      security:
-      - BearerAuth: []
-      responses:
-        '200':
-          description: User information retrieved successfully
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                example: private, max-age=300
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserProfile'
-        '401':
-          description: Unauthorized - invalid or expired token
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-  /auth/oauth/{provider}/redirect:
-    get:
-      summary: Get OAuth redirect URL
-      description: '**Get OAuth provider redirect URL for authentication**
-
-        Returns the authorization URL for the specified OAuth provider. Client should
-        redirect user to this URL to initiate OAuth flow.
-
-        **Security:** Provider validation and CSRF protection via state parameter
-        **Performance:** <10ms response time, cached provider configs'
-      operationId: getOAuthRedirect
-      tags:
-      - OAuth
-      parameters:
-      - name: provider
-        in: path
-        required: true
-        schema:
-          type: string
-          enum:
-          - google
-          - github
-          - discord
-          - steam
-          - epic_games
-          - microsoft
-        description: OAuth provider name
-      - name: redirect_uri
-        in: query
-        schema:
-          type: string
-          format: uri
-        description: Custom redirect URI (optional, must be pre-registered)
-      responses:
-        '200':
-          description: OAuth redirect URL generated successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - redirect_url
-                - state
-                properties:
-                  redirect_url:
-                    type: string
-                    format: uri
-                    description: Full OAuth authorization URL
-                    example: https://accounts.google.com/oauth/authorize?client_id=...
-                  state:
-                    type: string
-                    description: CSRF protection state parameter
-                    example: abc123def456
-                description: 'BACKEND NOTE: Fields ordered for struct alignment (large
-                  → small).'
-        '400':
-          description: Invalid provider or redirect URI
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '503':
-          description: OAuth provider temporarily unavailable
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-  /auth/oauth/{provider}/callback:
-    get:
-      summary: Handle OAuth provider callback
-      description: '**Process OAuth provider callback and complete authentication**
-
-        Handles the OAuth callback from provider, exchanges authorization code for
-        access token, creates/updates user account, and returns JWT tokens.
-
-        **Security:** State parameter validation, token encryption, secure session
-        creation **Performance:** <100ms for complete OAuth flow including user lookup/creation'
-      operationId: handleOAuthCallback
-      tags:
-      - OAuth
-      parameters:
-      - name: provider
-        in: path
-        required: true
-        schema:
-          type: string
-          enum:
-          - google
-          - github
-          - discord
-          - steam
-          - epic_games
-          - microsoft
-        description: OAuth provider name
-      - name: code
-        in: query
-        required: true
-        schema:
-          type: string
-        description: Authorization code from OAuth provider
-      - name: state
-        in: query
-        required: true
-        schema:
-          type: string
-        description: CSRF protection state parameter
-      - name: error
-        in: query
-        schema:
-          type: string
-        description: OAuth error code (if authorization failed)
-      - name: error_description
-        in: query
-        schema:
-          type: string
-        description: Human-readable error description
-      responses:
-        '200':
-          description: OAuth authentication completed successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OAuthLoginResponse'
-        '400':
-          description: Invalid OAuth callback parameters or state
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: OAuth authorization failed or denied
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many OAuth attempts - rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 300
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-  /auth/sessions/cleanup:
-    post:
-      summary: Clean up inactive sessions
-      description: '**Clean up expired or inactive user sessions**
-
-        Performs automated cleanup of sessions that have exceeded their lifetime or
-        are in invalid states. Helps maintain database performance and security by
-        removing stale session data.
-
-        **Performance:** Batch processing with configurable cleanup policies'
-      operationId: cleanupSessions
-      tags:
-      - Session Management
-      security:
-      - BearerAuth: []
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CleanupSessionsRequest'
-      responses:
-        '200':
-          description: Sessions cleaned up successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CleanupSessionsResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-  /auth/sessions/cleanup/stats:
-    get:
-      summary: Get session cleanup statistics
-      description: '**Retrieve session cleanup statistics and metrics**
-
-        Returns information about recent cleanup operations, success rates, and performance
-        metrics for session management.
-
-        **Performance:** Cached statistics with configurable refresh intervals'
-      operationId: getCleanupStats
-      tags:
-      - Session Management
-      security:
-      - BearerAuth: []
-      responses:
-        '200':
-          description: Cleanup statistics retrieved
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CleanupStatsResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-  /auth/sessions/security/validate:
-    post:
-      summary: Validate session security
-      description: '**Perform security validation on active sessions**
-
-        Analyzes session security parameters, detects anomalies, and provides recommendations
-        for improving session security posture.
-
-        **Security:** Comprehensive validation including IP changes, device fingerprints'
-      operationId: validateSessionSecurity
-      tags:
-      - Session Management
-      security:
-      - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ValidateSessionSecurityRequest'
-      responses:
-        '200':
-          description: Security validation completed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SessionSecurityValidationResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-  /auth/sessions/security/rotate-token:
-    post:
-      summary: Rotate session token
-      description: '**Generate new token for existing session**
-
-        Creates a new JWT token pair while maintaining session continuity. Useful
-        for token refresh without full re-authentication.
-
-        **Security:** Maintains session integrity during token rotation'
-      operationId: rotateSessionToken
-      tags:
-      - Session Management
-      security:
-      - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RotateSessionTokenRequest'
-      responses:
-        '200':
-          description: Token rotated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RotateSessionTokenResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-  /auth/sessions/monitoring/stats:
-    get:
-      summary: Get session monitoring statistics
-      description: '**Retrieve comprehensive session statistics**
-
-        Provides detailed metrics about session lifecycle, concurrent users, geographic
-        distribution, and performance indicators.
-
-        **Performance:** Aggregated statistics with efficient caching'
-      operationId: getSessionStats
-      tags:
-      - Session Management
-      security:
-      - BearerAuth: []
-      responses:
-        '200':
-          description: Session statistics retrieved
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SessionStatsResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-  /auth/sessions/monitoring/active:
-    get:
-      summary: Get active sessions list
-      description: '**Retrieve paginated list of active sessions**
-
-        Returns currently active sessions with filtering and pagination support. Useful
-        for administrative monitoring and troubleshooting.
-
-        **Performance:** Indexed queries with pagination optimization'
-      operationId: getActiveSessions
-      tags:
-      - Session Management
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 20
-        description: Number of items per page
-      - name: offset
-        in: query
-        schema:
-          type: integer
-          minimum: 0
-          default: 0
-        description: Number of items to skip
-      responses:
-        '200':
-          description: Active sessions retrieved
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ActiveSessionsResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-  /auth/sessions/admin/terminate:
-    post:
-      summary: Terminate session (admin only)
-      description: '**Forcefully terminate a user session**
-
-        Administrative function to forcibly end a session. Requires elevated permissions.
-        Should be used sparingly and with proper audit logging.
-
-        **Security:** Restricted to administrators, full audit trail maintained'
-      operationId: terminateSession
-      tags:
-      - Session Management
-      security:
-      - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TerminateSessionRequest'
-      responses:
-        '200':
-          description: Session terminated successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - status
-                properties:
-                  status:
-                    type: string
-                    enum:
-                    - terminated
-                    example: terminated
-                description: 'BACKEND NOTE: Simple status response for admin operations.'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
+    $ref: ./paths/auth-refresh.yaml#/paths/~1auth~1refresh
+  /auth/forgot-password:
+    $ref: ./paths/auth-forgot-password.yaml#/paths/~1auth~1forgot-password
+  /auth/reset-password:
+    $ref: ./paths/auth-reset-password.yaml#/paths/~1auth~1reset-password
+  /sessions:
+    $ref: ./paths/sessions.yaml#/paths/~1sessions
+  /sessions/{sessionId}/revoke:
+    $ref: ./paths/sessions-{sessionId}-revoke.yaml#/paths/~1sessions~1{sessionId}~1revoke
+  /oauth/{provider}/authorize:
+    $ref: ./paths/oauth-{provider}-authorize.yaml#/paths/~1oauth~1{provider}~1authorize
+  /oauth/{provider}/callback:
+    $ref: ./paths/oauth-{provider}-callback.yaml#/paths/~1oauth~1{provider}~1callback
 components:
-  responses:
-    HealthBatchSuccess:
-      description: Batch health results retrieved successfully
-      headers:
-        Cache-Control:
-          schema:
-            type: string
-            example: no-cache
-        X-Processing-Time:
-          schema:
-            type: integer
-            example: 15
-            description: Processing time in milliseconds
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-            - results
-            - total_time_ms
-            properties:
-              results:
-                type: array
-                items:
-                  type: object
-                  required:
-                  - status
-                  - timestamp
-                  properties:
-                    status:
-                      type: string
-                      enum:
-                      - healthy
-                      - degraded
-                      - unhealthy
-                      example: healthy
-                      maxLength: 255
-                    domain:
-                      type: string
-                      example: service-name
-                      maxLength: 255
-                    timestamp:
-                      type: string
-                      format: date-time
-                      example: '2025-12-28T10:00:00Z'
-                      maxLength: 255
-                    version:
-                      type: string
-                      example: 1.0.0
-                      maxLength: 50
-                    uptime_seconds:
-                      type: integer
-                      example: 3600
-                      minimum: 0
-                    active_connections:
-                      type: integer
-                      example: 1500
-                      minimum: 0
-                  description: 'BACKEND NOTE: Fields ordered for struct alignment
-                    (large → small). Expected memory savings: 30-50%.'
-                description: Health status for each requested service
-              total_time_ms:
-                type: integer
-                description: Total processing time in milliseconds
-    TooManyRequests:
-      description: Too many requests - rate limit exceeded
-      headers:
-        Retry-After:
-          schema:
-            type: integer
-            example: 60
-            description: Seconds to wait before retrying
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    BadRequest:
-      description: Invalid request parameters
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-            - code
-            - message
-            properties:
-              code:
-                type: integer
-                example: 500
-                format: int32
-                minimum: 100
-                maximum: 599
-              message:
-                type: string
-                example: Internal server error
-                maxLength: 1000
-              details:
-                type: object
-                description: Additional error details
-            description: Standard error response format
-    Unauthorized:
-      description: Authentication required
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-            - code
-            - message
-            properties:
-              code:
-                type: integer
-                example: 500
-                format: int32
-                minimum: 100
-                maximum: 599
-              message:
-                type: string
-                example: Internal server error
-                maxLength: 1000
-              details:
-                type: object
-                description: Additional error details
-            description: Standard error response format
-    Forbidden:
-      description: Access denied
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-            - code
-            - message
-            properties:
-              code:
-                type: integer
-                example: 500
-                format: int32
-                minimum: 100
-                maximum: 599
-              message:
-                type: string
-                example: Internal server error
-                maxLength: 1000
-              details:
-                type: object
-                description: Additional error details
-            description: Standard error response format
-    NotFound:
-      description: Resource not found
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-            - code
-            - message
-            properties:
-              code:
-                type: integer
-                example: 500
-                format: int32
-                minimum: 100
-                maximum: 599
-              message:
-                type: string
-                example: Internal server error
-                maxLength: 1000
-              details:
-                type: object
-                description: Additional error details
-            description: Standard error response format
-    InternalServerError:
-      description: Internal server error
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-            - code
-            - message
-            properties:
-              code:
-                type: integer
-                example: 500
-                format: int32
-                minimum: 100
-                maximum: 599
-              message:
-                type: string
-                example: Internal server error
-                maxLength: 1000
-              details:
-                type: object
-                description: Additional error details
-            description: Standard error response format
   schemas:
-    BaseEntity:
-      type: object
-      required:
-      - id
-      - created_at
-      - updated_at
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: Unique identifier (UUID v4)
-          example: 123e4567-e89b-12d3-a456-426614174000
-          maxLength: 36
-        created_at:
-          type: string
-          format: date-time
-          description: Creation timestamp (ISO 8601)
-          example: '2025-12-28T10:00:00Z'
-          maxLength: 30
-        updated_at:
-          type: string
-          format: date-time
-          description: Last update timestamp (ISO 8601)
-          example: '2025-12-28T10:00:00Z'
-          maxLength: 30
-    HealthResponse:
-      type: object
-      required:
-      - status
-      - timestamp
-      properties:
-        status:
-          type: string
-          enum:
-          - healthy
-          - degraded
-          - unhealthy
-          example: healthy
-          maxLength: 255
-        domain:
-          type: string
-          example: service-name
-          maxLength: 255
-        timestamp:
-          type: string
-          format: date-time
-          example: '2025-12-28T10:00:00Z'
-        version:
-          type: string
-          example: 1.0.0
-        uptime:
-          type: integer
-          description: System uptime in seconds
-    Error:
-      type: object
-      required:
-      - code
-      - message
-      properties:
-        code:
-          type: integer
-          example: 500
-          format: int32
-          minimum: 100
-          maximum: 599
-        message:
-          type: string
-          example: Internal server error
-          maxLength: 1000
-        details:
-          type: object
-          description: Additional error details
-      description: Standard error response format
-    LoginRequest:
-      type: object
-      required:
-      - email
-      - password
-      properties:
-        email:
-          type: string
-          format: email
-          description: User email address
-          example: user@necpgame.com
-        password:
-          type: string
-          minLength: 8
-          maxLength: 128
-          description: User password
-          example: MySecurePass123!
-        remember_me:
-          type: boolean
-          description: Extend session duration
-          example: true
-          default: false
-        mfa_code:
-          type: string
-          minLength: 6
-          maxLength: 8
-          description: Multi-factor authentication code (if enabled)
-          example: '123456'
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    RegisterRequest:
-      type: object
-      required:
-      - email
-      - password
-      - username
-      properties:
-        email:
-          type: string
-          format: email
-          description: User email address
-          example: newuser@necpgame.com
-        password:
-          type: string
-          minLength: 8
-          maxLength: 128
-          description: User password (must meet complexity requirements)
-          example: MySecurePass123!
-        username:
-          type: string
-          minLength: 3
-          maxLength: 50
-          pattern: ^[a-zA-Z0-9_-]+$
-          description: Unique username
-          example: cyber_runner_2077
-        accept_terms:
-          type: boolean
-          description: User accepts terms of service
-          example: true
-        marketing_consent:
-          type: boolean
-          description: Consent for marketing communications
-          example: false
-          default: false
-        referral_code:
-          type: string
-          maxLength: 50
-          description: Referral code from another user
-          example: FRIEND123
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    AuthResponse:
-      type: object
-      required:
-      - access_token
-      - token_type
-      - expires_in
-      properties:
-        access_token:
-          type: string
-          description: JWT access token for API authentication
-          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-        token_type:
-          type: string
-          enum:
-          - Bearer
-          example: Bearer
-        expires_in:
-          type: integer
-          description: Token expiration time in seconds
-          example: 3600
-        refresh_token:
-          type: string
-          description: Refresh token for obtaining new access tokens
-          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-        user:
-          $ref: '#/components/schemas/UserSummary'
-        session_id:
-          type: string
-          format: uuid
-          description: Session identifier
-          example: 550e8400-e29b-41d4-a716-446655440000
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    RegisterResponse:
-      type: object
-      required:
-      - user_id
-      - email
-      - verification_required
-      properties:
-        user_id:
-          type: string
-          format: uuid
-          description: Newly created user ID
-          example: 550e8400-e29b-41d4-a716-446655440000
-        email:
-          type: string
-          format: email
-          description: Registered email address
-          example: newuser@necpgame.com
-        username:
-          type: string
-          description: Registered username
-          example: cyber_runner_2077
-        verification_required:
-          type: boolean
-          description: Whether email verification is required
-          example: true
-        verification_token_expires:
-          type: string
-          format: date-time
-          description: When verification token expires
-          example: '2025-12-21T12:00:00Z'
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    UserSummary:
-      type: object
-      required:
-      - id
-      - email
-      - username
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: User unique identifier
-          example: 550e8400-e29b-41d4-a716-446655440000
-        email:
-          type: string
-          format: email
-          description: User email address
-          example: user@necpgame.com
-        username:
-          type: string
-          description: User display name
-          example: cyber_runner_2077
-        avatar_url:
-          type: string
-          format: uri
-          description: User avatar image URL
-          example: https://cdn.necpgame.com/avatars/550e8400-e29b-41d4-a716-446655440000.jpg
-        level:
-          type: integer
-          minimum: 1
-          description: User level
-          example: 25
-        is_verified:
-          type: boolean
-          description: Email verification status
-          example: true
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    UserProfile:
-      type: object
-      required:
-      - id
-      - email
-      - username
-      - created_at
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: User unique identifier
-          example: 550e8400-e29b-41d4-a716-446655440000
-        email:
-          type: string
-          format: email
-          description: User email address
-          example: user@necpgame.com
-        username:
-          type: string
-          description: User display name
-          example: cyber_runner_2077
-        avatar_url:
-          type: string
-          format: uri
-          description: User avatar image URL
-          example: https://cdn.necpgame.com/avatars/550e8400-e29b-41d4-a716-446655440000.jpg
-        level:
-          type: integer
-          minimum: 1
-          description: User level
-          example: 25
-        experience:
-          type: integer
-          minimum: 0
-          description: Total experience points
-          example: 12500
-        created_at:
-          type: string
-          format: date-time
-          description: Account creation timestamp
-          example: '2025-01-15T10:30:00Z'
-        last_login:
-          type: string
-          format: date-time
-          description: Last login timestamp
-          example: '2025-12-21T08:15:00Z'
-        is_verified:
-          type: boolean
-          description: Email verification status
-          example: true
-        preferences:
-          type: object
-          description: User preferences and settings
-          properties:
-            theme:
-              type: string
-              enum:
-              - light
-              - dark
-              - cyberpunk
-              example: cyberpunk
-            language:
-              type: string
-              example: en
-            notifications:
+    UserAccount:
+      description: Complete user account entity with infrastructure domain inheritance
+      allOf:
+      - $ref: ../common/schemas/infrastructure-entities.yaml#/UserAccountEntity
+      - type: object
+        properties:
+          auth_provider_data:
+            type: object
+            description: OAuth provider specific data
+            properties:
+              google_id:
+                type: string
+                description: Google OAuth user ID
+              discord_id:
+                type: string
+                description: Discord user ID
+              steam_id:
+                type: string
+                description: Steam user ID
+          last_password_change:
+            type: string
+            format: date-time
+            description: When password was last changed
+          password_reset_tokens:
+            type: array
+            items:
               type: object
               properties:
-                email:
+                token:
+                  type: string
+                  description: Reset token hash
+                expires_at:
+                  type: string
+                  format: date-time
+                  description: Token expiration
+                used:
                   type: boolean
-                  example: true
-                push:
-                  type: boolean
-                  example: false
-        stats:
-          type: object
-          description: User statistics
-          properties:
-            games_played:
-              type: integer
-              minimum: 0
-              example: 150
-            hours_played:
-              type: integer
-              minimum: 0
-              example: 250
-            achievements_unlocked:
-              type: integer
-              minimum: 0
-              example: 25
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    PaginationParams:
-      type: object
-      properties:
-        limit:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 20
-          example: 20
-        offset:
-          type: integer
-          minimum: 0
-          default: 0
-          example: 0
-    PaginatedResponse:
-      type: object
-      required:
-      - items
-      - total
-      - limit
-      - offset
-      properties:
-        items:
-          type: array
-          description: Array of items
-        total:
-          type: integer
-          minimum: 0
-          example: 100
-          description: Total number of items
-        limit:
-          type: integer
-          minimum: 1
-          maximum: 100
-          example: 20
-          description: Items per page
-        offset:
-          type: integer
-          minimum: 0
-          example: 0
-          description: Number of items to skip
-    ETagHeader:
-      type: string
-      description: Entity tag for caching and optimistic locking
-      example: '"auth-123-v1"'
-    OAuthLoginResponse:
+                  description: Whether token was used
+    Session:
+      description: Complete session entity with infrastructure domain inheritance
       allOf:
-      - $ref: '#/components/schemas/AuthResponse'
+      - $ref: ../common/schemas/infrastructure-entities.yaml#/SessionEntity
       - type: object
         properties:
           oauth_provider:
             type: string
             enum:
             - google
-            - github
             - discord
             - steam
-            - epic_games
-            - microsoft
-            description: OAuth provider used for authentication
-            example: google
-          oauth_id:
-            type: string
-            description: Unique identifier from OAuth provider
-            example: '123456789012345678901'
-          is_new_user:
+            - email_password
+            description: How session was created
+          mfa_verified:
             type: boolean
-            description: Whether a new user account was created during OAuth flow
-            example: false
-        description: 'BACKEND NOTE: Extends LoginResponse with OAuth-specific fields.
-          Fields ordered for struct alignment.'
-    OAuthProviderEntity:
+            description: Whether MFA was verified for this session
+            example: true
+    ApiKey:
+      description: Complete API key entity with infrastructure domain inheritance
       allOf:
-      - allOf:
-        - allOf:
-          - $ref: '#/components/schemas/BaseEntity'
-          - type: object
-            properties:
-              created_by:
-                type: string
-                format: uuid
-                description: ID of user who created the entity
-                example: 123e4567-e89b-12d3-a456-426614174001
-                maxLength: 36
-              updated_by:
-                type: string
-                format: uuid
-                description: ID of user who last modified the entity
-                example: 123e4567-e89b-12d3-a456-426614174002
-                maxLength: 36
-          description: 'BACKEND NOTE: Extends BaseEntity with audit trail. Use for
-            admin-managed entities.'
-        - type: object
-          required:
-          - provider_name
-          - client_id
-          - client_secret
-          properties:
-            provider_name:
+      - $ref: ../common/schemas/infrastructure-entities.yaml#/ApiKeyEntity
+      - type: object
+        properties:
+          scopes:
+            type: array
+            items:
               type: string
               enum:
-              - google
-              - github
-              - discord
-              - steam
-              - epic_games
-              - microsoft
-              description: OAuth provider
-              example: google
-            display_name:
-              type: string
-              description: Display name for UI
-              example: Google
-              maxLength: 50
-            client_id:
-              type: string
-              description: OAuth client ID
-              example: 123456789.apps.googleusercontent.com
-              maxLength: 255
-            client_secret:
-              type: string
-              description: OAuth client secret (encrypted)
-              example: encrypted_secret_here
-              maxLength: 255
-            authorization_url:
-              type: string
-              format: uri
-              description: OAuth authorization URL
-              example: https://accounts.google.com/oauth/authorize
-            token_url:
-              type: string
-              format: uri
-              description: OAuth token exchange URL
-              example: https://oauth2.googleapis.com/token
-            user_info_url:
-              type: string
-              format: uri
-              description: User info endpoint URL
-              example: https://www.googleapis.com/oauth2/v2/userinfo
-            scopes:
-              type: array
-              items:
-                type: string
-              description: Required OAuth scopes
-              example:
-              - openid
-              - email
-              - profile
-            is_active:
-              type: boolean
-              description: Whether provider is enabled
-              example: true
-            redirect_uris:
-              type: array
-              items:
-                type: string
-                format: uri
-              description: Allowed redirect URIs
-              maxItems: 10
-        description: 'BACKEND NOTE: OAuth provider configurations with security validation.'
-      - type: object
-        description: 'BACKEND NOTE: Uses common OAuth provider entity with domain-specific
-          extensions if needed.'
-    CleanupSessionsRequest:
+              - read
+              - write
+              - admin
+              - analytics
+            description: API key permission scopes
+    UserAccountSummary:
+      description: Summary user account for authentication responses
       type: object
       properties:
-        status_filter:
-          type: array
-          items:
-            type: string
-            enum:
-            - inactive
-            - disconnected
-            - terminated
-          description: Filter sessions by status
-        max_age_seconds:
-          type: integer
-          minimum: 0
-          default: 3600
-          description: Maximum session age in seconds
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    CleanupSessionsResponse:
-      type: object
-      properties:
-        cleaned_at:
-          type: string
-          format: date-time
-          description: Cleanup operation timestamp
-          example: '2025-12-28T10:00:00Z'
-        cleaned_sessions:
-          type: integer
-          minimum: 0
-          description: Number of sessions cleaned
-          example: 150
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    CleanupStatsResponse:
-      type: object
-      properties:
-        cleanup_frequency:
-          type: string
-          description: How often cleanup runs
-          example: hourly
-        last_cleanup:
-          type: string
-          format: date-time
-          description: Last cleanup execution time
-          example: '2025-12-28T10:00:00Z'
-        average_cleanup_time:
-          type: number
-          minimum: 0
-          description: Average cleanup duration in seconds
-          example: 2.5
-        total_cleaned:
-          type: integer
-          minimum: 0
-          description: Total sessions cleaned historically
-          example: 15420
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    ValidateSessionSecurityRequest:
-      type: object
-      required:
-      - session_id
-      properties:
-        session_id:
+        id:
           type: string
           format: uuid
-          description: Session to validate
-          example: 550e8400-e29b-41d4-a716-446655440000
-        ip_address:
+          description: User account ID
+        username:
           type: string
-          description: Current client IP
-          example: 192.168.1.100
-        user_agent:
+          description: Username
+        email:
           type: string
-          description: Current user agent
-          example: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    SessionSecurityValidationResponse:
-      type: object
-      properties:
-        session_id:
+          format: email
+          description: Email address
+        account_status:
           type: string
-          format: uuid
-          description: Validated session ID
-          example: 550e8400-e29b-41d4-a716-446655440000
-        warnings:
-          type: array
-          items:
-            type: string
-          description: Security warnings found
-          example:
-          - IP address changed
-          - Unusual login time
-        recommendations:
-          type: array
-          items:
-            type: string
-          description: Security improvement recommendations
-          example:
-          - Consider enabling 2FA
-          - Review recent login history
-        is_valid:
+          enum:
+          - active
+          - suspended
+          - banned
+          - pending_verification
+          description: Account status
+        email_verified:
           type: boolean
-          description: Overall security validation result
-          example: true
-        security_score:
-          type: integer
-          minimum: 0
-          maximum: 100
-          description: Security score (0-100)
-          example: 85
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    RotateSessionTokenRequest:
-      type: object
-      required:
-      - session_id
-      properties:
-        session_id:
+          description: Email verification status
+        created_at:
           type: string
-          format: uuid
-          description: Session to rotate token for
-          example: 550e8400-e29b-41d4-a716-446655440000
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    RotateSessionTokenResponse:
+          format: date-time
+          description: Account creation timestamp
+    SessionSummary:
+      description: Summary session for session management
       type: object
       properties:
-        session_id:
+        id:
           type: string
           format: uuid
           description: Session ID
-          example: 550e8400-e29b-41d4-a716-446655440000
-        new_token:
+        ip_address:
           type: string
-          description: New JWT access token
-          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-        expires_at:
+          description: Client IP address
+        user_agent:
           type: string
-          format: date-time
-          description: New token expiration time
-          example: '2025-12-28T11:00:00Z'
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    SessionStatsResponse:
-      type: object
-      properties:
-        last_updated:
+          description: Client user agent
+        created_at:
           type: string
           format: date-time
-          description: Statistics last update time
-          example: '2025-12-28T10:00:00Z'
-        average_session_duration:
-          type: number
-          minimum: 0
-          description: Average session duration in minutes
-          example: 45.7
-        total_sessions:
-          type: integer
-          minimum: 0
-          description: Total sessions created
-          example: 15420
-        active_sessions:
-          type: integer
-          minimum: 0
-          description: Currently active sessions
-          example: 1250
-        inactive_sessions:
-          type: integer
-          minimum: 0
-          description: Inactive but not cleaned sessions
-          example: 89
-        disconnected_sessions:
-          type: integer
-          minimum: 0
-          description: Sessions with connection issues
-          example: 23
-        peak_concurrent_sessions:
-          type: integer
-          minimum: 0
-          description: Peak concurrent sessions (24h)
-          example: 2100
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    ActiveSessionsResponse:
-      allOf:
-      - $ref: '#/components/schemas/PaginatedResponse'
-      - type: object
-        properties:
-          items:
-            type: array
-            items:
-              $ref: '#/components/schemas/SessionInfo'
-            description: List of active sessions
-      description: 'BACKEND NOTE: Extends paginated response with session-specific
-        data.'
-    SessionInfo:
-      allOf:
-      - allOf:
-        - type: object
-          required:
-          - id
-          - created_at
-          - updated_at
-          properties:
-            id:
-              type: string
-              format: uuid
-              description: Unique identifier (UUID v4)
-              example: 123e4567-e89b-12d3-a456-426614174000
-              maxLength: 36
-            created_at:
-              type: string
-              format: date-time
-              description: Creation timestamp (ISO 8601)
-              example: '2025-12-28T10:00:00Z'
-              maxLength: 30
-            updated_at:
-              type: string
-              format: date-time
-              description: Last modification timestamp (ISO 8601)
-              example: '2025-12-28T10:30:00Z'
-              maxLength: 30
-          description: 'BACKEND NOTE: Base entity with ordered fields for struct alignment.
-            Memory savings: 30-50%. All domain entities should extend this.'
-        - type: object
-          required:
-          - user_id
-          - token
-          - expires_at
-          properties:
-            user_id:
-              type: string
-              format: uuid
-              description: Universally Unique Identifier (UUID v4)
-              example: 123e4567-e89b-12d3-a456-426614174000
-              maxLength: 36
-            token:
-              type: string
-              pattern: ^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]*$
-              description: JWT token
-              example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-              maxLength: 1000
-            refresh_token:
-              type: string
-              pattern: ^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]*$
-              description: JWT refresh token
-              example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-              maxLength: 1000
-            expires_at:
-              type: string
-              format: date-time
-              description: ISO 8601 timestamp
-              example: '2025-12-28T10:00:00Z'
-              maxLength: 30
-            refresh_expires_at:
-              type: string
-              format: date-time
-              description: ISO 8601 timestamp
-              example: '2025-12-28T10:00:00Z'
-              maxLength: 30
-            ip_address:
-              type: string
-              pattern: ^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$
-              description: Client IP address
-              example: 192.168.1.100
-            user_agent:
-              type: string
-              description: Client user agent
-              example: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
-              maxLength: 500
-            device_fingerprint:
-              type: string
-              description: Device fingerprint for security
-              example: abc123def456
-              maxLength: 64
-            is_active:
-              type: boolean
-              description: Whether session is active
-              example: true
-            invalidated_at:
-              type: string
-              format: date-time
-              description: ISO 8601 timestamp
-              example: '2025-12-28T10:00:00Z'
-              maxLength: 30
-            last_activity_at:
-              type: string
-              format: date-time
-              description: ISO 8601 timestamp
-              example: '2025-12-28T10:00:00Z'
-              maxLength: 30
-            location:
-              type: object
-              description: Approximate location based on IP
-              properties:
-                country:
-                  type: string
-                  pattern: ^[A-Z]{2}$
-                city:
-                  type: string
-                  maxLength: 100
-                timezone:
-                  type: string
-                  maxLength: 50
-        description: 'BACKEND NOTE: User sessions with security tracking and device
-          fingerprinting.'
-      - type: object
-        description: 'BACKEND NOTE: Uses common session entity with auth-service specific
-          extensions.'
-    TerminateSessionRequest:
+          description: Session creation time
+        last_activity_at:
+          type: string
+          format: date-time
+          description: Last activity timestamp
+        is_active:
+          type: boolean
+          description: Whether session is active
+    LoginRequest:
+      description: Request payload for user login
       type: object
       required:
-      - session_id
+      - identifier
+      - password
       properties:
-        session_id:
+        identifier:
           type: string
-          format: uuid
-          description: Session to terminate
-          example: 550e8400-e29b-41d4-a716-446655440000
-        reason:
+          description: Username or email for login
+          example: nightrunner2077
+        password:
           type: string
-          description: Termination reason
-          example: Security violation detected
-        force:
+          format: password
+          minLength: 8
+          description: User password
+        remember_me:
           type: boolean
+          description: Whether to extend session duration
           default: false
-          description: Force immediate termination
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    UserAccountEntity:
+        mfa_code:
+          type: string
+          pattern: ^[0-9]{6}$
+          description: 6-digit MFA code if enabled
+    RegisterRequest:
+      description: Request payload for user registration
+      type: object
+      required:
+      - username
+      - email
+      - password
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 30
+          pattern: ^[a-zA-Z0-9_-]+$
+          description: Unique username
+          example: nightrunner2077
+        email:
+          type: string
+          format: email
+          description: Email address
+          example: nightrunner@necpgame.com
+        password:
+          type: string
+          format: password
+          minLength: 8
+          maxLength: 128
+          description: Password (server validates complexity)
+          example: MySecureP@ssw0rd123
+        preferred_language:
+          type: string
+          enum:
+          - en
+          - es
+          - zh
+          - ja
+          - ru
+          - de
+          - fr
+          - pl
+          - ko
+          - pt
+          description: User's preferred language
+          default: en
+        terms_accepted:
+          type: boolean
+          description: Whether terms of service were accepted
+          example: true
+        marketing_consent:
+          type: boolean
+          description: Consent for marketing communications
+          example: false
+    VerifyEmailRequest:
+      description: Request payload for email verification
+      type: object
+      required:
+      - token
+      properties:
+        token:
+          type: string
+          minLength: 32
+          description: Email verification token
+          example: abc123def456...
+    RefreshTokenRequest:
+      description: Request payload for token refresh
+      type: object
+      required:
+      - refresh_token
+      properties:
+        refresh_token:
+          type: string
+          description: JWT refresh token
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+    ForgotPasswordRequest:
+      description: Request payload for password reset initiation
+      type: object
+      required:
+      - email
+      properties:
+        email:
+          type: string
+          format: email
+          description: Account email address
+          example: nightrunner@necpgame.com
+    ResetPasswordRequest:
+      description: Request payload for password reset completion
+      type: object
+      required:
+      - token
+      - new_password
+      properties:
+        token:
+          type: string
+          minLength: 32
+          description: Password reset token
+          example: reset_abc123...
+        new_password:
+          type: string
+          format: password
+          minLength: 8
+          maxLength: 128
+          description: New password
+          example: NewSecureP@ssw0rd456
+    AuthConfiguration:
+      description: Auth service configuration entity
       allOf:
-      - allOf:
-        - $ref: '#/components/schemas/BaseEntity'
-        - type: object
-          properties:
-            created_by:
-              type: string
-              format: uuid
-              description: ID of user who created the entity
-              example: 123e4567-e89b-12d3-a456-426614174001
-              maxLength: 36
-            updated_by:
-              type: string
-              format: uuid
-              description: ID of user who last modified the entity
-              example: 123e4567-e89b-12d3-a456-426614174002
-              maxLength: 36
-        description: 'BACKEND NOTE: Extends BaseEntity with audit trail. Use for admin-managed
-          entities.'
+      - $ref: ../common/schemas/infrastructure-entities.yaml#/ConfigurationEntity
       - type: object
-        required:
-        - username
-        - email
-        - status
         properties:
-          username:
-            type: string
-            pattern: ^[a-zA-Z0-9_-]{3,30}$
-            description: Unique username
-            example: night_runner_2077
-            maxLength: 30
-          email:
-            type: string
-            format: email
-            description: Email address
-            example: user@necpgame.com
-            maxLength: 255
-          email_verified:
-            type: boolean
-            description: Whether email is verified
-            example: true
-          email_verified_at:
-            type: string
-            format: date-time
-            description: ISO 8601 timestamp
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
-          password_hash:
-            type: string
-            description: Bcrypt password hash
-            example: $2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPjYfY8HqK2K
-            maxLength: 255
-          status:
-            type: string
-            enum:
-            - active
-            - inactive
-            - suspended
-            - banned
-            - pending_verification
-            description: Account status
-            example: active
-          role:
-            type: string
-            enum:
-            - player
-            - moderator
-            - admin
-            - developer
-            description: Account role
-            example: player
-          permissions:
-            type: array
-            items:
-              type: string
-              enum:
-              - read_profile
-              - write_profile
-              - moderate_content
-              - ban_users
-              - system_admin
-              - developer_access
-            description: Granted permissions
-          last_login_at:
-            type: string
-            format: date-time
-            description: ISO 8601 timestamp
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
-          last_password_change_at:
-            type: string
-            format: date-time
-            description: ISO 8601 timestamp
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
-          failed_login_attempts:
-            type: integer
-            minimum: 0
-            maximum: 10
-            description: Failed login attempts in last hour
-            example: 0
-          locked_until:
-            type: string
-            format: date-time
-            description: ISO 8601 timestamp
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
-          two_factor_enabled:
-            type: boolean
-            description: Whether 2FA is enabled
-            example: false
-          two_factor_secret:
-            type: string
-            description: TOTP secret for 2FA
-            maxLength: 32
-          recovery_codes:
-            type: array
-            items:
-              type: string
-              pattern: ^[A-Z0-9]{10}$
-            maxItems: 10
-            description: Backup recovery codes
-          account_settings:
+          auth_settings:
             type: object
-            description: Account preferences
+            description: Authentication-specific settings
             properties:
-              email_notifications:
-                type: boolean
-                default: true
-              login_alerts:
-                type: boolean
-                default: true
-              session_timeout:
+              password_min_length:
                 type: integer
-                minimum: 300
-                maximum: 86400
-                default: 3600
-                description: Session timeout in seconds
-      description: 'BACKEND NOTE: Core user account with security features and permissions.'
-    SessionEntity:
+                minimum: 8
+                maximum: 128
+                description: Minimum password length
+              session_timeout_hours:
+                type: integer
+                minimum: 1
+                maximum: 168
+                description: Session timeout in hours
+              max_failed_attempts:
+                type: integer
+                minimum: 3
+                maximum: 10
+                description: Max failed login attempts before lockout
+              lockout_duration_minutes:
+                type: integer
+                minimum: 5
+                maximum: 1440
+                description: Account lockout duration
+    AuthAuditLog:
+      description: Audit trail for authentication operations
       allOf:
+      - $ref: ../common/schemas/infrastructure-entities.yaml#/AuditLogEntity
       - type: object
-        required:
-        - id
-        - created_at
-        - updated_at
-        properties:
-          id:
-            type: string
-            format: uuid
-            description: Unique identifier (UUID v4)
-            example: 123e4567-e89b-12d3-a456-426614174000
-            maxLength: 36
-          created_at:
-            type: string
-            format: date-time
-            description: Creation timestamp (ISO 8601)
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
-          updated_at:
-            type: string
-            format: date-time
-            description: Last modification timestamp (ISO 8601)
-            example: '2025-12-28T10:30:00Z'
-            maxLength: 30
-        description: 'BACKEND NOTE: Base entity with ordered fields for struct alignment.
-          Memory savings: 30-50%. All domain entities should extend this.'
-      - type: object
-        required:
-        - user_id
-        - token
-        - expires_at
         properties:
           user_id:
             type: string
             format: uuid
-            description: Universally Unique Identifier (UUID v4)
-            example: 123e4567-e89b-12d3-a456-426614174000
-            maxLength: 36
-          token:
-            type: string
-            pattern: ^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]*$
-            description: JWT token
-            example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-            maxLength: 1000
-          refresh_token:
-            type: string
-            pattern: ^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]*$
-            description: JWT refresh token
-            example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-            maxLength: 1000
-          expires_at:
-            type: string
-            format: date-time
-            description: ISO 8601 timestamp
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
-          refresh_expires_at:
-            type: string
-            format: date-time
-            description: ISO 8601 timestamp
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
-          ip_address:
-            type: string
-            pattern: ^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$
-            description: Client IP address
-            example: 192.168.1.100
-          user_agent:
-            type: string
-            description: Client user agent
-            example: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
-            maxLength: 500
-          device_fingerprint:
-            type: string
-            description: Device fingerprint for security
-            example: abc123def456
-            maxLength: 64
-          is_active:
-            type: boolean
-            description: Whether session is active
-            example: true
-          invalidated_at:
-            type: string
-            format: date-time
-            description: ISO 8601 timestamp
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
-          last_activity_at:
-            type: string
-            format: date-time
-            description: ISO 8601 timestamp
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
-          location:
-            type: object
-            description: Approximate location based on IP
-            properties:
-              country:
-                type: string
-                pattern: ^[A-Z]{2}$
-              city:
-                type: string
-                maxLength: 100
-              timezone:
-                type: string
-                maxLength: 50
-      description: 'BACKEND NOTE: User sessions with security tracking and device
-        fingerprinting.'
-    NotificationEntity:
-      allOf:
-      - type: object
-        required:
-        - id
-        - created_at
-        - updated_at
-        properties:
-          id:
-            type: string
-            format: uuid
-            description: Unique identifier (UUID v4)
-            example: 123e4567-e89b-12d3-a456-426614174000
-            maxLength: 36
-          created_at:
-            type: string
-            format: date-time
-            description: Creation timestamp (ISO 8601)
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
-          updated_at:
-            type: string
-            format: date-time
-            description: Last modification timestamp (ISO 8601)
-            example: '2025-12-28T10:30:00Z'
-            maxLength: 30
-        description: 'BACKEND NOTE: Base entity with ordered fields for struct alignment.
-          Memory savings: 30-50%. All domain entities should extend this.'
-      - type: object
-        required:
-        - user_id
-        - type
-        - title
-        - message
-        properties:
-          user_id:
-            type: string
-            format: uuid
-            description: Universally Unique Identifier (UUID v4)
-            example: 123e4567-e89b-12d3-a456-426614174000
-            maxLength: 36
-          type:
+            description: Associated user account ID
+          operation_type:
             type: string
             enum:
-            - system
-            - social
-            - game
-            - achievement
-            - trade
-            - guild
-            - event
-            - security
-            description: Notification category
-            example: achievement
-          title:
-            type: string
-            description: Notification title
-            example: Achievement Unlocked!
-            maxLength: 100
-          message:
-            type: string
-            description: Notification message
-            example: You have unlocked the 'Night City Explorer' achievement!
-            maxLength: 500
-          data:
-            type: object
-            description: Additional notification data
-            example:
-              achievement_id: uuid
-              points: 100
-          priority:
-            type: string
-            enum:
-            - low
-            - normal
-            - high
-            - urgent
-            description: Notification priority
-            example: normal
-          channels:
-            type: array
-            items:
-              type: string
-              enum:
-              - in_game
-              - push
-              - email
-              - sms
-            description: Delivery channels
-            example:
-            - in_game
-            - push
-          is_read:
-            type: boolean
-            description: Whether user has read the notification
-            example: false
-          read_at:
-            type: string
-            format: date-time
-            description: ISO 8601 timestamp
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
-          expires_at:
-            type: string
-            format: date-time
-            description: ISO 8601 timestamp
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
-          sent_at:
-            type: string
-            format: date-time
-            description: ISO 8601 timestamp
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
-          delivery_status:
-            type: object
-            description: Delivery status per channel
-            properties:
-              in_game:
-                type: string
-                enum:
-                - pending
-                - sent
-                - delivered
-                - failed
-              push:
-                type: string
-                enum:
-                - pending
-                - sent
-                - delivered
-                - failed
-              email:
-                type: string
-                enum:
-                - pending
-                - sent
-                - delivered
-                - failed
-      description: 'BACKEND NOTE: Multi-channel notifications with delivery tracking.'
-    AuditLogEntity:
-      allOf:
-      - type: object
-        required:
-        - id
-        - created_at
-        - updated_at
-        properties:
-          id:
-            type: string
-            format: uuid
-            description: Unique identifier (UUID v4)
-            example: 123e4567-e89b-12d3-a456-426614174000
-            maxLength: 36
-          created_at:
-            type: string
-            format: date-time
-            description: Creation timestamp (ISO 8601)
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
-          updated_at:
-            type: string
-            format: date-time
-            description: Last modification timestamp (ISO 8601)
-            example: '2025-12-28T10:30:00Z'
-            maxLength: 30
-        description: 'BACKEND NOTE: Base entity with ordered fields for struct alignment.
-          Memory savings: 30-50%. All domain entities should extend this.'
-      - type: object
-        required:
-        - user_id
-        - action
-        - resource_type
-        - resource_id
-        properties:
-          user_id:
-            type: string
-            format: uuid
-            description: Universally Unique Identifier (UUID v4)
-            example: 123e4567-e89b-12d3-a456-426614174000
-            maxLength: 36
-          action:
-            type: string
-            enum:
-            - create
-            - read
-            - update
-            - delete
             - login
             - logout
-            - permission_change
-            - security_event
-            description: Action performed
-            example: update
-          resource_type:
-            type: string
-            enum:
-            - user
-            - character
-            - item
-            - guild
-            - trade
-            - session
-            - permission
-            description: Type of resource affected
-            example: character
-          resource_id:
-            type: string
-            format: uuid
-            description: Universally Unique Identifier (UUID v4)
-            example: 123e4567-e89b-12d3-a456-426614174000
-            maxLength: 36
-          old_values:
-            type: object
-            description: Previous values (for updates/deletes)
-            example:
-              name: Old Name
-              level: 10
-          new_values:
-            type: object
-            description: New values (for creates/updates)
-            example:
-              name: New Name
-              level: 15
-          ip_address:
-            type: string
-            pattern: ^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$
-            description: Client IP address
-          user_agent:
-            type: string
-            description: Client user agent
-            maxLength: 500
-          session_id:
-            type: string
-            format: uuid
-            description: Universally Unique Identifier (UUID v4)
-            example: 123e4567-e89b-12d3-a456-426614174000
-            maxLength: 36
-          metadata:
-            type: object
-            description: Additional audit metadata
-            properties:
-              reason:
-                type: string
-                maxLength: 200
-              source:
-                type: string
-                enum:
-                - api
-                - admin_panel
-                - game_client
-                - automation
-              severity:
-                type: string
-                enum:
-                - low
-                - medium
-                - high
-                - critical
-      description: 'BACKEND NOTE: Comprehensive audit logging for compliance and security.'
-    SystemConfigEntity:
-      allOf:
-      - allOf:
-        - $ref: '#/components/schemas/BaseEntity'
-        - type: object
-          required:
-          - version
-          properties:
-            version:
-              type: integer
-              minimum: 1
-              description: Optimistic locking version
-              example: 1
-        description: 'BACKEND NOTE: Extends BaseEntity with version control. Use for
-          concurrent-safe updates.'
-      - type: object
-        required:
-        - key
-        - value
-        - config_type
-        properties:
-          key:
-            type: string
-            pattern: ^[a-zA-Z0-9._-]{1,100}$
-            description: Configuration key
-            example: game.max_players_per_guild
-            maxLength: 100
-          value:
-            type: string
-            description: Configuration value (JSON string)
-            example: '100'
-            maxLength: 10000
-          config_type:
-            type: string
-            enum:
-            - string
-            - number
-            - boolean
-            - json
-            - array
-            description: Value type for validation
-            example: number
-          category:
-            type: string
-            enum:
-            - game
-            - economy
-            - social
-            - security
-            - performance
-            - feature_flags
-            description: Configuration category
-            example: game
-          is_encrypted:
-            type: boolean
-            description: Whether value is encrypted
-            example: false
-          description:
-            type: string
-            description: Configuration description
-            example: Maximum number of players allowed per guild
-            maxLength: 500
-          validation_rules:
-            type: object
-            description: Value validation rules
-            properties:
-              min:
-                type: number
-              max:
-                type: number
-              pattern:
-                type: string
-              enum:
-                type: array
-                items:
-                  type: string
-          last_modified_by:
-            type: string
-            format: uuid
-            description: Universally Unique Identifier (UUID v4)
-            example: 123e4567-e89b-12d3-a456-426614174000
-            maxLength: 36
-          requires_restart:
-            type: boolean
-            description: Whether change requires service restart
-            example: false
-      description: 'BACKEND NOTE: Dynamic system configuration with validation and
-        versioning.'
-    AuditableEntity:
-      allOf:
-      - $ref: '#/components/schemas/BaseEntity'
-      - type: object
-        properties:
-          created_by:
-            type: string
-            format: uuid
-            description: ID of user who created the entity
-            example: 123e4567-e89b-12d3-a456-426614174001
-            maxLength: 36
-          updated_by:
-            type: string
-            format: uuid
-            description: ID of user who last modified the entity
-            example: 123e4567-e89b-12d3-a456-426614174002
-            maxLength: 36
-      description: 'BACKEND NOTE: Extends BaseEntity with audit trail. Use for admin-managed
-        entities.'
-    VersionedEntity:
-      allOf:
-      - $ref: '#/components/schemas/BaseEntity'
-      - type: object
-        required:
-        - version
-        properties:
-          version:
-            type: integer
-            minimum: 1
-            description: Optimistic locking version
-            example: 1
-      description: 'BACKEND NOTE: Extends BaseEntity with version control. Use for
-        concurrent-safe updates.'
-    SoftDeletableEntity:
-      allOf:
-      - $ref: '#/components/schemas/BaseEntity'
-      - type: object
-        properties:
-          deleted_at:
-            type: string
-            format: date-time
-            nullable: true
-            description: Soft deletion timestamp (null if not deleted)
-            example: null
-            maxLength: 30
-      description: 'BACKEND NOTE: Extends BaseEntity with soft delete capability.
-        Use for recoverable deletions.'
-    UpdateRequest:
-      type: object
-      required:
-      - id
-      description: Base schema for update operations with optimistic locking support.
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        version:
-          type: integer
-          minimum: 1
-          description: Current entity version for optimistic locking
-        metadata:
-          type: object
-          properties:
-            updated_by:
-              $ref: '#/components/schemas/UUID'
-            reason:
-              type: string
-              maxLength: 200
-              description: Update reason for audit trail
-    UUID:
-      type: string
-      format: uuid
-      description: Universally Unique Identifier (UUID v4)
-      example: 123e4567-e89b-12d3-a456-426614174000
-      maxLength: 36
-    Email:
-      type: string
-      format: email
-      description: Email address
-      example: user@necpgame.com
-      maxLength: 255
-    Timestamp:
-      type: string
-      format: date-time
-      description: ISO 8601 timestamp
-      example: '2025-12-28T10:00:00Z'
-      maxLength: 30
-    Version:
-      type: string
-      pattern: ^\d+\.\d+\.\d+$
-      description: Semantic version (MAJOR.MINOR.PATCH)
-      example: 1.0.0
-      maxLength: 20
-    ValidationResult:
-      type: object
-      required:
-      - valid
-      properties:
-        valid:
-          type: boolean
-          description: Whether validation passed
-          example: true
-        errors:
-          type: array
-          items:
-            type: string
-          description: Validation error messages
-          example:
-          - Field is required
-          - Invalid format
-        warnings:
-          type: array
-          items:
-            type: string
-          description: Validation warnings
-          example:
-          - Deprecated field usage
+            - register
+            - verify_email
+            - password_reset
+            - session_revoke
+            - oauth_login
+            description: Type of authentication operation performed
+  responses:
+    OK:
+      $ref: ../common/responses/success.yaml#/OK
+    Created:
+      $ref: ../common/responses/success.yaml#/Created
+    Updated:
+      $ref: ../common/responses/success.yaml#/Updated
+    Deleted:
+      $ref: ../common/responses/success.yaml#/Deleted
+    UserAccountActionSuccess:
+      description: User account action completed successfully
+      content:
+        application/json:
+          schema:
+            allOf:
+            - $ref: ../common/responses/success.yaml#/ActionSuccess
+            - type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    user_account_id:
+                      type: string
+                      format: uuid
+                      description: ID of the affected user account
+                    action_result:
+                      type: object
+                      description: Result of the action performed
+    BadRequest:
+      $ref: ../common/responses/error.yaml#/BadRequest
+    Unauthorized:
+      $ref: ../common/responses/error.yaml#/Unauthorized
+    Forbidden:
+      $ref: ../common/responses/error.yaml#/Forbidden
+    NotFound:
+      $ref: ../common/responses/error.yaml#/NotFound
+    Conflict:
+      $ref: ../common/responses/error.yaml#/Conflict
+    TooManyRequests:
+      $ref: ../common/responses/error.yaml#/TooManyRequests
+    InternalServerError:
+      $ref: ../common/responses/error.yaml#/InternalServerError
   securitySchemes:
     BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: JWT Bearer token authentication
+      $ref: ../common/security/security.yaml#/BearerAuth
     ApiKeyAuth:
-      type: apiKey
-      in: header
-      name: X-API-Key
-      description: API Key authentication
+      $ref: ../common/security/security.yaml#/ApiKeyAuth
     ServiceAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: Service-to-service authentication token
+      $ref: ../common/security/security.yaml#/ServiceAuth

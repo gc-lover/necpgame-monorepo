@@ -121,13 +121,25 @@ def collect_all_dependencies(data, base_path, visited=None, collected=None):
                                     else:
                                         raise KeyError(f"Component {part} not found")
 
-                            # Add the resolved component to collected schemas
+                            # Add the resolved component to collected components
+                            if component_path[0] == 'components' and len(component_path) >= 3:
+                                component_type = component_path[1]  # schemas, responses, etc.
+                                component_name = component_path[2]
+
+                                if component_type not in collected:
+                                    collected[component_type] = {}
+                                if component_name not in collected[component_type]:
+                                    collected[component_type][component_name] = current
+
+                            # Also collect all schemas from the referenced file
                             if 'components' in ref_data and 'schemas' in ref_data['components']:
+                                if 'schemas' not in collected:
+                                    collected['schemas'] = {}
                                 for schema_name, schema_def in ref_data['components']['schemas'].items():
-                                    if schema_name not in collected:
+                                    if schema_name not in collected['schemas']:
                                         # Resolve internal refs in the schema before adding
                                         resolved_schema = resolve_refs(schema_def, ref_path.parent)
-                                        collected[schema_name] = resolved_schema
+                                        collected['schemas'][schema_name] = resolved_schema
 
                             # Recursively collect dependencies of this component
                             collect_all_dependencies(current, ref_path.parent, visited, collected)
@@ -160,19 +172,20 @@ def bundle_openapi_spec(spec_path, output_path=None):
         data = yaml.safe_load(f)
 
     # First pass: collect all dependencies
-    collected_schemas = {}
-    collect_all_dependencies(data, spec_path.parent, collected=collected_schemas)
+    collected_components = {}
+    collect_all_dependencies(data, spec_path.parent, collected=collected_components)
 
-    # Add collected schemas to the main spec
+    # Add collected components to the main spec
     if 'components' not in data:
         data['components'] = {}
-    if 'schemas' not in data['components']:
-        data['components']['schemas'] = {}
 
-    # Merge collected schemas
-    for schema_name, schema_def in collected_schemas.items():
-        if schema_name not in data['components']['schemas']:
-            data['components']['schemas'][schema_name] = schema_def
+    # Merge all component types
+    for comp_type, components in collected_components.items():
+        if comp_type not in data['components']:
+            data['components'][comp_type] = {}
+        for comp_name, comp_def in components.items():
+            if comp_name not in data['components'][comp_type]:
+                data['components'][comp_type][comp_name] = comp_def
 
     # Second pass: resolve refs
     bundled = resolve_refs(data, spec_path.parent)

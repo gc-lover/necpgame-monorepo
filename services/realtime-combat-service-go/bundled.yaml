@@ -1,0 +1,196 @@
+openapi: 3.0.3
+info:
+  title: Real-time Combat Service API - Enterprise-Grade Real-time Combat Engine
+  description: '**Enterprise-grade API for Real-time Combat Management**
+
+    Complete real-time combat service for NECPGAME MMOFPS RPG. Handles live combat
+    sessions, WebSocket-based real-time updates, position synchronization, damage
+    events, and combat session orchestration with enterprise-grade performance optimizations.
+
+    ## Key Features
+
+    - **Enterprise-grade architecture** with proper domain separation - **Real-time
+    WebSocket support** for 10k+ concurrent connections - **Backend optimization hints**
+    for struct alignment and memory savings - **Event-driven microservice** with Kafka
+    integration - **Anti-cheat validation** and lag compensation algorithms
+
+    ## Domain Purpose
+
+    Manages real-time combat components including session lifecycle, live player synchronization,
+    damage calculations, combat analytics, and spectator systems.
+
+    ## Performance Targets
+
+    - WebSocket connections: 10k+ concurrent, <50MB memory per 1000 connections -
+    Position updates: 1000+ updates/sec, P99 <10ms latency - Damage events: 2000+
+    events/sec, <5ms processing time - Combat sessions: 500+ active sessions, <20ms
+    state sync - Event throughput: 5000+ events/sec via Kafka - Cache hit rate: >98%
+    (Redis for active combat states)
+
+    '
+  version: 1.0.0
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  contact:
+    name: NECPGAME Real-time Combat API Support
+    url: https://necpgame.com/support
+    email: api@realtime.necpgame.com
+servers:
+- url: http://localhost:8086/api/v1/specialized-domain/combat/realtime
+  description: Real-time Combat Service Development Server
+- url: https://realtime.necpgame.com/api/v1
+  description: Real-time Combat Service Production Server
+security:
+- BearerAuth: []
+tags:
+- name: Combat Sessions
+  description: Combat session management and lifecycle
+- name: Tournament
+  description: Tournament match management and brackets
+- name: Leaderboard
+  description: Real-time leaderboard and ranking systems
+- name: Spectator
+  description: Spectator mode and viewing capabilities
+- name: Analytics
+  description: Combat analytics and performance metrics
+- name: WebSocket
+  description: Real-time WebSocket communication endpoints
+- name: Real-time Updates
+  description: WebSocket-based real-time combat updates
+- name: Position Sync
+  description: Player position synchronization and validation
+- name: Combat Events
+  description: Combat event streaming and notifications
+- name: Statistics
+  description: Combat performance statistics and analytics
+- name: System
+  description: Health checks and system operations
+paths:
+  /health:
+    $ref: ./paths/health.yaml#/paths/~1health
+  /sessions:
+    $ref: ./paths/sessions.yaml#/paths/~1sessions
+  /sessions/{session_id}:
+    $ref: ./paths/sessions-{session_id}.yaml#/paths/~1sessions~1{session_id}
+  /sessions/{session_id}/join:
+    $ref: ./paths/sessions-{session_id}-join.yaml#/paths/~1sessions~1{session_id}~1join
+  /sessions/{session_id}/leave:
+    $ref: ./paths/sessions-{session_id}-leave.yaml#/paths/~1sessions~1{session_id}~1leave
+  /sessions/{session_id}/spectate:
+    $ref: ./paths/sessions-{session_id}-spectate.yaml#/paths/~1sessions~1{session_id}~1spectate
+  /ws/sessions/{session_id}:
+    $ref: ./paths/ws-sessions-{session_id}.yaml#/paths/~1ws~1sessions~1{session_id}
+  /ws/sessions/{session_id}/spectate:
+    $ref: ./paths/ws-sessions-{session_id}-spectate.yaml#/paths/~1ws~1sessions~1{session_id}~1spectate
+  /udp/sessions/{session_id}/connect:
+    $ref: ./paths/udp-sessions-{session_id}-connect.yaml#/paths/~1udp~1sessions~1{session_id}~1connect
+  /sessions/{session_id}/positions:
+    $ref: ./paths/sessions-{session_id}-positions.yaml#/paths/~1sessions~1{session_id}~1positions
+  /sessions/{session_id}/stats:
+    $ref: ./paths/sessions-{session_id}-stats.yaml#/paths/~1sessions~1{session_id}~1stats
+  /sessions/{session_id}/damage:
+    $ref: ./paths/sessions-{session_id}-damage.yaml#/paths/~1sessions~1{session_id}~1damage
+  /sessions/{session_id}/actions:
+    $ref: ./paths/sessions-{session_id}-actions.yaml#/paths/~1sessions~1{session_id}~1actions
+  /sessions/{session_id}/replay:
+    $ref: ./paths/sessions-{session_id}-replay.yaml#/paths/~1sessions~1{session_id}~1replay
+  /tournaments/{tournament_id}/sessions:
+    $ref: ./paths/tournaments-{tournament_id}-sessions.yaml#/paths/~1tournaments~1{tournament_id}~1sessions
+  /tournaments/{tournament_id}/leaderboard:
+    $ref: ./paths/tournaments-{tournament_id}-leaderboard.yaml#/paths/~1tournaments~1{tournament_id}~1leaderboard
+  /sessions/{session_id}/leaderboard:
+    $ref: ./paths/sessions-{session_id}-leaderboard.yaml#/paths/~1sessions~1{session_id}~1leaderboard
+  /tournaments/{tournament_id}/spectate:
+    $ref: ./paths/tournaments-{tournament_id}-spectate.yaml#/paths/~1tournaments~1{tournament_id}~1spectate
+  /analytics/combat/{session_id}:
+    $ref: ./paths/analytics-combat-{session_id}.yaml#/paths/~1analytics~1combat~1{session_id}
+components:
+  schemas:
+    CombatSession:
+      $ref: ./schemas/session-schemas.yaml#/components/schemas/CombatSession
+    CreateSessionRequest:
+      $ref: ./schemas/session-schemas.yaml#/components/schemas/CreateSessionRequest
+    UpdateSessionRequest:
+      $ref: ./schemas/session-schemas.yaml#/components/schemas/UpdateSessionRequest
+    JoinSessionRequest:
+      $ref: ./schemas/session-schemas.yaml#/components/schemas/JoinSessionRequest
+    JoinSessionResponse:
+      $ref: ./schemas/session-schemas.yaml#/components/schemas/JoinSessionResponse
+    PositionUpdateRequest:
+      $ref: ./schemas/position-schemas.yaml#/components/schemas/PositionUpdateRequest
+    PositionUpdateResponse:
+      $ref: ./schemas/position-schemas.yaml#/components/schemas/PositionUpdateResponse
+    DamageRequest:
+      $ref: ./schemas/damage-schemas.yaml#/components/schemas/DamageRequest
+    DamageResponse:
+      $ref: ./schemas/damage-schemas.yaml#/components/schemas/DamageResponse
+    CombatActionRequest:
+      $ref: ./schemas/action-schemas.yaml#/components/schemas/CombatActionRequest
+    CombatActionResponse:
+      $ref: ./schemas/action-schemas.yaml#/components/schemas/CombatActionResponse
+    SpectateRequest:
+      $ref: ./schemas/spectator-schemas.yaml#/components/schemas/SpectateRequest
+    SpectateResponse:
+      $ref: ./schemas/spectator-schemas.yaml#/components/schemas/SpectateResponse
+    CombatStatsResponse:
+      $ref: ./schemas/stats-schemas.yaml#/components/schemas/CombatStatsResponse
+    CombatReplayResponse:
+      $ref: ./schemas/replay-schemas.yaml#/components/schemas/CombatReplayResponse
+    TournamentSessionsResponse:
+      $ref: ./schemas/tournament-schemas.yaml#/components/schemas/TournamentSessionsResponse
+    TournamentLeaderboardResponse:
+      $ref: ./schemas/tournament-schemas.yaml#/components/schemas/TournamentLeaderboardResponse
+    TournamentSpectateRequest:
+      $ref: ./schemas/tournament-schemas.yaml#/components/schemas/TournamentSpectateRequest
+    TournamentSpectateResponse:
+      $ref: ./schemas/tournament-schemas.yaml#/components/schemas/TournamentSpectateResponse
+    SessionLeaderboardResponse:
+      $ref: ./schemas/leaderboard-schemas.yaml#/components/schemas/SessionLeaderboardResponse
+    CombatAnalyticsResponse:
+      $ref: ./schemas/analytics-schemas.yaml#/components/schemas/CombatAnalyticsResponse
+    UdpPacketHeader:
+      $ref: ./schemas/udp-schemas.yaml#/components/schemas/UdpPacketHeader
+    PositionUpdatePacket:
+      $ref: ./schemas/udp-schemas.yaml#/components/schemas/PositionUpdatePacket
+    CombatActionPacket:
+      $ref: ./schemas/udp-schemas.yaml#/components/schemas/CombatActionPacket
+    DamageEventPacket:
+      $ref: ./schemas/udp-schemas.yaml#/components/schemas/DamageEventPacket
+    StateSyncPacket:
+      $ref: ./schemas/udp-schemas.yaml#/components/schemas/StateSyncPacket
+    HeartbeatPacket:
+      $ref: ./schemas/udp-schemas.yaml#/components/schemas/HeartbeatPacket
+    UdpConnectionStats:
+      $ref: ./schemas/udp-schemas.yaml#/components/schemas/UdpConnectionStats
+    UdpServerConfig:
+      $ref: ./schemas/udp-schemas.yaml#/components/schemas/UdpServerConfig
+  responses: {}
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: '**JWT Bearer Authentication**
+
+
+        Use JWT tokens obtained from `/auth/login` or `/auth/refresh`.
+
+
+        **Token Format:** `Authorization: Bearer <jwt_token>`
+
+
+        **Token Expiration:** 15 minutes for access tokens, 7 days for refresh tokens
+
+
+        **Security Features:**
+
+        - RS256 signature verification
+
+        - Token blacklisting on logout
+
+        - Rate limiting per user
+
+        - Geographic restrictions (optional)
+
+        '

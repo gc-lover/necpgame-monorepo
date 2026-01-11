@@ -74,732 +74,15 @@ tags:
   description: System health and performance monitoring
 paths:
   /health:
-    get:
-      operationId: itemServiceHealthCheck
-      summary: Health check endpoint for Item Service
-      description: Returns the health status of the Item Service with performance
-        metrics
-      tags:
-      - Health Monitoring
-      security: []
-      responses:
-        '200':
-          description: Service is healthy
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - status
-                - timestamp
-                properties:
-                  status:
-                    type: string
-                    enum:
-                    - healthy
-                    - degraded
-                    - unhealthy
-                    example: healthy
-                    maxLength: 255
-                  domain:
-                    type: string
-                    example: service-name
-                    maxLength: 255
-                  timestamp:
-                    type: string
-                    format: date-time
-                    example: '2025-12-28T10:00:00Z'
-                    maxLength: 255
-                  version:
-                    type: string
-                    example: 1.0.0
-                    maxLength: 50
-                  uptime_seconds:
-                    type: integer
-                    example: 3600
-                    minimum: 0
-                  active_connections:
-                    type: integer
-                    example: 1500
-                    minimum: 0
-                description: 'BACKEND NOTE: Fields ordered for struct alignment (large
-                  → small). Expected memory savings: 30-50%.'
-        '503':
-          description: Service is unhealthy
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
+    $ref: ./paths/health.yaml#/paths/~1health
   /items:
-    get:
-      operationId: listItems
-      summary: List items with filtering and pagination
-      description: Retrieve a paginated list of items with optional filtering
-      tags:
-      - Item Management
-      parameters:
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 20
-      - name: offset
-        in: query
-        schema:
-          type: integer
-          minimum: 0
-          default: 0
-      responses:
-        '200':
-          description: List of items retrieved successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  items:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Item'
-                  total:
-                    type: integer
-                  limit:
-                    type: integer
-                  offset:
-                    type: integer
-        '400':
-          description: Invalid request parameters
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
+    $ref: ./paths/items.yaml#/paths/~1items
   /items/{itemId}:
-    get:
-      operationId: getItem
-      summary: Get item by ID
-      description: Retrieve detailed information about a specific item
-      tags:
-      - Item Management
-      parameters:
-      - name: itemId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      responses:
-        '200':
-          description: Item retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Item'
-        '404':
-          description: Resource not found
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
+    $ref: ./paths/items-{itemId}.yaml#/paths/~1items~1{itemId}
 components:
-  responses:
-    HealthBatchSuccess:
-      description: Batch health results retrieved successfully
-      headers:
-        Cache-Control:
-          schema:
-            type: string
-            example: no-cache
-        X-Processing-Time:
-          schema:
-            type: integer
-            example: 15
-            description: Processing time in milliseconds
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-            - results
-            - total_time_ms
-            properties:
-              results:
-                type: array
-                items:
-                  type: object
-                  required:
-                  - status
-                  - timestamp
-                  properties:
-                    status:
-                      type: string
-                      enum:
-                      - healthy
-                      - degraded
-                      - unhealthy
-                      example: healthy
-                      maxLength: 255
-                    domain:
-                      type: string
-                      example: service-name
-                      maxLength: 255
-                    timestamp:
-                      type: string
-                      format: date-time
-                      example: '2025-12-28T10:00:00Z'
-                      maxLength: 255
-                    version:
-                      type: string
-                      example: 1.0.0
-                      maxLength: 50
-                    uptime_seconds:
-                      type: integer
-                      example: 3600
-                      minimum: 0
-                    active_connections:
-                      type: integer
-                      example: 1500
-                      minimum: 0
-                  description: 'BACKEND NOTE: Fields ordered for struct alignment
-                    (large → small). Expected memory savings: 30-50%.'
-                description: Health status for each requested service
-              total_time_ms:
-                type: integer
-                description: Total processing time in milliseconds
-    ExampleListSuccess:
-      description: Examples retrieved successfully
-      headers:
-        Cache-Control:
-          schema:
-            type: string
-            example: max-age=300, private
-        X-Total-Count:
-          schema:
-            type: integer
-            example: 150
-            description: Total number of examples matching criteria
-        X-Page-Count:
-          schema:
-            type: integer
-            example: 8
-            description: Total number of pages
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ExampleListResponse'
-    ExampleCreated:
-      description: Example created successfully
-      headers:
-        Location:
-          schema:
-            type: string
-            example: /api/v1/examples/550e8400-e29b-41d4-a716-446655440000
-            description: URL of the created example
-        ETag:
-          schema:
-            type: string
-            example: '"example-123-v1"'
-            description: Entity tag for caching and optimistic locking
-        Cache-Control:
-          schema:
-            type: string
-            example: no-cache
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ExampleResponse'
-    ExampleRetrieved:
-      description: Example retrieved successfully
-      headers:
-        ETag:
-          schema:
-            type: string
-            example: '"example-123-v1"'
-            description: Entity tag for caching
-        Cache-Control:
-          schema:
-            type: string
-            example: max-age=300, private
-            description: Cache control directives
-        Last-Modified:
-          schema:
-            type: string
-            format: date-time
-            example: '2025-12-21T10:00:00Z'
-            description: Last modification timestamp
-        X-Processing-Time:
-          schema:
-            type: integer
-            example: 5
-            description: Processing time in milliseconds
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ExampleResponse'
-    ExampleUpdated:
-      description: Example updated successfully
-      headers:
-        ETag:
-          schema:
-            type: string
-            example: '"example-123-v2"'
-            description: New entity tag after update
-        Last-Modified:
-          schema:
-            type: string
-            format: date-time
-            example: '2025-12-21T10:05:00Z'
-            description: Last modification timestamp
-        X-Processing-Time:
-          schema:
-            type: integer
-            example: 25
-            description: Processing time in milliseconds
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ExampleResponse'
-    ExampleDeleted:
-      description: Example deleted successfully
-      headers:
-        X-Processing-Time:
-          schema:
-            type: integer
-            example: 15
-            description: Processing time in milliseconds
-    OK:
-      description: Operation completed successfully
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              success:
-                type: boolean
-                example: true
-              message:
-                type: string
-                example: Operation completed
-    Created:
-      description: Resource created successfully
-      headers:
-        Location:
-          schema:
-            type: string
-            format: uri
-          description: URI of the created resource
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              id:
-                type: string
-                format: uuid
-                description: Unique identifier of created resource
-              created_at:
-                type: string
-                format: date-time
-                description: Creation timestamp
-    BadRequest:
-      description: Invalid request parameters
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-            - code
-            - message
-            properties:
-              code:
-                type: integer
-                example: 500
-                format: int32
-                minimum: 100
-                maximum: 599
-              message:
-                type: string
-                example: Internal server error
-                maxLength: 1000
-              details:
-                type: object
-                description: Additional error details
-            description: Standard error response format
-    Unauthorized:
-      description: Authentication required
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-            - code
-            - message
-            properties:
-              code:
-                type: integer
-                example: 500
-                format: int32
-                minimum: 100
-                maximum: 599
-              message:
-                type: string
-                example: Internal server error
-                maxLength: 1000
-              details:
-                type: object
-                description: Additional error details
-            description: Standard error response format
-    Forbidden:
-      description: Access denied
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-            - code
-            - message
-            properties:
-              code:
-                type: integer
-                example: 500
-                format: int32
-                minimum: 100
-                maximum: 599
-              message:
-                type: string
-                example: Internal server error
-                maxLength: 1000
-              details:
-                type: object
-                description: Additional error details
-            description: Standard error response format
-    NotFound:
-      description: Resource not found
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-            - code
-            - message
-            properties:
-              code:
-                type: integer
-                example: 500
-                format: int32
-                minimum: 100
-                maximum: 599
-              message:
-                type: string
-                example: Internal server error
-                maxLength: 1000
-              details:
-                type: object
-                description: Additional error details
-            description: Standard error response format
-    Conflict:
-      description: Resource conflict
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-            - code
-            - message
-            properties:
-              code:
-                type: integer
-                example: 500
-                format: int32
-                minimum: 100
-                maximum: 599
-              message:
-                type: string
-                example: Internal server error
-                maxLength: 1000
-              details:
-                type: object
-                description: Additional error details
-            description: Standard error response format
-    InternalServerError:
-      description: Internal server error
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-            - code
-            - message
-            properties:
-              code:
-                type: integer
-                example: 500
-                format: int32
-                minimum: 100
-                maximum: 599
-              message:
-                type: string
-                example: Internal server error
-                maxLength: 1000
-              details:
-                type: object
-                description: Additional error details
-            description: Standard error response format
-    HealthOK:
-      description: Service is healthy
-      content:
-        application/json:
-          schema:
-            HealthResponse:
-              type: object
-              required:
-              - status
-              - timestamp
-              properties:
-                status:
-                  type: string
-                  enum:
-                  - healthy
-                  - degraded
-                  - unhealthy
-                  example: healthy
-                  maxLength: 255
-                domain:
-                  type: string
-                  example: service-name
-                  maxLength: 255
-                timestamp:
-                  type: string
-                  format: date-time
-                  example: '2025-12-28T10:00:00Z'
-                  maxLength: 255
-                version:
-                  type: string
-                  example: 1.0.0
-                  maxLength: 50
-                uptime_seconds:
-                  type: integer
-                  example: 3600
-                  minimum: 0
-                active_connections:
-                  type: integer
-                  example: 1500
-                  minimum: 0
-              description: 'BACKEND NOTE: Fields ordered for struct alignment (large
-                → small). Expected memory savings: 30-50%.'
   schemas:
     HealthResponse:
-      type: object
-      required:
-      - status
-      - timestamp
-      properties:
-        status:
-          type: string
-          enum:
-          - healthy
-          - degraded
-          - unhealthy
-          example: healthy
-          maxLength: 255
-        domain:
-          type: string
-          example: service-name
-          maxLength: 255
-        timestamp:
-          type: string
-          format: date-time
-          example: '2025-12-28T10:00:00Z'
-          maxLength: 255
-        version:
-          type: string
-          example: 1.0.0
-          maxLength: 50
-        uptime_seconds:
-          type: integer
-          example: 3600
-          minimum: 0
-        active_connections:
-          type: integer
-          example: 1500
-          minimum: 0
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
+      $ref: ../common/schemas/health.yaml#/HealthResponse
     WebSocketHealthMessage:
       type: object
       required:
@@ -825,64 +108,11 @@ components:
           description: Timestamp of the health message
           maxLength: 1000
         health:
-          type: object
-          required:
-          - status
-          - timestamp
-          properties:
-            status:
-              type: string
-              enum:
-              - healthy
-              - degraded
-              - unhealthy
-              example: healthy
-              maxLength: 255
-            domain:
-              type: string
-              example: service-name
-              maxLength: 255
-            timestamp:
-              type: string
-              format: date-time
-              example: '2025-12-28T10:00:00Z'
-              maxLength: 255
-            version:
-              type: string
-              example: 1.0.0
-              maxLength: 50
-            uptime_seconds:
-              type: integer
-              example: 3600
-              minimum: 0
-            active_connections:
-              type: integer
-              example: 1500
-              minimum: 0
-          description: 'BACKEND NOTE: Fields ordered for struct alignment (large →
-            small). Expected memory savings: 30-50%.'
+          $ref: ../common/schemas/health.yaml#/HealthResponse
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
         Expected memory savings: 30-50%.'
     Error:
-      type: object
-      required:
-      - code
-      - message
-      properties:
-        code:
-          type: integer
-          example: 500
-          format: int32
-          minimum: 100
-          maximum: 599
-        message:
-          type: string
-          example: Internal server error
-          maxLength: 1000
-        details:
-          type: object
-          description: Additional error details
-      description: Standard error response format
+      $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
     Example:
       type: object
       required:
@@ -1063,46 +293,9 @@ components:
         Expected memory savings: 30-50%. Paginated responses optimized for memory
         efficiency.'
     PaginationParams:
-      type: object
-      properties:
-        limit:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 20
-          example: 20
-        offset:
-          type: integer
-          minimum: 0
-          default: 0
-          example: 0
+      $ref: ../common/schemas/pagination.yaml#/PaginationParams
     PaginatedResponse:
-      type: object
-      required:
-      - items
-      - total
-      - limit
-      - offset
-      properties:
-        items:
-          type: array
-          description: Array of items
-        total:
-          type: integer
-          minimum: 0
-          example: 100
-          description: Total number of items
-        limit:
-          type: integer
-          minimum: 1
-          maximum: 100
-          example: 20
-          description: Items per page
-        offset:
-          type: integer
-          minimum: 0
-          example: 0
-          description: Number of items to skip
+      $ref: ../common/schemas/pagination.yaml#/PaginatedResponse
     Item:
       type: object
       required:
@@ -1183,19 +376,132 @@ components:
           format: date-time
           description: Last update timestamp
       description: Item definition schema. Fields ordered for struct alignment.
+  responses:
+    HealthBatchSuccess:
+      $ref: ../common/responses/success.yaml#/HealthBatchSuccess
+    ExampleListSuccess:
+      description: Examples retrieved successfully
+      headers:
+        Cache-Control:
+          schema:
+            type: string
+            example: max-age=300, private
+        X-Total-Count:
+          schema:
+            type: integer
+            example: 150
+            description: Total number of examples matching criteria
+        X-Page-Count:
+          schema:
+            type: integer
+            example: 8
+            description: Total number of pages
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ExampleListResponse'
+    ExampleCreated:
+      description: Example created successfully
+      headers:
+        Location:
+          schema:
+            type: string
+            example: /api/v1/examples/550e8400-e29b-41d4-a716-446655440000
+            description: URL of the created example
+        ETag:
+          schema:
+            type: string
+            example: '"example-123-v1"'
+            description: Entity tag for caching and optimistic locking
+        Cache-Control:
+          schema:
+            type: string
+            example: no-cache
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ExampleResponse'
+    ExampleRetrieved:
+      description: Example retrieved successfully
+      headers:
+        ETag:
+          schema:
+            type: string
+            example: '"example-123-v1"'
+            description: Entity tag for caching
+        Cache-Control:
+          schema:
+            type: string
+            example: max-age=300, private
+            description: Cache control directives
+        Last-Modified:
+          schema:
+            type: string
+            format: date-time
+            example: '2025-12-21T10:00:00Z'
+            description: Last modification timestamp
+        X-Processing-Time:
+          schema:
+            type: integer
+            example: 5
+            description: Processing time in milliseconds
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ExampleResponse'
+    ExampleUpdated:
+      description: Example updated successfully
+      headers:
+        ETag:
+          schema:
+            type: string
+            example: '"example-123-v2"'
+            description: New entity tag after update
+        Last-Modified:
+          schema:
+            type: string
+            format: date-time
+            example: '2025-12-21T10:05:00Z'
+            description: Last modification timestamp
+        X-Processing-Time:
+          schema:
+            type: integer
+            example: 25
+            description: Processing time in milliseconds
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ExampleResponse'
+    ExampleDeleted:
+      description: Example deleted successfully
+      headers:
+        X-Processing-Time:
+          schema:
+            type: integer
+            example: 15
+            description: Processing time in milliseconds
+    OK:
+      $ref: ../common/responses/success.yaml#/OK
+    Created:
+      $ref: ../common/responses/success.yaml#/Created
+    BadRequest:
+      $ref: ../common/responses/error.yaml#/BadRequest
+    Unauthorized:
+      $ref: ../common/responses/error.yaml#/Unauthorized
+    Forbidden:
+      $ref: ../common/responses/error.yaml#/Forbidden
+    NotFound:
+      $ref: ../common/responses/error.yaml#/NotFound
+    Conflict:
+      $ref: ../common/responses/error.yaml#/Conflict
+    InternalServerError:
+      $ref: ../common/responses/error.yaml#/InternalServerError
+    HealthOK:
+      $ref: ../common/responses/success.yaml#/HealthOK
   securitySchemes:
     BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: JWT Bearer token authentication
+      $ref: ../common/security/security.yaml#/BearerAuth
     ApiKeyAuth:
-      type: apiKey
-      in: header
-      name: X-API-Key
-      description: API Key authentication
+      $ref: ../common/security/security.yaml#/ApiKeyAuth
     ServiceAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: Service-to-service authentication token
+      $ref: ../common/security/security.yaml#/ServiceAuth

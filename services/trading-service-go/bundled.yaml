@@ -1,1189 +1,806 @@
-openapi: 3.0.0
+openapi: 3.0.3
 info:
   title: Trading Service API
-  description: 'Trade Service обеспечивает безопасную P2P торговлю между игроками.'
+  description: "Enterprise-grade P2P Item Trading System  NECPGAME .\n\n## \U0001F3AF\
+    \ **Trading Service Overview**\n\nTrading Service    P2P     NECPGAME  enterprise-grade\
+    \   .\n\n### ** **\n- **Trade Creation**:   \n- **Trade Negotiation**:    \n-\
+    \ **Trade Execution**:    \n- **Trade History**:    \n\n### ** **\n- **Item Trading**:\
+    \  \n- **Currency Exchange**:  \n- **Bulk Trading**:  \n- **Secure Trading**:\
+    \    \n\n### ** **\n- **Trade Matching**:   \n- **Price Analytics**:     \n- **Fraud\
+    \ Prevention**:   \n- **Trade Arbitration**:   \n\n## \U0001F4CA **Performance\
+    \ Targets**\n- **P99 Latency**: <30ms   \n- **Throughput**: 20,000+ trades/second\n\
+    - **Concurrent Traders**: 200,000+  \n- **Trade Volume**: 1M+   \n\n## \U0001F510\
+    \ **Security**\n- JWT RS256 \n- Rate limiting   \n- Input validation  sanitization\n\
+    - Audit logging  \n"
   version: 1.0.0
+  contact:
+    name: NECPGAME Platform Team
+    email: platform@necpgame.com
   license:
-    name: MIT
+    name: Proprietary
+    url: https://necpgame.com/license
 servers:
-  - url: https://api.necpgame.com
-    description: Production server
-  - url: https://staging-api.necpgame.com
-    description: Staging server
+- url: https://trading.necpgame.com/api/v1
+  description: Production Environment
+- url: https://trading-staging.necpgame.com/api/v1
+  description: Staging Environment
+- url: http://localhost:8080/api/v1
+  description: Local Development
+security:
+- BearerAuth: []
 tags:
-  - name: Trade Sessions
-    description: Управление торговыми сессиями
-  - name: Trade History
-    description: История сделок
-  - name: Trade Orders
-    description: Торговые заказы и ордерная книга
-  - name: Trade Contracts
-    description: Долгосрочные торговые контракты
-  - name: Auctions
-    description: Аукционы для редких предметов
+- name: Trade Management
+  description: ' '
+- name: Trade Negotiation
+  description: '  '
+- name: Trade Execution
+  description: ' '
+- name: Trade History
+  description: ' '
+- name: Market Analytics
+  description: ' '
+- name: Dispute Resolution
+  description: ' '
+- name: Health
+  description: '  '
 paths:
   /health:
-    get:
-      operationId: HealthCheck
-      responses:
-        '200':
-          description: Service is healthy
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HealthResponse'
-  /api/v1/trade/sessions:
-    post:
-      tags:
-        - Trade Sessions
-      summary: Создать торговую сессию
-      operationId: CreateTradeSession
-      security:
-        - BearerAuth: [ ]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateTradeRequest'
-      responses:
-        '200':
-          description: Торговая сессия создана
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TradeSessionResponse'
-        '400':
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '409':
-          description: Игрок уже в торговой сессии
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  /api/v1/trade/sessions/{sessionId}:
-    parameters:
-      - name: sessionId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-    get:
-      tags:
-        - Trade Sessions
-      summary: Получить торговую сессию
-      operationId: GetTradeSession
-      security:
-        - BearerAuth: [ ]
-      responses:
-        '200':
-          description: Торговая сессия найдена
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TradeSessionResponse'
-        '404':
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-    put:
-      tags:
-        - Trade Sessions
-      summary: Обновить торговую сессию
-      operationId: UpdateTradeSession
-      security:
-        - BearerAuth: [ ]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateTradeRequest'
-      responses:
-        '200':
-          description: Торговая сессия обновлена
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TradeSessionResponse'
-        '404':
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-    delete:
-      tags:
-        - Trade Sessions
-      summary: Отменить торговую сессию
-      operationId: CancelTradeSession
-      security:
-        - BearerAuth: [ ]
-      responses:
-        '200':
-          description: Торговая сессия отменена
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CancelTradeResponse'
-        '404':
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  /api/v1/trade/sessions/list/{playerId}:
-    parameters:
-      - name: playerId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-    get:
-      tags:
-        - Trade Sessions
-      summary: Получить список торговых сессий
-      operationId: ListTradeSessions
-      security:
-        - BearerAuth: [ ]
-      responses:
-        '200':
-          description: Список торговых сессий
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TradeSessionList'
-  /api/v1/trade/sessions/{sessionId}/execute:
-    parameters:
-      - name: sessionId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-    post:
-      tags:
-        - Trade Sessions
-      summary: Выполнить сделку
-      operationId: ExecuteTrade
-      security:
-        - BearerAuth: [ ]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ExecuteTradeRequest'
-      responses:
-        '200':
-          description: Сделка выполнена
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TradeResult'
-        '404':
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  /api/v1/trade/history/{playerId}:
-    parameters:
-      - name: playerId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          default: 50
-      - name: offset
-        in: query
-        schema:
-          type: integer
-          default: 0
-    get:
-      tags:
-        - Trade History
-      summary: Получить историю сделок
-      operationId: GetTradeHistory
-      security:
-        - BearerAuth: [ ]
-      responses:
-        '200':
-          description: История сделок
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TradeHistoryResponse'
-
-  # ============================================================================
-  # TRADE ORDERS ENDPOINTS
-  # ============================================================================
-  /api/v1/trade/orders:
-    post:
-      tags:
-        - Trade Orders
-      summary: Создать торговый заказ
-      operationId: CreateTradeOrder
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateTradeOrderRequest'
-      responses:
-        '200':
-          description: Торговый заказ создан
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CreateTradeOrderResponse'
-        '400':
-          description: Неверный запрос
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          description: Внутренняя ошибка сервера
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-    get:
-      tags:
-        - Trade Orders
-      summary: Получить список торговых заказов
-      operationId: ListTradeOrders
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: playerId
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: status
-          in: query
-          schema:
-            type: string
-        - name: orderType
-          in: query
-          schema:
-            type: string
-            enum: [buy, sell]
-      responses:
-        '200':
-          description: Список торговых заказов
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TradeOrdersListResponse'
-        '400':
-          description: Неверный запрос
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /api/v1/trade/orders/{orderId}:
-    get:
-      tags:
-        - Trade Orders
-      summary: Получить торговый заказ по ID
-      operationId: GetTradeOrder
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: orderId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: Детали торгового заказа
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TradeOrderResponse'
-        '404':
-          description: Заказ не найден
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-    delete:
-      tags:
-        - Trade Orders
-      summary: Отменить торговый заказ
-      operationId: CancelTradeOrder
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: orderId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: Заказ отменен
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CancelTradeOrderResponse'
-        '404':
-          description: Заказ не найден
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  # ============================================================================
-  # TRADE CONTRACTS ENDPOINTS
-  # ============================================================================
-  /api/v1/trade/contracts:
-    post:
-      tags:
-        - Trade Contracts
-      summary: Создать торговый контракт
-      operationId: CreateTradeContract
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateTradeContractRequest'
-      responses:
-        '200':
-          description: Торговый контракт создан
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CreateTradeContractResponse'
-        '400':
-          description: Неверный запрос
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /api/v1/trade/contracts/{contractId}:
-    get:
-      tags:
-        - Trade Contracts
-      summary: Получить торговый контракт по ID
-      operationId: GetTradeContract
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: contractId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: Детали торгового контракта
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TradeContractResponse'
-        '404':
-          description: Контракт не найден
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  # ============================================================================
-  # AUCTION ENDPOINTS
-  # ============================================================================
-  /api/v1/trade/auctions:
-    post:
-      tags:
-        - Auctions
-      summary: Создать аукцион
-      operationId: CreateAuction
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateAuctionRequest'
-      responses:
-        '200':
-          description: Аукцион создан
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CreateAuctionResponse'
-        '400':
-          description: Неверный запрос
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /api/v1/trade/auctions/{auctionId}/bid:
-    post:
-      tags:
-        - Auctions
-      summary: Сделать ставку на аукционе
-      operationId: PlaceAuctionBid
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: auctionId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PlaceAuctionBidRequest'
-      responses:
-        '200':
-          description: Ставка принята
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PlaceAuctionBidResponse'
-        '400':
-          description: Неверная ставка
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-security:
-  - BearerAuth: []
+    $ref: ./paths/health.yaml#/paths/~1health
+  /health/batch:
+    $ref: ./paths/health-batch.yaml#/paths/~1health~1batch
+  /health/ws:
+    $ref: ./paths/health-ws.yaml#/paths/~1health~1ws
+  /trades:
+    $ref: ./paths/trades.yaml#/paths/~1trades
+  /trades/{tradeId}:
+    $ref: ./paths/trades-{tradeId}.yaml#/paths/~1trades~1{tradeId}
+  /trades/{tradeId}/negotiate:
+    $ref: ./paths/trades-{tradeId}-negotiate.yaml#/paths/~1trades~1{tradeId}~1negotiate
+  /trades/{tradeId}/accept:
+    $ref: ./paths/trades-{tradeId}-accept.yaml#/paths/~1trades~1{tradeId}~1accept
+  /trades/{tradeId}/execute:
+    $ref: ./paths/trades-{tradeId}-execute.yaml#/paths/~1trades~1{tradeId}~1execute
+  /players/{playerId}/trades/history:
+    $ref: ./paths/players-{playerId}-trades-history.yaml#/paths/~1players~1{playerId}~1trades~1history
+  /trades/matching:
+    $ref: ./paths/trades-matching.yaml#/paths/~1trades~1matching
+  /market/analytics:
+    $ref: ./paths/market-analytics.yaml#/paths/~1market~1analytics
+  /trades/{tradeId}/dispute:
+    $ref: ./paths/trades-{tradeId}-dispute.yaml#/paths/~1trades~1{tradeId}~1dispute
+  /disputes/{disputeId}:
+    $ref: ./paths/disputes-{disputeId}.yaml#/paths/~1disputes~1{disputeId}
 components:
+  schemas:
+    CharacterEntity:
+      $ref: ../common/schemas/game-entities.yaml#/components/schemas/CharacterEntity
+    BaseEntity:
+      $ref: ../common/schemas/game-entities.yaml#/components/schemas/BaseEntity
+    OptimisticLock:
+      $ref: ../common/schemas/game-entities.yaml#/components/schemas/OptimisticLock
+    ErrorResponse:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+    HealthResponse:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthResponse
+    HealthBatchRequest:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthBatchRequest
+    HealthBatchResponse:
+      $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/HealthBatchResponse
+    TradeEntity:
+      type: object
+      description: ' '
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        required:
+        - initiatorId
+        - type
+        - status
+        properties:
+          initiatorId:
+            type: string
+            description: 'ID  '
+            format: uuid
+            example: 123e4567-e89b-12d3-a456-426614174000
+          participantId:
+            type: string
+            description: 'ID  '
+            format: uuid
+          type:
+            type: string
+            description: ' '
+            enum:
+            - item_trade
+            - currency_exchange
+            - bulk_trade
+            - secure_trade
+            example: item_trade
+          status:
+            type: string
+            description: ' '
+            enum:
+            - pending
+            - negotiating
+            - accepted
+            - executed
+            - completed
+            - cancelled
+            - disputed
+            example: pending
+          offeredItems:
+            type: array
+            description: ' '
+            items:
+              $ref: '#/components/schemas/TradeItemEntity'
+          requestedItems:
+            type: array
+            description: ' '
+            items:
+              $ref: '#/components/schemas/TradeItemEntity'
+          offeredCurrency:
+            type: object
+            description: ' '
+            properties:
+              currency:
+                type: string
+                enum:
+                - eddies
+                - eurobucks
+                - credits
+                example: eddies
+              amount:
+                type: integer
+                minimum: 0
+                example: 5000
+          requestedCurrency:
+            type: object
+            description: ' '
+            properties:
+              currency:
+                type: string
+                enum:
+                - eddies
+                - eurobucks
+                - credits
+                example: eddies
+              amount:
+                type: integer
+                minimum: 0
+                example: 3000
+          expiresAt:
+            type: string
+            description: '  '
+            format: date-time
+          acceptedAt:
+            type: string
+            description: ' '
+            format: date-time
+          executedAt:
+            type: string
+            description: ' '
+            format: date-time
+          completedAt:
+            type: string
+            description: ' '
+            format: date-time
+          escrowEnabled:
+            type: boolean
+            description: ' '
+            default: false
+          escrowReleased:
+            type: boolean
+            description: ' '
+            default: false
+          negotiationHistory:
+            type: array
+            description: ' '
+            items:
+              type: object
+              properties:
+                playerId:
+                  type: string
+                  format: uuid
+                timestamp:
+                  type: string
+                  format: date-time
+                action:
+                  type: string
+                  enum:
+                  - counter_offer
+                  - accept
+                  - modify
+                  - cancel
+                details:
+                  type: object
+                  additionalProperties: true
+          $ref: '#/components/schemas/OptimisticLock'
+    TradeItemEntity:
+      type: object
+      description: '  '
+      required:
+      - itemId
+      - quantity
+      properties:
+        itemId:
+          type: string
+          description: 'ID '
+          format: uuid
+          example: 456e7890-e89b-12d3-a456-426614174001
+        quantity:
+          type: integer
+          description: ''
+          minimum: 1
+          example: 1
+        itemName:
+          type: string
+          description: ' '
+          maxLength: 100
+          example: Militech M-10AF Lexington
+        itemType:
+          type: string
+          description: ' '
+          enum:
+          - weapon
+          - armor
+          - cyberware
+          - consumable
+          - misc
+          example: weapon
+        rarity:
+          type: string
+          description: ' '
+          enum:
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
+          example: rare
+        estimatedValue:
+          type: integer
+          description: ' '
+          minimum: 0
+          example: 25000
+    TradeDisputeEntity:
+      type: object
+      description: '   '
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        required:
+        - tradeId
+        - initiatorId
+        - reason
+        properties:
+          tradeId:
+            type: string
+            description: 'ID '
+            format: uuid
+          initiatorId:
+            type: string
+            description: 'ID  '
+            format: uuid
+          reason:
+            type: string
+            description: ' '
+            enum:
+            - item_not_delivered
+            - wrong_item
+            - payment_not_received
+            - item_damaged
+            - other
+            example: item_not_delivered
+          description:
+            type: string
+            description: ' '
+            maxLength: 1000
+          evidence:
+            type: array
+            description: ''
+            items:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum:
+                  - screenshot
+                  - log
+                  - witness_statement
+                url:
+                  type: string
+                  format: uri
+                description:
+                  type: string
+                  maxLength: 200
+          status:
+            type: string
+            description: ' '
+            enum:
+            - open
+            - investigating
+            - resolved
+            - escalated
+            example: open
+          resolution:
+            type: string
+            description: ' '
+            enum:
+            - initiator_wins
+            - participant_wins
+            - refund
+            - compensation
+            - dismissed
+          resolvedAt:
+            type: string
+            description: ' '
+            format: date-time
+          assignedModerator:
+            type: string
+            description: ' '
+            format: uuid
+          $ref: '#/components/schemas/OptimisticLock'
+    CreateTradeRequest:
+      type: object
+      required:
+      - type
+      - offeredItems
+      - requestedItems
+      properties:
+        type:
+          type: string
+          enum:
+          - item_trade
+          - currency_exchange
+          - bulk_trade
+          - secure_trade
+        offeredItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/TradeItemEntity'
+        requestedItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/TradeItemEntity'
+        offeredCurrency:
+          type: object
+          properties:
+            currency:
+              type: string
+              enum:
+              - eddies
+              - eurobucks
+              - credits
+            amount:
+              type: integer
+              minimum: 0
+        requestedCurrency:
+          type: object
+          properties:
+            currency:
+              type: string
+              enum:
+              - eddies
+              - eurobucks
+              - credits
+            amount:
+              type: integer
+              minimum: 0
+        expiresIn:
+          type: integer
+          description: '    '
+          minimum: 5
+          maximum: 1440
+          default: 60
+        escrowEnabled:
+          type: boolean
+          default: false
+        notes:
+          type: string
+          description: '  '
+          maxLength: 500
+    UpdateTradeRequest:
+      type: object
+      properties:
+        offeredItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/TradeItemEntity'
+        requestedItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/TradeItemEntity'
+        offeredCurrency:
+          type: object
+          properties:
+            currency:
+              type: string
+              enum:
+              - eddies
+              - eurobucks
+              - credits
+            amount:
+              type: integer
+              minimum: 0
+        requestedCurrency:
+          type: object
+          properties:
+            currency:
+              type: string
+              enum:
+              - eddies
+              - eurobucks
+              - credits
+            amount:
+              type: integer
+              minimum: 0
+        expiresIn:
+          type: integer
+          description: '    '
+          minimum: 5
+          maximum: 1440
+        notes:
+          type: string
+          maxLength: 500
+    TradeResponse:
+      type: object
+      properties:
+        trade:
+          $ref: '#/components/schemas/TradeEntity'
+        metadata:
+          type: object
+          properties:
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+            timeRemaining:
+              type: integer
+              description: '   '
+    TradeListResponse:
+      type: object
+      properties:
+        trades:
+          type: array
+          items:
+            $ref: '#/components/schemas/TradeEntity'
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+              minimum: 0
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 100
+            offset:
+              type: integer
+              minimum: 0
+            hasNext:
+              type: boolean
+    NegotiateTradeRequest:
+      type: object
+      required:
+      - action
+      properties:
+        action:
+          type: string
+          enum:
+          - counter_offer
+          - accept
+          - modify
+          - cancel
+        modifiedOffer:
+          type: object
+          description: ' '
+          properties:
+            offeredItems:
+              type: array
+              items:
+                $ref: '#/components/schemas/TradeItemEntity'
+            requestedItems:
+              type: array
+              items:
+                $ref: '#/components/schemas/TradeItemEntity'
+            offeredCurrency:
+              type: object
+              properties:
+                currency:
+                  type: string
+                  enum:
+                  - eddies
+                  - eurobucks
+                  - credits
+                amount:
+                  type: integer
+                  minimum: 0
+            requestedCurrency:
+              type: object
+              properties:
+                currency:
+                  type: string
+                  enum:
+                  - eddies
+                  - eurobucks
+                  - credits
+                amount:
+                  type: integer
+                  minimum: 0
+        message:
+          type: string
+          description: '   '
+          maxLength: 500
+    AcceptTradeRequest:
+      type: object
+      required:
+      - playerId
+      properties:
+        playerId:
+          type: string
+          format: uuid
+    ExecuteTradeRequest:
+      type: object
+      required:
+      - executorId
+      properties:
+        executorId:
+          type: string
+          format: uuid
+        confirmationCode:
+          type: string
+          description: '    '
+          pattern: ^[A-Z0-9]{6}$
+    TradeExecutionResponse:
+      type: object
+      properties:
+        tradeId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - executed
+          - pending_escrow
+          - completed
+        executedAt:
+          type: string
+          format: date-time
+        itemsTransferred:
+          type: array
+          items:
+            type: object
+            properties:
+              fromPlayer:
+                type: string
+                format: uuid
+              toPlayer:
+                type: string
+                format: uuid
+              item:
+                $ref: '#/components/schemas/TradeItemEntity'
+        currencyTransferred:
+          type: array
+          items:
+            type: object
+            properties:
+              fromPlayer:
+                type: string
+                format: uuid
+              toPlayer:
+                type: string
+                format: uuid
+              currency:
+                type: string
+                enum:
+                - eddies
+                - eurobucks
+                - credits
+              amount:
+                type: integer
+                minimum: 0
+        escrowHeld:
+          type: boolean
+          description: '   '
+    TradeHistoryResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        trades:
+          type: array
+          items:
+            $ref: '#/components/schemas/TradeEntity'
+        statistics:
+          type: object
+          properties:
+            totalTrades:
+              type: integer
+              minimum: 0
+            successfulTrades:
+              type: integer
+              minimum: 0
+            cancelledTrades:
+              type: integer
+              minimum: 0
+            disputedTrades:
+              type: integer
+              minimum: 0
+            totalValueTraded:
+              type: integer
+              minimum: 0
+            successRate:
+              type: number
+              minimum: 0
+              maximum: 1
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+              minimum: 0
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 100
+            offset:
+              type: integer
+              minimum: 0
+            hasNext:
+              type: boolean
+    MatchingTradesResponse:
+      type: object
+      properties:
+        offeredItems:
+          type: array
+          items:
+            type: string
+            format: uuid
+        requestedItems:
+          type: array
+          items:
+            type: string
+            format: uuid
+        matches:
+          type: array
+          items:
+            type: object
+            properties:
+              trade:
+                $ref: '#/components/schemas/TradeEntity'
+              matchScore:
+                type: number
+                minimum: 0
+                maximum: 1
+                description: '  (0-1)'
+              priceDifference:
+                type: integer
+                description: '   ( = )'
+        totalMatches:
+          type: integer
+          minimum: 0
+    MarketAnalyticsResponse:
+      type: object
+      properties:
+        itemType:
+          type: string
+        period:
+          type: string
+          enum:
+          - hourly
+          - daily
+          - weekly
+          - monthly
+        region:
+          type: string
+        priceTrends:
+          type: object
+          properties:
+            averagePrice:
+              type: number
+            minPrice:
+              type: number
+            maxPrice:
+              type: number
+            priceChange:
+              type: number
+              description: '   '
+        tradeVolume:
+          type: integer
+          minimum: 0
+        activeListings:
+          type: integer
+          minimum: 0
+        mostTradedItems:
+          type: array
+          items:
+            type: object
+            properties:
+              itemId:
+                type: string
+                format: uuid
+              itemName:
+                type: string
+              tradeCount:
+                type: integer
+                minimum: 0
+              averagePrice:
+                type: number
+    CreateDisputeRequest:
+      type: object
+      required:
+      - reason
+      - description
+      properties:
+        reason:
+          type: string
+          enum:
+          - item_not_delivered
+          - wrong_item
+          - payment_not_received
+          - item_damaged
+          - other
+        description:
+          type: string
+          maxLength: 1000
+        evidence:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum:
+                - screenshot
+                - log
+                - witness_statement
+              url:
+                type: string
+                format: uri
+              description:
+                type: string
+                maxLength: 200
+    UpdateDisputeRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+          - investigating
+          - resolved
+          - escalated
+        resolution:
+          type: string
+          enum:
+          - initiator_wins
+          - participant_wins
+          - refund
+          - compensation
+          - dismissed
+        moderatorNotes:
+          type: string
+          maxLength: 1000
+    DisputeResponse:
+      type: object
+      properties:
+        dispute:
+          $ref: '#/components/schemas/TradeDisputeEntity'
+        trade:
+          $ref: '#/components/schemas/TradeEntity'
+        metadata:
+          type: object
+          properties:
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+  responses: {}
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-  schemas:
-    HealthResponse:
-      type: object
-      required:
-        - status
-        - message
-        - timestamp
-      properties:
-        status:
-          type: string
-          example: "healthy"
-        message:
-          type: string
-          example: "Trading service is operational"
-        timestamp:
-          type: string
-          format: date-time
-    Error:
-      type: object
-      required:
-        - code
-        - message
-      properties:
-        code:
-          type: string
-          example: "400"
-        message:
-          type: string
-          example: "Bad Request"
-    CreateTradeRequest:
-      type: object
-      required:
-        - player_id
-        - participant_id
-      properties:
-        player_id:
-          type: string
-          format: uuid
-          description: ID инициатора сделки
-        participant_id:
-          type: string
-          format: uuid
-          description: ID участника сделки
-    TradeSessionResponse:
-      type: object
-      required:
-        - id
-        - initiator_id
-        - participant_id
-        - status
-        - currency_type
-        - total_value
-        - created_at
-        - expires_at
-        - is_active
-      properties:
-        id:
-          type: string
-          format: uuid
-        initiator_id:
-          type: string
-          format: uuid
-        participant_id:
-          type: string
-          format: uuid
-        status:
-          type: string
-          enum: [pending, active, completed, cancelled, expired]
-        currency_type:
-          type: string
-          example: "eurodollars"
-        total_value:
-          type: integer
-          format: int64
-        created_at:
-          type: string
-          format: date-time
-        expires_at:
-          type: string
-          format: date-time
-        is_active:
-          type: boolean
-    UpdateTradeRequest:
-      type: object
-      properties:
-        status:
-          type: string
-          enum: [pending, active, completed, cancelled, expired]
-        currency_type:
-          type: string
-        total_value:
-          type: integer
-          format: int64
-    CancelTradeResponse:
-      type: object
-      required:
-        - session_id
-        - status
-        - message
-      properties:
-        session_id:
-          type: string
-          format: uuid
-        status:
-          type: string
-          enum: [pending, active, completed, cancelled, expired]
-        message:
-          type: string
-    TradeSessionList:
-      type: object
-      required:
-        - sessions
-        - total
-      properties:
-        sessions:
-          type: array
-          items:
-            $ref: '#/components/schemas/TradeSessionResponse'
-        total:
-          type: integer
-          format: int64
-    ExecuteTradeRequest:
-      type: object
-      required:
-        - item_id
-        - quantity
-        - total_price
-      properties:
-        item_id:
-          type: string
-          format: uuid
-        quantity:
-          type: integer
-          format: int32
-        total_price:
-          type: integer
-          format: int64
-    TradeResult:
-      type: object
-      required:
-        - trade_id
-        - session_id
-        - buyer_id
-        - seller_id
-        - item_id
-        - quantity
-        - total_price
-        - currency_type
-        - executed_at
-        - success
-      properties:
-        trade_id:
-          type: string
-          format: uuid
-        session_id:
-          type: string
-          format: uuid
-        buyer_id:
-          type: string
-          format: uuid
-        seller_id:
-          type: string
-          format: uuid
-        item_id:
-          type: string
-          format: uuid
-        quantity:
-          type: integer
-          format: int32
-        total_price:
-          type: integer
-          format: int64
-        currency_type:
-          type: string
-        transaction_fee:
-          type: integer
-          format: int64
-        executed_at:
-          type: string
-          format: date-time
-        success:
-          type: boolean
-    TradeTransaction:
-      type: object
-      required:
-        - id
-        - session_id
-        - buyer_id
-        - seller_id
-        - item_id
-        - quantity
-        - total_price
-        - currency_type
-        - transaction_fee
-        - status
-        - executed_at
-      properties:
-        id:
-          type: string
-          format: uuid
-        session_id:
-          type: string
-          format: uuid
-        buyer_id:
-          type: string
-          format: uuid
-        seller_id:
-          type: string
-          format: uuid
-        item_id:
-          type: string
-          format: uuid
-        quantity:
-          type: integer
-          format: int32
-        total_price:
-          type: integer
-          format: int64
-        currency_type:
-          type: string
-        transaction_fee:
-          type: integer
-          format: int64
-        status:
-          type: string
-          enum: [pending, completed, failed, refunded]
-        executed_at:
-          type: string
-          format: date-time
-    TradeHistoryResponse:
-      type: object
-      required:
-        - transactions
-        - total
-        - limit
-        - offset
-      properties:
-        transactions:
-          type: array
-          items:
-            $ref: '#/components/schemas/TradeTransaction'
-        total:
-          type: integer
-          format: int64
-        limit:
-          type: integer
-          format: int64
-        offset:
-          type: integer
-          format: int64
-
-    # ============================================================================
-    # TRADE ORDERS SCHEMAS
-    # ============================================================================
-    CreateTradeOrderRequest:
-      type: object
-      required:
-        - playerId
-        - itemId
-        - orderType
-        - orderMode
-        - itemName
-        - quantity
-        - price
-        - currencyType
-      properties:
-        playerId:
-          type: string
-          format: uuid
-        itemId:
-          type: string
-          format: uuid
-        orderType:
-          type: string
-          enum: [buy, sell]
-        orderMode:
-          type: string
-          enum: [limit, market, stop]
-        itemName:
-          type: string
-        quantity:
-          type: integer
-          format: int32
-        price:
-          type: integer
-          format: int64
-        minQuantity:
-          type: integer
-          format: int32
-        maxQuantity:
-          type: integer
-          format: int32
-        currencyType:
-          type: string
-        isPartial:
-          type: boolean
-        expiresAt:
-          type: string
-          format: date-time
-
-    CreateTradeOrderResponse:
-      type: object
-      required:
-        - orderId
-        - status
-        - message
-        - createdAt
-      properties:
-        orderId:
-          type: string
-          format: uuid
-        status:
-          type: string
-        message:
-          type: string
-        createdAt:
-          type: string
-          format: date-time
-
-    TradeOrderResponse:
-      type: object
-      required:
-        - id
-        - playerId
-        - itemId
-        - orderType
-        - orderMode
-        - itemName
-        - quantity
-        - price
-        - filledQuantity
-        - currencyType
-        - status
-        - isActive
-        - isPartial
-        - createdAt
-        - updatedAt
-        - expiresAt
-      properties:
-        id:
-          type: string
-          format: uuid
-        playerId:
-          type: string
-          format: uuid
-        itemId:
-          type: string
-          format: uuid
-        orderType:
-          type: string
-        orderMode:
-          type: string
-        itemName:
-          type: string
-        quantity:
-          type: integer
-          format: int32
-        price:
-          type: integer
-          format: int64
-        minQuantity:
-          type: integer
-          format: int32
-        maxQuantity:
-          type: integer
-          format: int32
-        filledQuantity:
-          type: integer
-          format: int32
-        currencyType:
-          type: string
-        status:
-          type: string
-        isActive:
-          type: boolean
-        isPartial:
-          type: boolean
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-        expiresAt:
-          type: string
-          format: date-time
-
-    TradeOrdersListResponse:
-      type: object
-      required:
-        - orders
-        - count
-      properties:
-        orders:
-          type: array
-          items:
-            $ref: '#/components/schemas/TradeOrderSummary'
-        count:
-          type: integer
-
-    TradeOrderSummary:
-      type: object
-      required:
-        - id
-        - itemName
-        - orderType
-        - orderMode
-        - quantity
-        - price
-        - filledQuantity
-        - status
-        - createdAt
-        - expiresAt
-      properties:
-        id:
-          type: string
-          format: uuid
-        itemName:
-          type: string
-        orderType:
-          type: string
-        orderMode:
-          type: string
-        quantity:
-          type: integer
-          format: int32
-        price:
-          type: integer
-          format: int64
-        filledQuantity:
-          type: integer
-          format: int32
-        status:
-          type: string
-        createdAt:
-          type: string
-          format: date-time
-        expiresAt:
-          type: string
-          format: date-time
-
-    CancelTradeOrderResponse:
-      type: object
-      required:
-        - orderId
-        - status
-        - message
-      properties:
-        orderId:
-          type: string
-          format: uuid
-        status:
-          type: string
-        message:
-          type: string
-
-    # ============================================================================
-    # TRADE CONTRACTS SCHEMAS
-    # ============================================================================
-    CreateTradeContractRequest:
-      type: object
-      required:
-        - sellerId
-        - buyerId
-        - contractType
-        - itemName
-        - totalQuantity
-        - unitPrice
-      properties:
-        sellerId:
-          type: string
-          format: uuid
-        buyerId:
-          type: string
-          format: uuid
-        contractType:
-          type: string
-          enum: [supply, exclusive, bulk]
-        itemName:
-          type: string
-        totalQuantity:
-          type: integer
-          format: int32
-        unitPrice:
-          type: integer
-          format: int64
-        escrowAmount:
-          type: integer
-          format: int64
-        deliveryDeadline:
-          type: string
-          format: date-time
-        expiresAt:
-          type: string
-          format: date-time
-        isEscrowActive:
-          type: boolean
-
-    CreateTradeContractResponse:
-      type: object
-      required:
-        - contractId
-        - status
-        - message
-        - createdAt
-      properties:
-        contractId:
-          type: string
-          format: uuid
-        status:
-          type: string
-        message:
-          type: string
-        createdAt:
-          type: string
-          format: date-time
-
-    TradeContractResponse:
-      type: object
-      required:
-        - id
-        - sellerId
-        - buyerId
-        - contractType
-        - status
-        - itemName
-        - totalQuantity
-        - deliveredQuantity
-        - unitPrice
-        - escrowAmount
-        - deliveryDeadline
-        - expiresAt
-        - deliveries
-        - isEscrowActive
-        - isCompleted
-        - createdAt
-        - updatedAt
-      properties:
-        id:
-          type: string
-          format: uuid
-        sellerId:
-          type: string
-          format: uuid
-        buyerId:
-          type: string
-          format: uuid
-        contractType:
-          type: string
-        status:
-          type: string
-        itemName:
-          type: string
-        totalQuantity:
-          type: integer
-          format: int32
-        deliveredQuantity:
-          type: integer
-          format: int32
-        unitPrice:
-          type: integer
-          format: int64
-        escrowAmount:
-          type: integer
-          format: int64
-        deliveryDeadline:
-          type: string
-          format: date-time
-        expiresAt:
-          type: string
-          format: date-time
-        deliveries:
-          type: array
-          items:
-            $ref: '#/components/schemas/ContractDeliverySummary'
-        isEscrowActive:
-          type: boolean
-        isCompleted:
-          type: boolean
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-
-    ContractDeliverySummary:
-      type: object
-      required:
-        - id
-        - quantity
-        - deliveredAt
-        - status
-      properties:
-        id:
-          type: string
-          format: uuid
-        quantity:
-          type: integer
-          format: int32
-        deliveredAt:
-          type: string
-          format: date-time
-        status:
-          type: string
-
-    # ============================================================================
-    # AUCTION SCHEMAS
-    # ============================================================================
-    CreateAuctionRequest:
-      type: object
-      required:
-        - sellerId
-        - itemId
-        - itemName
-        - auctionType
-        - startingPrice
-        - quantity
-        - endsAt
-      properties:
-        sellerId:
-          type: string
-          format: uuid
-        itemId:
-          type: string
-          format: uuid
-        itemName:
-          type: string
-        auctionType:
-          type: string
-          enum: [english, dutch, sealed]
-        startingPrice:
-          type: integer
-          format: int64
-        reservePrice:
-          type: integer
-          format: int64
-        quantity:
-          type: integer
-          format: int32
-        endsAt:
-          type: string
-          format: date-time
-
-    CreateAuctionResponse:
-      type: object
-      required:
-        - auctionId
-        - status
-        - message
-        - createdAt
-      properties:
-        auctionId:
-          type: string
-          format: uuid
-        status:
-          type: string
-        message:
-          type: string
-        createdAt:
-          type: string
-          format: date-time
-
-    PlaceAuctionBidRequest:
-      type: object
-      required:
-        - bidderId
-        - amount
-      properties:
-        bidderId:
-          type: string
-          format: uuid
-        amount:
-          type: integer
-          format: int64
-
-    PlaceAuctionBidResponse:
-      type: object
-      required:
-        - bidId
-        - status
-        - message
-        - bidTime
-      properties:
-        bidId:
-          type: string
-          format: uuid
-        status:
-          type: string
-        message:
-          type: string
-        bidTime:
-          type: string
-          format: date-time

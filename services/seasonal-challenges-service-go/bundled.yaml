@@ -1,0 +1,764 @@
+openapi: 3.0.3
+info:
+  title: Seasonal Challenges Service API
+  description: '**Enterprise-grade API for Seasonal Challenges System**
+
+
+    ## Domain Purpose
+
+    Manages seasonal challenges, trials, and competitive events with real-time progression
+    tracking, rewards distribution, and leaderboards for MMOFPS RPG gameplay.
+
+
+    ## Performance Targets
+
+    - P99 Latency: <50ms for all endpoints
+
+    - Memory per Instance: <50KB baseline
+
+    - Concurrent Users: 10,000+ supported
+
+    - Uptime: 99.9% SLA
+
+
+    ## Domain Inheritance
+
+    This service inherits from seasonal-challenges-entities.yaml providing:
+
+    - Consistent base entity structure (id, timestamps, version)
+
+    - Domain-specific business entities
+
+    - Optimistic locking for concurrent operations
+
+    - Strict typing with validation rules
+
+    '
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Team
+    email: api@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+- url: https://api.necpgame.com/v1/seasonal-challenges
+  description: Production environment
+- url: https://staging-api.necpgame.com/v1/seasonal-challenges
+  description: Staging environment
+- url: http://localhost:8080/api/v1/seasonal-challenges
+  description: Local development
+security:
+- BearerAuth: []
+tags:
+- name: Seasonal Challenges
+  description: Core seasonal challenges operations
+- name: Leaderboards
+  description: Seasonal leaderboard management and rankings
+- name: Rewards
+  description: Seasonal rewards distribution and claiming
+- name: Events
+  description: Real-time seasonal events and notifications
+- name: Health Monitoring
+  description: Service health and performance monitoring
+- name: Administration
+  description: Administrative operations
+paths:
+  /health:
+    $ref: ./paths/health.yaml#/paths/~1health
+  /health/detailed:
+    $ref: ./paths/health-detailed.yaml#/paths/~1health~1detailed
+  /health/batch:
+    $ref: ./paths/health-batch.yaml#/paths/~1health~1batch
+  /health/ws:
+    $ref: ./paths/health-ws.yaml#/paths/~1health~1ws
+  /seasons:
+    $ref: ./paths/seasons.yaml#/paths/~1seasons
+  /seasons/{season_id}:
+    $ref: ./paths/seasons-{season_id}.yaml#/paths/~1seasons~1{season_id}
+  /seasons/{season_id}/challenges:
+    $ref: ./paths/seasons-{season_id}-challenges.yaml#/paths/~1seasons~1{season_id}~1challenges
+  /challenges/{challenge_id}/progress:
+    $ref: ./paths/challenges-{challenge_id}-progress.yaml#/paths/~1challenges~1{challenge_id}~1progress
+  /leaderboards/{season_id}:
+    $ref: ./paths/leaderboards-{season_id}.yaml#/paths/~1leaderboards~1{season_id}
+  /rewards/{player_id}/claim:
+    $ref: ./paths/rewards-{player_id}-claim.yaml#/paths/~1rewards~1{player_id}~1claim
+  /ws/events:
+    $ref: ./paths/ws-events.yaml#/paths/~1ws~1events
+  /events/{season_id}/broadcast:
+    $ref: ./paths/events-{season_id}-broadcast.yaml#/paths/~1events~1{season_id}~1broadcast
+components:
+  schemas:
+    Season:
+      description: Complete season entity
+      type: object
+      required:
+      - id
+      - name
+      - start_date
+      - end_date
+      - created_at
+      - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Season ID
+        name:
+          type: string
+          description: Season name
+        start_date:
+          type: string
+          format: date-time
+          description: Season start date
+        end_date:
+          type: string
+          format: date-time
+          description: Season end date
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+        version:
+          type: integer
+          description: Optimistic locking version
+        currency_limit:
+          type: integer
+          minimum: 0
+          maximum: 1000000
+          description: Maximum seasonal currency that can be earned
+          example: 50000
+        rewards_pool:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeasonRewardPool'
+          description: Available reward pools for the season
+    SeasonSummary:
+      description: Summary season for list operations
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Season ID
+        name:
+          type: string
+          description: Season name
+        status:
+          type: string
+          enum:
+          - upcoming
+          - active
+          - completed
+          description: Season status
+        start_date:
+          type: string
+          format: date-time
+          description: Season start date
+        end_date:
+          type: string
+          format: date-time
+          description: Season end date
+        total_challenges:
+          type: integer
+          description: Total number of challenges
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+    Challenge:
+      description: Seasonal challenge entity
+      type: object
+      required:
+      - id
+      - season_id
+      - name
+      - created_at
+      - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Challenge ID
+        season_id:
+          type: string
+          format: uuid
+          description: Parent season ID
+        name:
+          type: string
+          description: Challenge name
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+        version:
+          type: integer
+          description: Optimistic locking version
+        objectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChallengeObjective'
+          description: Challenge objectives to complete
+    ChallengeWithProgress:
+      description: Challenge with player progress information
+      allOf:
+      - $ref: '#/components/schemas/Challenge'
+      - type: object
+        properties:
+          progress:
+            $ref: '#/components/schemas/ChallengeProgress'
+          is_completed:
+            type: boolean
+            description: Whether the player has completed this challenge
+    ChallengeObjective:
+      description: Individual objective within a challenge
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Objective ID
+        type:
+          type: string
+          enum:
+          - kill_count
+          - score_threshold
+          - time_limit
+          - collection
+          - achievement
+          description: Type of objective
+        target_value:
+          type: integer
+          minimum: 1
+          description: Target value to achieve
+        description:
+          type: string
+          description: Human-readable objective description
+        metadata:
+          type: object
+          description: Additional objective-specific data
+    ChallengeProgress:
+      description: Player progress for a challenge
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player ID
+        challenge_id:
+          type: string
+          format: uuid
+          description: Challenge ID
+        current_value:
+          type: integer
+          minimum: 0
+          description: Current progress value
+        is_completed:
+          type: boolean
+          description: Whether the challenge is completed
+        completed_at:
+          type: string
+          format: date-time
+          description: Completion timestamp
+        objectives_progress:
+          type: array
+          items:
+            $ref: '#/components/schemas/ObjectiveProgress'
+          description: Progress for individual objectives
+    ObjectiveProgress:
+      description: Progress for individual objective
+      type: object
+      properties:
+        objective_id:
+          type: string
+          format: uuid
+          description: Objective ID
+        current_value:
+          type: integer
+          minimum: 0
+          description: Current progress value
+        is_completed:
+          type: boolean
+          description: Whether this objective is completed
+    SeasonLeaderboard:
+      description: Season leaderboard with rankings
+      type: object
+      properties:
+        season_id:
+          type: string
+          format: uuid
+          description: Season ID
+        total_players:
+          type: integer
+          description: Total number of players in leaderboard
+        last_updated:
+          type: string
+          format: date-time
+          description: Last leaderboard update timestamp
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaderboardEntry'
+          description: Ranked leaderboard entries
+    LeaderboardEntry:
+      description: Individual leaderboard entry
+      type: object
+      properties:
+        rank:
+          type: integer
+          minimum: 1
+          description: Player rank position
+        player_id:
+          type: string
+          format: uuid
+          description: Player ID
+        player_name:
+          type: string
+          description: Player display name
+        score:
+          type: integer
+          minimum: 0
+          description: Total seasonal score
+        challenges_completed:
+          type: integer
+          minimum: 0
+          description: Number of challenges completed
+        currency_earned:
+          type: integer
+          minimum: 0
+          description: Seasonal currency earned
+    Reward:
+      description: Seasonal reward entity
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+          - currency
+          - item
+          - cosmetic
+          - title
+          - achievement
+          - experience_points
+          - experience_multiplier
+          - premium_boost
+          description: Type of reward
+        amount:
+          type: integer
+          minimum: 1
+          description: Reward amount/quantity
+        item_id:
+          type: string
+          format: uuid
+          description: Item ID (for item rewards)
+        metadata:
+          type: object
+          description: Additional reward data
+    SeasonRewardPool:
+      description: Reward pool configuration for season
+      type: object
+      properties:
+        tier:
+          type: string
+          enum:
+          - bronze
+          - silver
+          - gold
+          - platinum
+          - diamond
+          description: Reward tier
+        min_score:
+          type: integer
+          minimum: 0
+          description: Minimum score required for this tier
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reward'
+          description: Available rewards in this pool
+    ClaimedRewards:
+      description: Result of claiming seasonal rewards
+      type: object
+      properties:
+        season_id:
+          type: string
+          format: uuid
+          description: Season ID
+        claimed_at:
+          type: string
+          format: date-time
+          description: Claim timestamp
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reward'
+          description: Rewards that were claimed
+        next_claim_available:
+          type: string
+          format: date-time
+          description: When next claim is available
+    CreateSeasonRequest:
+      description: Request payload for creating a season
+      type: object
+      required:
+      - name
+      - start_date
+      - end_date
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Season name
+          example: Summer Championship 2026
+        description:
+          type: string
+          maxLength: 500
+          description: Season description
+        start_date:
+          type: string
+          format: date-time
+          description: Season start date
+        end_date:
+          type: string
+          format: date-time
+          description: Season end date
+        currency_limit:
+          type: integer
+          minimum: 0
+          maximum: 1000000
+          default: 10000
+          description: Maximum seasonal currency per player
+        reward_pools:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeasonRewardPool'
+          description: Reward pools configuration
+        metadata:
+          type: object
+          description: Additional season metadata
+    UpdateSeasonRequest:
+      description: Request payload for updating a season
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Season name
+        description:
+          type: string
+          maxLength: 500
+          description: Season description
+        start_date:
+          type: string
+          format: date-time
+          description: Season start date
+        end_date:
+          type: string
+          format: date-time
+          description: Season end date
+        currency_limit:
+          type: integer
+          minimum: 0
+          maximum: 1000000
+          description: Maximum seasonal currency per player
+        reward_pools:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeasonRewardPool'
+          description: Reward pools configuration
+        status:
+          type: string
+          enum:
+          - upcoming
+          - active
+          - completed
+          - cancelled
+          description: Season status
+        version:
+          type: integer
+          minimum: 1
+          description: Current version for optimistic locking
+          example: 1
+    UpdateProgressRequest:
+      description: Request payload for updating challenge progress
+      type: object
+      required:
+      - player_id
+      - progress_value
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player ID
+        progress_value:
+          type: integer
+          minimum: 0
+          description: New progress value to add
+        objective_id:
+          type: string
+          format: uuid
+          description: Specific objective to update (optional)
+        metadata:
+          type: object
+          description: Additional progress data
+    ClaimRewardsRequest:
+      description: Request payload for claiming seasonal rewards
+      type: object
+      required:
+      - season_id
+      properties:
+        season_id:
+          type: string
+          format: uuid
+          description: Season ID to claim rewards for
+        claim_type:
+          type: string
+          enum:
+          - all_available
+          - specific_tier
+          default: all_available
+          description: Type of claim operation
+        tier:
+          type: string
+          enum:
+          - bronze
+          - silver
+          - gold
+          - platinum
+          - diamond
+          description: Specific tier to claim (if claim_type is specific_tier)
+    BroadcastEventRequest:
+      description: Request payload for broadcasting seasonal event
+      type: object
+      required:
+      - event_type
+      - message
+      properties:
+        event_type:
+          type: string
+          enum:
+          - season_start
+          - season_end
+          - challenge_unlocked
+          - leaderboard_update
+          - reward_available
+          description: Type of seasonal event
+        message:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: Event message to broadcast
+        target_players:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Specific players to target (empty = all players)
+        metadata:
+          type: object
+          description: Additional event data
+    SeasonalChallengesConfiguration:
+      description: Service-specific configuration entity
+      allOf:
+      - $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/ConfigurationEntity
+      - type: object
+        properties:
+          seasonal_challenges_settings:
+            type: object
+            description: Domain-specific settings
+            properties:
+              max_concurrent_seasons:
+                type: integer
+                minimum: 1
+                maximum: 10
+                default: 1
+                description: Maximum number of concurrent seasons
+              leaderboard_update_interval:
+                type: integer
+                minimum: 30
+                maximum: 3600
+                default: 300
+                description: Leaderboard update interval in seconds
+              progress_batch_size:
+                type: integer
+                minimum: 1
+                maximum: 1000
+                default: 100
+                description: Progress update batch size
+              reward_claim_cooldown:
+                type: integer
+                minimum: 0
+                maximum: 86400
+                default: 3600
+                description: Cooldown between reward claims in seconds
+    SeasonalChallengeAuditLog:
+      description: Audit trail for seasonal challenge operations
+      allOf:
+      - $ref: ../common/schemas/infrastructure-entities.yaml#/components/schemas/AuditLogEntity
+      - type: object
+        properties:
+          season_id:
+            type: string
+            format: uuid
+            description: Associated season ID
+          challenge_id:
+            type: string
+            format: uuid
+            description: Associated challenge ID
+          player_id:
+            type: string
+            format: uuid
+            description: Associated player ID
+          operation_type:
+            type: string
+            enum:
+            - season_create
+            - season_update
+            - challenge_progress
+            - reward_claim
+            - leaderboard_update
+            - event_broadcast
+            description: Type of operation performed
+          old_value:
+            type: object
+            description: Previous state (for updates)
+          new_value:
+            type: object
+            description: New state (for updates)
+  responses:
+    OK:
+      $ref: ../common/responses/success.yaml#/components/responses/OK
+    Created:
+      $ref: ../common/responses/success.yaml#/components/responses/Created
+    Updated:
+      description: Resource updated successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+    Deleted:
+      description: Resource deleted successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+    ChallengeCompletedSuccess:
+      description: Challenge completed successfully
+      content:
+        application/json:
+          schema:
+            allOf:
+            - type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                action:
+                  type: string
+                  description: Action that was performed
+            - type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    challenge_id:
+                      type: string
+                      format: uuid
+                      description: ID of the completed challenge
+                    rewards_earned:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/Reward'
+                      description: Rewards earned from completion
+    BadRequest:
+      $ref: ../common/responses/error.yaml#/components/responses/BadRequest
+    Unauthorized:
+      $ref: ../common/responses/error.yaml#/components/responses/Unauthorized
+    Forbidden:
+      $ref: ../common/responses/error.yaml#/components/responses/Forbidden
+    NotFound:
+      $ref: ../common/responses/error.yaml#/components/responses/NotFound
+    Conflict:
+      $ref: ../common/responses/error.yaml#/components/responses/Conflict
+    TooManyRequests:
+      $ref: ../common/responses/error.yaml#/components/responses/TooManyRequests
+    InternalServerError:
+      $ref: ../common/responses/error.yaml#/components/responses/InternalServerError
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: '**JWT Bearer Authentication**
+
+
+        Use JWT tokens obtained from `/auth/login` or `/auth/refresh`.
+
+
+        **Token Format:** `Authorization: Bearer <jwt_token>`
+
+
+        **Token Expiration:** 15 minutes for access tokens, 7 days for refresh tokens
+
+
+        **Security Features:**
+
+        - RS256 signature verification
+
+        - Token blacklisting on logout
+
+        - Rate limiting per user
+
+        - Geographic restrictions (optional)
+
+        '
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: '**API Key Authentication**
+
+
+        Use API keys obtained from the admin panel.
+
+
+        **Header Format:** `X-API-Key: <api_key>`
+
+
+        **Rate Limits:** Configurable per key (default: 60 requests/minute)
+
+
+        **Security Features:**
+
+        - SHA-256 hashed storage
+
+        - IP whitelisting support
+
+        - Automatic key rotation
+
+        - Usage analytics
+
+        '
+    ServiceAuth:
+      type: http
+      scheme: bearer
+      description: Service-to-service authentication

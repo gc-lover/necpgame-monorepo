@@ -1,1182 +1,590 @@
 openapi: 3.0.3
 info:
-  title: Role Service API - Enterprise-Grade Role Management
-  description: '**Enterprise-Grade Role and Permission Management API for NECPGAME**
+  title: Role Service API
+  description: '**Enterprise-grade API for Role-Based Access Control**
 
-    Role-based access control service managing user roles, permissions, and access
-    policies. Handles role assignment, permission checking, and security policy enforcement
-    across the entire NECPGAME platform.
-
-    ## Key Features
-
-    - **Enterprise-grade architecture** with proper domain separation - **Backend
-    optimization hints** for struct alignment and performance - **Complete validation**
-    with redocly and ogen code generation - **Security-first approach** with RBAC
-    policy enforcement - **Performance-optimized** permission checking - **Comprehensive
-    error handling** with proper HTTP status codes
 
     ## Domain Purpose
 
-    Manages role-based access control (RBAC) including user roles, permissions, access
-    policies, and security enforcement. Provides centralized role management and permission
-    validation for all NECPGAME services.
+    Comprehensive role and permission management service providing fine-grained access
+    control,
+
+    hierarchical role structures, and security auditing for the NECPGAME platform.
+
+
+    ## Business Value
+
+    - Enterprise RBAC with role hierarchies
+
+    - Fine-grained permission management
+
+    - Dynamic permission evaluation
+
+    - Security compliance and auditing
+
+    - Scalable access control for millions of users
+
 
     ## Performance Targets
 
-    - P99 Latency: <10ms for permission checks - Memory: <100KB per instance (role
-    cache) - Concurrent users: 10,000+ simultaneous permission checks - Security:
-    Zero-trust permission validation
+    - P99 Latency: <25ms for permission checks
+
+    - Memory per Instance: <30KB baseline
+
+    - Concurrent Permission Checks: 100,000+ per second
+
+    - Redis Cache Hit Rate: >95% for permission queries
+
+
+    ## Domain Inheritance
+
+    This service inherits from infrastructure-entities.yaml providing:
+
+    - Audit trails for security events
+
+    - Configuration management for policies
+
+    - User account references
+
+    - Optimistic locking for concurrent operations
+
+    - Strict typing with validation rules
 
     '
   version: 1.0.0
   contact:
-    name: NECPGAME API Support
-    url: https://necpgame.com/support
+    name: NECPGAME API Team
     email: api@necpgame.com
   license:
     name: MIT
-    url: https://opensource.org/licenses/MIT
 servers:
-- url: https://api.necpgame.com/v1/role
-  description: Production server
-- url: https://staging-api.necpgame.com/v1/role
-  description: Staging server
-- url: http://localhost:8080/api/v1/role
-  description: Local development server
+- url: https://api.necpgame.com/v1/role-service
+  description: Production environment
+- url: https://staging-api.necpgame.com/v1/role-service
+  description: Staging environment
+- url: http://localhost:8080/api/v1/role-service
+  description: Local development
 security:
 - BearerAuth: []
 tags:
 - name: Role Management
-  description: Core role management operations
+  description: Core role operations and lifecycle
 - name: Permission Management
-  description: Permission and access control operations
+  description: Permission definition and validation
+- name: Access Control
+  description: User role assignments and access checks
+- name: Security Auditing
+  description: Role and permission audit trails
+- name: Policy Management
+  description: Security policies and compliance
 - name: Health Monitoring
-  description: System health and performance monitoring
+  description: Service health and performance monitoring
 paths:
   /health:
-    get:
-      summary: Role service health check
-      description: '**Enterprise-grade health check endpoint**
-
-        Provides real-time health status of the role management microservice.
-
-        Critical for service discovery, load balancing, and monitoring.
-
-        **Performance:** <1ms response time, cached for 30 seconds '
-      operationId: roleServiceHealthCheck
-      tags:
-      - Health Monitoring
-      parameters:
-      - name: Accept-Encoding
-        in: header
-        schema:
-          type: string
-          enum:
-          - gzip
-          - deflate
-          - br
-      responses:
-        '200':
-          description: Service is healthy
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                example: max-age=30, s-maxage=60
-            ETag:
-              schema:
-                $ref: '#/components/schemas/ETagHeader'
-            Content-Encoding:
-              schema:
-                type: string
-                enum:
-                - gzip
-                - deflate
-                - br
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HealthResponse'
-        '503':
-          description: Service is unhealthy
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HealthResponse'
-        '429':
-          description: Too many requests - rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
+    $ref: ./paths/health.yaml#/paths/~1health
   /roles:
-    get:
-      summary: List roles with filtering and pagination
-      description: '**Enterprise-grade listing endpoint**
-
-        Supports complex filtering, sorting, and pagination patterns.
-
-        Optimized for high-throughput scenarios with proper indexing.
-
-        **Performance:** <10ms P95, supports 1000+ concurrent requests '
-      operationId: listRoles
-      tags:
-      - Role Management
-      parameters:
-      - name: page
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          default: 1
-        description: Page number for pagination
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 20
-        description: Number of items per page
-      - name: filter_active
-        in: query
-        schema:
-          type: boolean
-          default: true
-        description: Filter by active status
-      responses:
-        '200':
-          description: Roles retrieved successfully
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                example: max-age=300, private
-            X-Total-Count:
-              schema:
-                type: integer
-                example: 150
-                description: Total number of roles matching criteria
-            X-Page-Count:
-              schema:
-                type: integer
-                example: 8
-                description: Total number of pages
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RoleListResponse'
-        '400':
-          description: Invalid request - malformed query parameters
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Unprocessable entity - validation failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-    post:
-      summary: Create new role
-      description: '**Enterprise-grade creation endpoint**
-
-        Validates business rules, applies security checks, and ensures data consistency.
-
-        Supports optimistic locking for concurrent operations.
-
-        **Performance:** <50ms P95, includes validation and business logic '
-      operationId: createRole
-      tags:
-      - Role Management
-      security:
-      - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateRoleRequest'
-      responses:
-        '201':
-          description: Role created successfully
-          headers:
-            Location:
-              schema:
-                type: string
-                example: /api/v1/roles/550e8400-e29b-41d4-a716-446655440000
-                description: URI of the created role
-            ETag:
-              schema:
-                type: string
-                example: '"role-123-v1"'
-                description: Entity tag for caching and optimistic locking
-            Cache-Control:
-              schema:
-                type: string
-                example: no-cache
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RoleResponse'
-        '400':
-          description: Invalid request - malformed or missing data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '409':
-          description: Conflict - role with this identifier already exists
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Unprocessable entity - business rule validation failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - creation rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-  /roles/{role_id}:
-    get:
-      summary: Get specific role by ID
-      description: '**Enterprise-grade retrieval endpoint**
-
-        Optimized with proper caching strategies and database indexing.
-
-        Supports conditional requests with ETags.
-
-        **Performance:** <5ms P95 with Redis caching '
-      operationId: getRole
-      tags:
-      - Role Management
-      parameters:
-      - name: role_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Role unique identifier
-      - name: include_permissions
-        in: query
-        schema:
-          type: boolean
-          default: false
-        description: Include associated permissions in response
-      responses:
-        '200':
-          description: Role retrieved successfully
-          headers:
-            ETag:
-              schema:
-                type: string
-                example: '"role-123-v1"'
-                description: Entity tag for caching
-            Cache-Control:
-              schema:
-                type: string
-                example: max-age=300, private
-                description: Cache control directives
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RoleResponse'
-        '400':
-          description: Invalid request - malformed role ID
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Role not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-    put:
-      summary: Update existing role
-      description: '**Enterprise-grade update endpoint**
-
-        Supports partial updates, optimistic locking, and audit trails.
-
-        Ensures data consistency with event sourcing patterns.
-
-        **Performance:** <25ms P95, includes validation and conflict resolution '
-      operationId: updateRole
-      tags:
-      - Role Management
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: role_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Role unique identifier
-      - name: If-Match
-        in: header
-        schema:
-          type: string
-        description: ETag for optimistic locking - prevents concurrent updates
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateRoleRequest'
-      responses:
-        '200':
-          description: Role updated successfully
-          headers: {}
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RoleResponse'
-        '400':
-          description: Invalid request - malformed data or role ID
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Role not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '409':
-          description: Conflict - version conflict (optimistic locking)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Unprocessable entity - business rule validation failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - update rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-    delete:
-      summary: Delete role
-      description: '**Enterprise-grade deletion endpoint**
-
-        Supports soft deletes with audit trails and cleanup scheduling.
-
-        Ensures referential integrity and cascading deletes.
-
-        **Performance:** <15ms P95, includes cleanup operations '
-      operationId: deleteRole
-      tags:
-      - Role Management
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: role_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Role unique identifier
-      responses:
-        '204':
-          description: Role deleted successfully
-        '400':
-          description: Invalid request - malformed role ID
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Role not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '409':
-          description: Conflict - role cannot be deleted (referential integrity)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - deletion rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
+    $ref: ./paths/roles.yaml#/paths/~1roles
+  /roles/{roleId}:
+    $ref: ./paths/roles-{roleId}.yaml#/paths/~1roles~1{roleId}
+  /roles/{roleId}/permissions:
+    $ref: ./paths/roles-{roleId}-permissions.yaml#/paths/~1roles~1{roleId}~1permissions
+  /permissions:
+    $ref: ./paths/permissions.yaml#/paths/~1permissions
+  /users/{userId}/roles:
+    $ref: ./paths/users-{userId}-roles.yaml#/paths/~1users~1{userId}~1roles
   /permissions/check:
-    post:
-      summary: Check user permissions for specific action
-      description: '**Performance-critical endpoint**
-
-        Checks if user has required permissions for a specific action.
-
-        Optimized for high-frequency calls with caching and fast lookups.
-
-        **Performance:** <5ms P99, supports 10,000+ concurrent checks '
-      operationId: checkPermissions
-      tags:
-      - Permission Management
-      security:
-      - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PermissionCheckRequest'
-      responses:
-        '200':
-          description: Permission check completed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PermissionCheckResponse'
-        '400':
-          description: Invalid request - malformed permission check
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '403':
-          description: Access denied - insufficient permissions
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - permission check rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 1
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
+    $ref: ./paths/permissions-check.yaml#/paths/~1permissions~1check
+  /audit/roles:
+    $ref: ./paths/audit-roles.yaml#/paths/~1audit~1roles
 components:
-  responses:
-    OK:
-      description: Operation completed successfully
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              success:
-                type: boolean
-                example: true
-              message:
-                type: string
-                example: Operation completed
-    Created:
-      description: Resource created successfully
-      headers:
-        Location:
-          schema:
+  schemas:
+    Role:
+      description: Complete role entity with infrastructure domain inheritance
+      allOf:
+      - $ref: ../common/schemas/infrastructure-entities.yaml#/ConfigurationEntity
+      - type: object
+        properties:
+          name:
             type: string
-            format: uri
-          description: URI of the created resource
-      content:
-        application/json:
-          schema:
+            minLength: 1
+            maxLength: 100
+            description: Human-readable role name
+          description:
+            type: string
+            maxLength: 500
+            description: Role description and purpose
+          role_type:
+            type: string
+            enum:
+            - system
+            - organization
+            - project
+            - custom
+            description: Category of role
+          organization_id:
+            type: string
+            format: uuid
+            description: Organization this role belongs to
+          parent_role_id:
+            type: string
+            format: uuid
+            description: Parent role for inheritance
+          permissions:
+            type: array
+            items:
+              type: string
+            description: Direct permissions assigned to this role
+          inherited_permissions:
+            type: array
+            items:
+              type: string
+            description: Permissions inherited from parent roles
+          is_active:
+            type: boolean
+            default: true
+            description: Whether role is active
+          metadata:
             type: object
+            description: Additional role metadata
             properties:
-              id:
+              created_by:
                 type: string
                 format: uuid
-                description: Unique identifier of created resource
-              created_at:
+                description: User who created this role
+              risk_level:
                 type: string
-                format: date-time
-                description: Creation timestamp
-    BadRequest:
-      description: Invalid request parameters
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-            - code
-            - message
-            properties:
-              code:
-                type: integer
-                example: 500
-                format: int32
-                minimum: 100
-                maximum: 599
-              message:
-                type: string
-                example: Internal server error
-                maxLength: 1000
-              details:
-                type: object
-                description: Additional error details
-            description: Standard error response format
-    Unauthorized:
-      description: Authentication required
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-            - code
-            - message
-            properties:
-              code:
-                type: integer
-                example: 500
-                format: int32
-                minimum: 100
-                maximum: 599
-              message:
-                type: string
-                example: Internal server error
-                maxLength: 1000
-              details:
-                type: object
-                description: Additional error details
-            description: Standard error response format
-    Forbidden:
-      description: Access denied
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-            - code
-            - message
-            properties:
-              code:
-                type: integer
-                example: 500
-                format: int32
-                minimum: 100
-                maximum: 599
-              message:
-                type: string
-                example: Internal server error
-                maxLength: 1000
-              details:
-                type: object
-                description: Additional error details
-            description: Standard error response format
-    NotFound:
-      description: Resource not found
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-            - code
-            - message
-            properties:
-              code:
-                type: integer
-                example: 500
-                format: int32
-                minimum: 100
-                maximum: 599
-              message:
-                type: string
-                example: Internal server error
-                maxLength: 1000
-              details:
-                type: object
-                description: Additional error details
-            description: Standard error response format
-    Conflict:
-      description: Resource conflict
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-            - code
-            - message
-            properties:
-              code:
-                type: integer
-                example: 500
-                format: int32
-                minimum: 100
-                maximum: 599
-              message:
-                type: string
-                example: Internal server error
-                maxLength: 1000
-              details:
-                type: object
-                description: Additional error details
-            description: Standard error response format
-    InternalServerError:
-      description: Internal server error
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-            - code
-            - message
-            properties:
-              code:
-                type: integer
-                example: 500
-                format: int32
-                minimum: 100
-                maximum: 599
-              message:
-                type: string
-                example: Internal server error
-                maxLength: 1000
-              details:
-                type: object
-                description: Additional error details
-            description: Standard error response format
-  schemas:
-    HealthResponse:
+                enum:
+                - low
+                - medium
+                - high
+                - critical
+                description: Security risk level of this role
+    RoleSummary:
+      description: Summary role for list operations
       type: object
-      required:
-      - status
-      - timestamp
-      properties:
-        status:
-          type: string
-          enum:
-          - healthy
-          - degraded
-          - unhealthy
-          example: healthy
-          maxLength: 255
-        domain:
-          type: string
-          example: service-name
-          maxLength: 255
-        timestamp:
-          type: string
-          format: date-time
-          example: '2025-12-28T10:00:00Z'
-          maxLength: 255
-        version:
-          type: string
-          example: 1.0.0
-          maxLength: 50
-        uptime_seconds:
-          type: integer
-          example: 3600
-          minimum: 0
-        active_connections:
-          type: integer
-          example: 1500
-          minimum: 0
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    Error:
-      type: object
-      required:
-      - code
-      - message
-      properties:
-        code:
-          type: integer
-          example: 500
-          format: int32
-          minimum: 100
-          maximum: 599
-        message:
-          type: string
-          example: Internal server error
-          maxLength: 1000
-        details:
-          type: object
-          description: Additional error details
-      description: Standard error response format
-    PaginationParams:
-      type: object
-      properties:
-        limit:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 20
-          example: 20
-        offset:
-          type: integer
-          minimum: 0
-          default: 0
-          example: 0
-    PaginatedResponse:
-      type: object
-      required:
-      - items
-      - total
-      - limit
-      - offset
-      properties:
-        items:
-          type: array
-          description: Array of items
-        total:
-          type: integer
-          minimum: 0
-          example: 100
-          description: Total number of items
-        limit:
-          type: integer
-          minimum: 1
-          maximum: 100
-          example: 20
-          description: Items per page
-        offset:
-          type: integer
-          minimum: 0
-          example: 0
-          description: Number of items to skip
-    Role:
-      type: object
-      required:
-      - id
-      - name
-      - created_at
-      - is_active
       properties:
         id:
           type: string
           format: uuid
-          description: Role unique identifier
-          example: 550e8400-e29b-41d4-a716-446655440000
+          description: Role ID
         name:
           type: string
-          minLength: 1
-          maxLength: 100
-          description: Role display name
-          example: Game Master
-        description:
+          description: Role name
+        role_type:
           type: string
-          maxLength: 500
-          description: Role description
-          example: Full access to game management features
+          enum:
+          - system
+          - organization
+          - project
+          - custom
+          description: Role type
+        is_active:
+          type: boolean
+          description: Active status
+        permission_count:
+          type: integer
+          description: Number of permissions
         created_at:
           type: string
           format: date-time
           description: Creation timestamp
-          example: '2025-12-21T10:00:00Z'
-        updated_at:
+    Permission:
+      description: Permission definition entity
+      type: object
+      required:
+      - id
+      - resource_type
+      - action
+      - name
+      properties:
+        id:
           type: string
-          format: date-time
-          description: Last update timestamp
-          example: '2025-12-21T10:00:00Z'
+          format: uuid
+          description: Permission unique identifier
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Human-readable permission name
+        description:
+          type: string
+          maxLength: 500
+          description: Permission description
+        resource_type:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Type of resource (e.g., 'user', 'role', 'organization')
+        action:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Action on resource (e.g., 'create', 'read', 'update', 'delete')
+        conditions:
+          type: object
+          description: Conditional requirements for permission
+          additionalProperties: true
+        risk_level:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - critical
+          description: Security risk level
         is_active:
           type: boolean
-          description: Whether this role is active
-          example: true
-        priority:
-          type: integer
-          minimum: 1
-          maximum: 1000
-          default: 100
-          description: Role priority for inheritance resolution
-          example: 500
-        permissions:
-          type: array
-          items:
+          default: true
+          description: Whether permission is active
+    PermissionSummary:
+      description: Summary permission for list operations
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Permission ID
+        name:
+          type: string
+          description: Permission name
+        resource_type:
+          type: string
+          description: Resource type
+        action:
+          type: string
+          description: Action
+        risk_level:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - critical
+          description: Risk level
+    UserRoleAssignment:
+      description: User role assignment entity
+      type: object
+      required:
+      - id
+      - user_id
+      - role_id
+      - assigned_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Assignment unique identifier
+        user_id:
+          type: string
+          format: uuid
+          description: User assigned to role
+        role_id:
+          type: string
+          format: uuid
+          description: Role assigned to user
+        organization_id:
+          type: string
+          format: uuid
+          description: Organization context
+        assigned_by:
+          type: string
+          format: uuid
+          description: User who made the assignment
+        assigned_at:
+          type: string
+          format: date-time
+          description: Assignment timestamp
+        expires_at:
+          type: string
+          format: date-time
+          description: Optional expiration date
+        conditions:
+          type: object
+          description: Conditional assignment rules
+          additionalProperties: true
+        is_active:
+          type: boolean
+          default: true
+          description: Whether assignment is active
+    RoleAuditEntry:
+      description: Audit entry for role operations
+      allOf:
+      - $ref: ../common/schemas/infrastructure-entities.yaml#/AuditLogEntity
+      - type: object
+        properties:
+          role_id:
             type: string
-            maxLength: 200
-          description: Associated permissions
-          example:
-          - game.admin
-          - user.manage
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
+            format: uuid
+            description: Associated role ID
+          user_id:
+            type: string
+            format: uuid
+            description: Associated user ID
+          operation_type:
+            type: string
+            enum:
+            - role_create
+            - role_update
+            - role_delete
+            - permission_assign
+            - permission_revoke
+            - role_assign
+            - role_revoke
+            description: Type of role operation performed
+          old_values:
+            type: object
+            description: Previous state values
+          new_values:
+            type: object
+            description: New state values
     CreateRoleRequest:
+      description: Request payload for creating a role
       type: object
       required:
       - name
+      - role_type
       properties:
         name:
           type: string
           minLength: 1
           maxLength: 100
-          description: Desired role name
-          example: Moderator
+          description: Role name
+          example: Content Moderator
         description:
           type: string
           maxLength: 500
           description: Role description
-          example: Content moderation permissions
-        priority:
-          type: integer
-          minimum: 1
-          maximum: 1000
-          default: 100
-          description: Role priority
+          example: Can moderate user-generated content and manage reports
+        role_type:
+          type: string
+          enum:
+          - system
+          - organization
+          - project
+          - custom
+          description: Role category
+          example: organization
+        organization_id:
+          type: string
+          format: uuid
+          description: Organization ID for organization/project roles
+        parent_role_id:
+          type: string
+          format: uuid
+          description: Parent role for inheritance
         permissions:
           type: array
           items:
             type: string
-            maxLength: 200
-          maxItems: 50
-          description: Initial permissions
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
+          description: Initial permissions to assign
+          example:
+          - content.moderate
+          - user.ban
+        metadata:
+          type: object
+          description: Additional role metadata
     UpdateRoleRequest:
+      description: Request payload for updating a role
       type: object
       properties:
         name:
           type: string
           minLength: 1
           maxLength: 100
-          description: New role name
-          example: Senior Moderator
+          description: Role name
         description:
           type: string
           maxLength: 500
-          description: New description
-        priority:
-          type: integer
-          minimum: 1
-          maximum: 1000
-          description: New priority
+          description: Role description
         permissions:
           type: array
           items:
             type: string
-            maxLength: 200
-          maxItems: 50
-          description: Replace all permissions
+          description: Updated permissions
         is_active:
           type: boolean
-          description: Update active status
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    RoleResponse:
-      type: object
-      required:
-      - role
-      properties:
-        role:
-          $ref: '#/components/schemas/Role'
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    RoleListResponse:
-      type: object
-      required:
-      - roles
-      - total_count
-      - has_more
-      properties:
-        roles:
-          type: array
-          items:
-            $ref: '#/components/schemas/Role'
-          description: List of roles
-        has_more:
-          type: boolean
-          description: Whether there are more results available
-          example: true
-        total_count:
+          description: Active status
+        version:
           type: integer
-          description: Total number of roles matching criteria
-          example: 150
-        page:
-          type: integer
-          description: Current page number
-          example: 1
-        limit:
-          type: integer
-          description: Items per page
-          example: 20
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Paginated responses optimized for memory efficiency.'
-    PermissionCheckRequest:
+          minimum: 1
+          description: Current version for optimistic locking
+    UpdateRolePermissionsRequest:
+      description: Request payload for updating role permissions
       type: object
       required:
-      - action
-      - resource
+      - permissions
       properties:
-        action:
-          type: string
-          maxLength: 100
-          description: Action to check (e.g., "read", "write", "delete")
-          example: write
-        resource:
-          type: string
-          maxLength: 500
-          description: Resource identifier (e.g., "/api/users", "/game/server/123")
-          example: /api/users
-        context:
-          type: object
-          description: Additional context for permission evaluation
-          example:
-            user_id: '123'
-            server_id: '456'
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    PermissionCheckResponse:
-      type: object
-      required:
-      - allowed
-      properties:
-        allowed:
-          type: boolean
-          description: Whether the action is permitted
-          example: true
-        reason:
-          type: string
-          maxLength: 500
-          description: Reason for denial (if not allowed)
-          example: Insufficient permissions
-        required_role:
-          type: string
-          maxLength: 100
-          description: Required role for this action
-          example: admin
-        user_roles:
+        permissions:
           type: array
           items:
             type: string
-            maxLength: 100
-          description: User's current roles
-          example:
-          - user
-          - moderator
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    ETagHeader:
-      type: string
-      description: Entity tag for caching and optimistic locking
-      example: '"role-123-v1"'
+          description: Complete list of permissions for the role
+        version:
+          type: integer
+          minimum: 1
+          description: Current version for optimistic locking
+    CreatePermissionRequest:
+      description: Request payload for creating a permission
+      type: object
+      required:
+      - name
+      - resource_type
+      - action
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Permission name
+          example: Create User
+        description:
+          type: string
+          maxLength: 500
+          description: Permission description
+          example: Allows creating new user accounts
+        resource_type:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Resource type
+          example: user
+        action:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Action on resource
+          example: create
+        conditions:
+          type: object
+          description: Permission conditions
+        risk_level:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - critical
+          description: Security risk level
+          default: medium
+    AssignRoleRequest:
+      description: Request payload for assigning a role to user
+      type: object
+      required:
+      - role_id
+      properties:
+        role_id:
+          type: string
+          format: uuid
+          description: Role to assign
+        organization_id:
+          type: string
+          format: uuid
+          description: Organization context
+        expires_at:
+          type: string
+          format: date-time
+          description: Optional expiration date
+        conditions:
+          type: object
+          description: Assignment conditions
+        assigned_by:
+          type: string
+          format: uuid
+          description: User making the assignment
+    PermissionCheckRequest:
+      description: Request payload for permission checking
+      type: object
+      required:
+      - user_id
+      - permissions
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          description: User to check permissions for
+        permissions:
+          type: array
+          items:
+            type: object
+            required:
+            - resource_type
+            - action
+            properties:
+              resource_type:
+                type: string
+                description: Resource type
+              action:
+                type: string
+                description: Action on resource
+              resource_id:
+                type: string
+                format: uuid
+                description: Specific resource ID
+              context:
+                type: object
+                description: Additional context for evaluation
+          description: Permissions to check
+        organization_id:
+          type: string
+          format: uuid
+          description: Organization context
+    PermissionCheckResult:
+      description: Result of permission check operation
+      type: object
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          description: User checked
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              permission:
+                type: object
+                properties:
+                  resource_type:
+                    type: string
+                    description: Resource type
+                  action:
+                    type: string
+                    description: Action
+                  resource_id:
+                    type: string
+                    format: uuid
+                    description: Resource ID
+                description: Permission checked
+              granted:
+                type: boolean
+                description: Whether permission is granted
+              reason:
+                type: string
+                description: Reason for grant/deny
+              roles:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+                description: Roles granting this permission
+          description: Individual permission check results
+  responses:
+    OK:
+      $ref: ../common/responses/success.yaml#/OK
+    Created:
+      $ref: ../common/responses/success.yaml#/Created
+    Updated:
+      $ref: ../common/responses/success.yaml#/Updated
+    Deleted:
+      $ref: ../common/responses/success.yaml#/Deleted
+    BadRequest:
+      $ref: ../common/responses/error.yaml#/BadRequest
+    NotFound:
+      $ref: ../common/responses/error.yaml#/NotFound
+    Conflict:
+      $ref: ../common/responses/error.yaml#/Conflict
   securitySchemes:
     BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: JWT Bearer token authentication
-    ApiKeyAuth:
-      type: apiKey
-      in: header
-      name: X-API-Key
-      description: API Key authentication
+      $ref: ../common/security/security.yaml#/BearerAuth
     ServiceAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: Service-to-service authentication token
+      $ref: ../common/security/security.yaml#/ServiceAuth

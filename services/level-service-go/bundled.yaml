@@ -1,1569 +1,984 @@
 openapi: 3.0.3
 info:
-  title: Level Service API - Enterprise-Grade Domain Service
-  description: '**Enterprise-Grade Level Management API for NECPGAME**
+  title: Level Service API
+  description: '**Enterprise-grade API for Character Leveling and Progression Management**
 
-    This API manages character leveling, experience calculation, and progression systems
-    for player characters in the Night City universe.
-
-    ## Key Features
-
-    - **Experience Calculation**: Dynamic XP rewards based on actions and difficulty
-    - **Level Progression**: Automatic level advancement with stat bonuses - **Progression
-    Analytics**: Player growth tracking and optimization - **Anti-Cheat Validation**:
-    Experience gain validation and fraud detection - **Performance Optimized**: MMOFPS-grade
-    performance with <25ms P99 latency - **Memory Efficient**: 30-50% memory savings
-    for level data structures
 
     ## Domain Purpose
 
-    The Level domain handles all character progression mechanics in Night City. Players
-    advance through levels by gaining experience from combat, quests, exploration,
-    and achievements, unlocking new abilities and improving stats.
+    Comprehensive character progression service providing experience management, level
+    advancement,
+
+    stat distribution, and milestone tracking for the NECPGAME platform.
+
+
+    ## Business Value
+
+    - Real-time experience and leveling calculations
+
+    - Advanced progression analytics and player retention insights
+
+    - Performance-optimized level scaling and difficulty balancing
+
+    - Enterprise-grade scalability for millions of concurrent players
+
+    - Comprehensive achievement and milestone systems
+
 
     ## Performance Targets
 
-    - P99 Latency: <25ms for level operations - Memory: <15KB per active character
-    level data - Concurrent users: 50,000+ simultaneous level calculations - XP calculation:
-    <10ms response time
+    - P99 Latency: <20ms for experience operations
+
+    - Throughput: 100,000+ XP operations per second
+
+    - Concurrent Characters: 1,000,000+ active characters supported
+
+    - Memory per Character: <1KB for level data storage
+
+
+    ## Domain Inheritance
+
+    This service inherits from game-entities.yaml providing:
+
+    - Character progression tracking with optimistic locking
+
+    - Experience gain events integration
+
+    - Achievement system integration
+
+    - Combat action experience rewards
+
+    - Strict typing with validation rules
 
     '
   version: 1.0.0
   contact:
-    name: NECPGAME API Support
-    url: https://necpgame.com/support
+    name: NECPGAME API Team
     email: api@necpgame.com
   license:
     name: MIT
 servers:
-- url: https://api.necpgame.com/v1/level
-  description: Production server
-- url: https://staging-api.necpgame.com/v1/level
-  description: Staging server
-- url: http://localhost:8080/api/v1/level
-  description: Local development server
+- url: https://api.necpgame.com/v1/level-service
+  description: Production environment
+- url: https://staging-api.necpgame.com/v1/level-service
+  description: Staging environment
+- url: http://localhost:8080/api/v1/level-service
+  description: Local development
 security:
 - BearerAuth: []
 tags:
-- name: Level Management
-  description: Character level and experience operations
+- name: Experience Management
+  description: Core experience gain and level advancement operations
+- name: Character Progression
+  description: Character-specific leveling and stat management
+- name: Level Scaling
+  description: Level-based scaling and difficulty management
+- name: Achievements & Milestones
+  description: Achievement tracking and milestone rewards
+- name: Analytics & Balancing
+  description: Progression analytics and balancing tools
+- name: Leaderboards
+  description: Level-based leaderboards and rankings
 - name: Health Monitoring
-  description: System health and performance monitoring
+  description: Service health and performance monitoring
 paths:
   /health:
-    get:
-      summary: Health check endpoint
-      operationId: levelServiceHealthCheck
-      tags:
-      - Health Monitoring
-      responses:
-        '200':
-          $ref: '#/components/responses/OK'
-        '503':
-          $ref: '#/components/responses/ServiceUnavailable'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-  /gameplay/level/calculate:
-    post:
-      summary: Calculate experience and level progression
-      operationId: calculateLevelProgression
-      tags:
-      - Level Management
-      security:
-      - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CalculateLevelRequest'
-      responses:
-        '200':
-          $ref: '#/components/responses/OK'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CalculateLevelResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-  /gameplay/level/{characterId}:
-    get:
-      summary: Get character level information
-      operationId: getCharacterLevel
-      tags:
-      - Level Management
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: characterId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Character unique identifier
-      responses:
-        '200':
-          $ref: '#/components/responses/OK'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CharacterLevelInfo'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
+    $ref: ./paths/health.yaml#/paths/~1health
+  /experience/gain:
+    $ref: ./paths/experience-gain.yaml#/paths/~1experience~1gain
+  /experience/batch/gain:
+    $ref: ./paths/experience-batch-gain.yaml#/paths/~1experience~1batch~1gain
+  /characters/{characterId}/level:
+    $ref: ./paths/characters-{characterId}-level.yaml#/paths/~1characters~1{characterId}~1level
+  /characters/{characterId}/stats/allocate:
+    $ref: ./paths/characters-{characterId}-stats-allocate.yaml#/paths/~1characters~1{characterId}~1stats~1allocate
+  /characters/{characterId}/stats/reset:
+    $ref: ./paths/characters-{characterId}-stats-reset.yaml#/paths/~1characters~1{characterId}~1stats~1reset
+  /characters/{characterId}/prestige:
+    $ref: ./paths/characters-{characterId}-prestige.yaml#/paths/~1characters~1{characterId}~1prestige
+  /levels/{level}/scaling:
+    $ref: ./paths/levels-{level}-scaling.yaml#/paths/~1levels~1{level}~1scaling
+  /achievements/check:
+    $ref: ./paths/achievements-check.yaml#/paths/~1achievements~1check
+  /leaderboards/level:
+    $ref: ./paths/leaderboards-level.yaml#/paths/~1leaderboards~1level
+  /analytics/progression:
+    $ref: ./paths/analytics-progression.yaml#/paths/~1analytics~1progression
 components:
-  securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      description: JWT Bearer token authentication
-  responses:
-    OK:
-      description: Operation completed successfully
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              success:
-                type: boolean
-                example: true
-              message:
-                type: string
-                example: Operation completed
-    Created:
-      description: Resource created successfully
-      headers:
-        Location:
-          schema:
-            type: string
-            format: uri
-          description: URI of the created resource
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              id:
-                type: string
-                format: uuid
-                description: Unique identifier of created resource
-              created_at:
-                type: string
-                format: date-time
-                description: Creation timestamp
-    Updated:
-      description: Resource updated successfully
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              id:
-                type: string
-                format: uuid
-                description: Unique identifier of updated resource
-              updated_at:
-                type: string
-                format: date-time
-                description: Last modification timestamp
-    Deleted:
-      description: Resource deleted successfully
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              id:
-                type: string
-                format: uuid
-                description: Unique identifier of deleted resource
-              deleted_at:
-                type: string
-                format: date-time
-                description: Deletion timestamp
-    BadRequest:
-      description: Invalid request parameters
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-            - code
-            - message
-            properties:
-              code:
-                type: integer
-                example: 500
-                format: int32
-                minimum: 100
-                maximum: 599
-              message:
-                type: string
-                example: Internal server error
-                maxLength: 1000
-              details:
-                type: object
-                description: Additional error details
-            description: Standard error response format
-    Unauthorized:
-      description: Authentication required
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-            - code
-            - message
-            properties:
-              code:
-                type: integer
-                example: 500
-                format: int32
-                minimum: 100
-                maximum: 599
-              message:
-                type: string
-                example: Internal server error
-                maxLength: 1000
-              details:
-                type: object
-                description: Additional error details
-            description: Standard error response format
-    NotFound:
-      description: Resource not found
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-            - code
-            - message
-            properties:
-              code:
-                type: integer
-                example: 500
-                format: int32
-                minimum: 100
-                maximum: 599
-              message:
-                type: string
-                example: Internal server error
-                maxLength: 1000
-              details:
-                type: object
-                description: Additional error details
-            description: Standard error response format
-    TooManyRequests:
-      description: Too many requests - rate limit exceeded
-      content:
-        application/json:
-          schema:
-            allOf:
-            - type: object
-              required:
-              - code
-              - message
-              properties:
-                code:
-                  type: integer
-                  example: 500
-                  format: int32
-                  minimum: 100
-                  maximum: 599
-                message:
-                  type: string
-                  example: Internal server error
-                  maxLength: 1000
-                details:
-                  type: object
-                  description: Additional error details
-              description: Standard error response format
-            - type: object
-              properties:
-                retry_after:
-                  type: integer
-                  example: 60
-                  description: Seconds to wait before retrying
-    ServiceUnavailable:
-      description: Service is temporarily unavailable
-      content:
-        application/json:
-          schema:
-            Error:
-              type: object
-              required:
-              - code
-              - message
-              properties:
-                code:
-                  type: integer
-                  example: 500
-                  format: int32
-                  minimum: 100
-                  maximum: 599
-                message:
-                  type: string
-                  example: Internal server error
-                  maxLength: 1000
-                details:
-                  type: object
-                  description: Additional error details
-              description: Standard error response format
   schemas:
-    Error:
-      Error:
-        type: object
-        required:
-        - code
-        - message
-        properties:
-          code:
-            type: integer
-            example: 500
-            format: int32
-            minimum: 100
-            maximum: 599
-          message:
-            type: string
-            example: Internal server error
-            maxLength: 1000
-          details:
-            type: object
-            description: Additional error details
-        description: Standard error response format
-    HealthResponse:
-      HealthResponse:
-        type: object
-        required:
-        - status
-        - timestamp
-        properties:
-          status:
-            type: string
-            enum:
-            - healthy
-            - degraded
-            - unhealthy
-            example: healthy
-            maxLength: 255
-          domain:
-            type: string
-            example: service-name
-            maxLength: 255
-          timestamp:
-            type: string
-            format: date-time
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 255
-          version:
-            type: string
-            example: 1.0.0
-            maxLength: 50
-          uptime_seconds:
-            type: integer
-            example: 3600
-            minimum: 0
-          active_connections:
-            type: integer
-            example: 1500
-            minimum: 0
-        description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-          Expected memory savings: 30-50%.'
-    CalculateLevelRequest:
+    CharacterLevel:
+      description: Character level and progression entity with game domain inheritance
       type: object
       required:
+      - id
       - character_id
-      - experience_gained
-      - source
+      - current_level
+      - current_experience
+      - total_experience_earned
       properties:
+        id:
+          type: string
+          format: uuid
+          description: Level record unique identifier
         character_id:
           type: string
           format: uuid
-          description: Character gaining experience
-        experience_gained:
+          description: Character this level belongs to
+        current_level:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          description: Current character level
+        current_experience:
           type: integer
           minimum: 0
+          description: Experience points in current level
+        total_experience_earned:
+          type: integer
+          minimum: 0
+          description: Total lifetime experience earned
+        experience_to_next_level:
+          type: integer
+          minimum: 0
+          description: Experience needed for next level
+        available_stat_points:
+          type: integer
+          minimum: 0
+          description: Unallocated stat points
+        prestige_level:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Character prestige level
+        last_level_up_at:
+          type: string
+          format: date-time
+          description: When character last leveled up
+        experience_multipliers:
+          type: object
+          description: Active experience multipliers
+          additionalProperties:
+            type: number
+          example:
+            vip_bonus: 1.5
+            event_bonus: 2.0
+            guild_bonus: 1.25
+        stat_allocation:
+          $ref: '#/components/schemas/StatAllocation'
+        progression_milestones:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Completed progression milestones
+        created_at:
+          type: string
+          format: date-time
+          description: When level record was created
+        updated_at:
+          type: string
+          format: date-time
+          description: When level record was last updated
+    ExperienceEvent:
+      description: Experience gain event entity
+      type: object
+      required:
+      - id
+      - character_id
+      - experience_amount
+      - source_type
+      - gained_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Experience event unique identifier
+        character_id:
+          type: string
+          format: uuid
+          description: Character receiving experience
+        experience_amount:
+          type: integer
+          minimum: 1
           description: Amount of experience gained
-        source:
+        base_experience:
+          type: integer
+          minimum: 1
+          description: Base experience before multipliers
+        source_type:
           type: string
           enum:
           - combat
           - quest
           - exploration
+          - crafting
+          - social
+          - event
           - achievement
           description: Source of experience gain
-        difficulty_multiplier:
+        source_id:
+          type: string
+          format: uuid
+          description: Specific source identifier (quest ID, enemy ID, etc.)
+        multipliers_applied:
+          type: object
+          description: Multipliers applied to base experience
+          additionalProperties:
+            type: number
+          example:
+            difficulty_multiplier: 1.2
+            group_bonus: 1.5
+            vip_status: 1.25
+        gained_at:
+          type: string
+          format: date-time
+          description: When experience was gained
+        level_at_gain:
+          type: integer
+          minimum: 1
+          description: Character level when experience was gained
+        contributed_to_level_up:
+          type: boolean
+          description: Whether this experience contributed to a level up
+    Achievement:
+      description: Achievement definition entity
+      allOf:
+      - $ref: ../common/schemas/game-entities.yaml#/BaseGameEntity
+      - type: object
+        properties:
+          name:
+            type: string
+            minLength: 1
+            maxLength: 100
+            description: Achievement name
+          description:
+            type: string
+            maxLength: 500
+            description: Achievement description
+          category:
+            type: string
+            minLength: 1
+            maxLength: 50
+            description: Achievement category
+          difficulty:
+            type: string
+            enum:
+            - bronze
+            - silver
+            - gold
+            - platinum
+            - diamond
+            default: bronze
+            description: Achievement difficulty tier
+          points_value:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            description: Achievement point value
+          rewards:
+            $ref: '#/components/schemas/AchievementRewards'
+          conditions:
+            type: array
+            items:
+              $ref: '#/components/schemas/AchievementCondition'
+            description: Conditions to unlock achievement
+          is_repeatable:
+            type: boolean
+            default: false
+            description: Whether achievement can be earned multiple times
+          max_progress:
+            type: integer
+            minimum: 1
+            description: Maximum progress value for progress-based achievements
+    StatAllocation:
+      description: Character stat point allocation
+      type: object
+      properties:
+        strength:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Points allocated to strength
+        agility:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Points allocated to agility
+        intelligence:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Points allocated to intelligence
+        vitality:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Points allocated to vitality
+        perception:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Points allocated to perception
+        charisma:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Points allocated to charisma
+        total_allocated:
+          type: integer
+          minimum: 0
+          description: Total points allocated
+    PrestigeBonuses:
+      description: Bonuses granted by prestige level
+      type: object
+      properties:
+        experience_multiplier:
+          type: number
+          minimum: 1
+          description: Experience gain multiplier
+        stat_point_bonus:
+          type: integer
+          minimum: 0
+          description: Bonus stat points per level
+        unlocked_features:
+          type: array
+          items:
+            type: string
+          description: Features unlocked by prestige
+        cosmetic_rewards:
+          type: array
+          items:
+            type: string
+          description: Cosmetic items granted
+        title_unlocked:
+          type: string
+          description: Prestige title unlocked
+    LevelScaling:
+      description: Scaling values for a specific level
+      type: object
+      required:
+      - level
+      properties:
+        level:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          description: Level these scalings apply to
+        enemy_health_multiplier:
           type: number
           minimum: 0.1
-          maximum: 5.0
-          default: 1.0
-          description: Difficulty-based experience multiplier
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).'
-    CalculateLevelResponse:
+          description: Enemy health scaling multiplier
+        enemy_damage_multiplier:
+          type: number
+          minimum: 0.1
+          description: Enemy damage scaling multiplier
+        experience_reward_multiplier:
+          type: number
+          minimum: 0.1
+          description: Experience reward scaling multiplier
+        item_drop_rate_multiplier:
+          type: number
+          minimum: 0.1
+          description: Item drop rate scaling multiplier
+        quest_rewards_multiplier:
+          type: number
+          minimum: 0.1
+          description: Quest reward scaling multiplier
+        recommended_zone_level:
+          type: integer
+          minimum: 1
+          description: Recommended zone level
+        difficulty_rating:
+          type: string
+          enum:
+          - very_easy
+          - easy
+          - normal
+          - hard
+          - very_hard
+          - nightmare
+          description: Difficulty rating for this level
+    AchievementCondition:
+      description: Condition for achieving an achievement
+      type: object
+      required:
+      - type
+      properties:
+        type:
+          type: string
+          enum:
+          - level_reached
+          - experience_gained
+          - enemies_killed
+          - quests_completed
+          - items_collected
+          - time_played
+          - social_interactions
+          - combat_stats
+          description: Type of achievement condition
+        target_value:
+          type: integer
+          minimum: 1
+          description: Target value to achieve
+        comparison_operator:
+          type: string
+          enum:
+          - equals
+          - greater_than
+          - less_than
+          - greater_equal
+          - less_equal
+          default: greater_equal
+          description: Comparison operator
+        additional_filters:
+          type: object
+          description: Additional filters for the condition
+          additionalProperties: true
+    AchievementRewards:
+      description: Rewards granted by achievement
+      type: object
+      properties:
+        experience_points:
+          type: integer
+          minimum: 0
+          description: Experience points rewarded
+        currency_amount:
+          type: integer
+          minimum: 0
+          description: In-game currency rewarded
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              item_id:
+                type: string
+                format: uuid
+                description: Item template ID
+              quantity:
+                type: integer
+                minimum: 1
+                description: Item quantity
+          description: Items rewarded
+        titles:
+          type: array
+          items:
+            type: string
+          description: Titles unlocked
+        cosmetic_unlocks:
+          type: array
+          items:
+            type: string
+          description: Cosmetic items unlocked
+    LeaderboardEntry:
+      description: Leaderboard ranking entry
+      type: object
+      required:
+      - rank
+      - character_id
+      - character_name
+      - level
+      - total_experience
+      properties:
+        rank:
+          type: integer
+          minimum: 1
+          description: Current ranking position
+        character_id:
+          type: string
+          format: uuid
+          description: Character unique identifier
+        character_name:
+          type: string
+          description: Character display name
+        level:
+          type: integer
+          minimum: 1
+          description: Character level
+        total_experience:
+          type: integer
+          minimum: 0
+          description: Total experience earned
+        prestige_level:
+          type: integer
+          minimum: 0
+          description: Prestige level
+        last_activity:
+          type: string
+          format: date-time
+          description: Last activity timestamp
+        region:
+          type: string
+          description: Player region
+        guild_name:
+          type: string
+          description: Guild name (if applicable)
+    LeaderboardMetadata:
+      description: Leaderboard metadata
+      type: object
+      properties:
+        total_entries:
+          type: integer
+          description: Total entries in leaderboard
+        last_updated:
+          type: string
+          format: date-time
+          description: When leaderboard was last updated
+        timeframe:
+          type: string
+          enum:
+          - current
+          - weekly
+          - monthly
+          - all_time
+          description: Timeframe for rankings
+        region_filter:
+          type: string
+          description: Regional filter applied
+    CharacterLevelInfo:
+      description: Comprehensive character level information
       type: object
       required:
       - character_id
-      - previous_level
-      - new_level
-      - experience_gained
-      - total_experience
-      - leveled_up
+      - current_level
+      - current_experience
+      - experience_to_next_level
       properties:
         character_id:
           type: string
           format: uuid
-          description: Character ID
-        previous_level:
+          description: Character unique identifier
+        current_level:
           type: integer
           minimum: 1
-          description: Level before calculation
-        new_level:
-          type: integer
-          minimum: 1
-          description: Level after calculation
-        experience_gained:
+          description: Current character level
+        current_experience:
           type: integer
           minimum: 0
-          description: Experience points gained
-        total_experience:
+          description: Experience in current level
+        total_experience_earned:
           type: integer
           minimum: 0
-          description: Total experience points
-        experience_to_next:
+          description: Total lifetime experience
+        experience_to_next_level:
           type: integer
           minimum: 0
           description: Experience needed for next level
+        experience_progress_percentage:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Progress to next level (0-1)
+        available_stat_points:
+          type: integer
+          minimum: 0
+          description: Unallocated stat points
+        prestige_level:
+          type: integer
+          minimum: 0
+          description: Current prestige level
+        stat_allocation:
+          $ref: '#/components/schemas/StatAllocation'
+        recent_level_ups:
+          type: array
+          items:
+            type: object
+            properties:
+              level_reached:
+                type: integer
+                description: Level reached
+              reached_at:
+                type: string
+                format: date-time
+                description: When level was reached
+              experience_at_level_up:
+                type: integer
+                description: Experience when leveled up
+          description: Recent level up history
+        milestones_achieved:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Progression milestones achieved
+    StatChanges:
+      description: Summary of stat changes from level operations
+      type: object
+      properties:
+        strength:
+          type: number
+          description: Strength change
+        agility:
+          type: number
+          description: Agility change
+        intelligence:
+          type: number
+          description: Intelligence change
+        vitality:
+          type: number
+          description: Vitality change
+        perception:
+          type: number
+          description: Perception change
+        charisma:
+          type: number
+          description: Charisma change
+    LevelUpEvent:
+      description: Event triggered when character levels up
+      type: object
+      required:
+      - character_id
+      - new_level
+      - leveled_up_at
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Character that leveled up
+        new_level:
+          type: integer
+          minimum: 2
+          description: New level reached
+        leveled_up_at:
+          type: string
+          format: date-time
+          description: When level up occurred
+        stat_points_granted:
+          type: integer
+          minimum: 0
+          description: Stat points granted
+        experience_overflow:
+          type: integer
+          minimum: 0
+          description: Experience carried over to new level
+        rewards_granted:
+          $ref: '#/components/schemas/AchievementRewards'
+        triggered_events:
+          type: array
+          items:
+            type: string
+          description: Game events triggered by level up
+    AchievementAward:
+      description: Achievement award information
+      type: object
+      required:
+      - achievement_id
+      - achievement_name
+      - awarded_at
+      properties:
+        achievement_id:
+          type: string
+          format: uuid
+          description: Achievement unique identifier
+        achievement_name:
+          type: string
+          description: Achievement display name
+        awarded_at:
+          type: string
+          format: date-time
+          description: When achievement was awarded
+        points_earned:
+          type: integer
+          description: Achievement points earned
+        rewards:
+          $ref: '#/components/schemas/AchievementRewards'
+        tier:
+          type: string
+          enum:
+          - bronze
+          - silver
+          - gold
+          - platinum
+          - diamond
+          description: Achievement tier
+    AchievementProgress:
+      description: Achievement progress update
+      type: object
+      required:
+      - achievement_id
+      - current_progress
+      - target_progress
+      properties:
+        achievement_id:
+          type: string
+          format: uuid
+          description: Achievement unique identifier
+        current_progress:
+          type: integer
+          minimum: 0
+          description: Current progress value
+        target_progress:
+          type: integer
+          minimum: 1
+          description: Target progress value
+        progress_percentage:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Progress percentage (0-1)
+        last_updated:
+          type: string
+          format: date-time
+          description: When progress was last updated
+    ProgressionAnalytics:
+      description: Comprehensive character progression analytics
+      type: object
+      properties:
+        time_range:
+          type: object
+          properties:
+            start_date:
+              type: string
+              format: date-time
+            end_date:
+              type: string
+              format: date-time
+        total_characters:
+          type: integer
+          description: Total characters analyzed
+        average_level:
+          type: number
+          description: Average character level
+        level_distribution:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Character count by level
+        experience_gain_patterns:
+          type: object
+          properties:
+            average_daily_xp:
+              type: number
+              description: Average daily experience gain
+            xp_sources_distribution:
+              type: object
+              additionalProperties:
+                type: number
+              description: Experience by source type
+            leveling_speed_trends:
+              type: array
+              items:
+                type: object
+                properties:
+                  level_range:
+                    type: string
+                    description: Level range (e.g., "1-10")
+                  average_days_to_complete:
+                    type: number
+                    description: Average days to complete range
+              description: Leveling speed by level ranges
+        stat_allocation_preferences:
+          type: object
+          additionalProperties:
+            type: number
+          description: Average stat point allocation preferences
+        retention_correlation:
+          type: object
+          properties:
+            level_retention_rates:
+              type: object
+              additionalProperties:
+                type: number
+              description: Retention rates by level milestones
+            progression_bottlenecks:
+              type: array
+              items:
+                type: object
+                properties:
+                  level:
+                    type: integer
+                    description: Level where bottleneck occurs
+                  completion_rate:
+                    type: number
+                    minimum: 0
+                    maximum: 1
+                    description: Rate of players completing this level
+                  average_time_stuck:
+                    type: number
+                    description: Average days players are stuck at this level
+              description: Identified progression bottlenecks
+    GainExperienceRequest:
+      description: Request payload for gaining experience
+      type: object
+      required:
+      - character_id
+      - experience_amount
+      - source_type
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Character gaining experience
+        experience_amount:
+          type: integer
+          minimum: 1
+          maximum: 1000000
+          description: Amount of experience to gain
+        source_type:
+          type: string
+          enum:
+          - combat
+          - quest
+          - exploration
+          - crafting
+          - social
+          - event
+          - achievement
+          description: Source of experience gain
+        source_id:
+          type: string
+          format: uuid
+          description: Specific source identifier
+        multipliers:
+          type: object
+          description: Additional multipliers to apply
+          additionalProperties:
+            type: number
+          example:
+            difficulty_bonus: 1.5
+            vip_multiplier: 2.0
+        metadata:
+          type: object
+          description: Additional experience event metadata
+          additionalProperties: true
+    BatchGainExperienceRequest:
+      description: Request payload for batch experience gain
+      type: object
+      required:
+      - experience_events
+      properties:
+        experience_events:
+          type: array
+          items:
+            $ref: '#/components/schemas/GainExperienceRequest'
+          minItems: 1
+          maxItems: 1000
+          description: Individual experience gain requests
+        batch_metadata:
+          type: object
+          description: Metadata for the entire batch
+          properties:
+            event_type:
+              type: string
+              description: Type of batch event (e.g., "daily_quest_completion")
+            campaign_id:
+              type: string
+              format: uuid
+              description: Associated campaign or event ID
+    ExperienceResult:
+      description: Result of experience gain operation
+      type: object
+      required:
+      - experience_gained
+      - new_total_experience
+      - level_before
+      - level_after
+      properties:
+        experience_gained:
+          type: integer
+          description: Experience points gained
+        new_total_experience:
+          type: integer
+          description: New total experience
+        level_before:
+          type: integer
+          description: Level before experience gain
+        level_after:
+          type: integer
+          description: Level after experience gain
         leveled_up:
           type: boolean
           description: Whether character leveled up
-        stat_bonuses:
+        stat_points_granted:
+          type: integer
+          description: Stat points granted from level up
+        level_up_rewards:
+          $ref: '#/components/schemas/AchievementRewards'
+        experience_overflow:
+          type: integer
+          description: Experience carried over to next level
+    AllocateStatPointsRequest:
+      description: Request payload for stat point allocation
+      type: object
+      required:
+      - stat_allocations
+      properties:
+        stat_allocations:
           type: object
+          description: Stat points to allocate by stat type
           properties:
-            health:
+            strength:
               type: integer
               minimum: 0
-              description: Health bonus from level up
-            stamina:
+              description: Points to allocate to strength
+            agility:
               type: integer
               minimum: 0
-              description: Stamina bonus from level up
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).'
-    CharacterLevelInfo:
-      allOf:
-      - allOf:
-        - type: object
-          required:
-          - id
-          - created_at
-          - updated_at
-          properties:
-            id:
-              type: string
-              format: uuid
-              description: Unique identifier (UUID v4)
-              example: 123e4567-e89b-12d3-a456-426614174000
-              maxLength: 36
-            created_at:
-              type: string
-              format: date-time
-              description: Creation timestamp (ISO 8601)
-              example: '2025-12-28T10:00:00Z'
-              maxLength: 30
-            updated_at:
-              type: string
-              format: date-time
-              description: Last modification timestamp (ISO 8601)
-              example: '2025-12-28T10:30:00Z'
-              maxLength: 30
-          description: 'BACKEND NOTE: Base entity with ordered fields for struct alignment.
-            Memory savings: 30-50%. All domain entities should extend this.'
-        - type: object
-          required:
-          - name
-          - level
-          properties:
-            name:
-              type: string
-              description: Character display name
-              example: V, the Mercenary
-              maxLength: 100
-            level:
-              type: integer
-              minimum: 1
-              maximum: 50
-              description: Character level
-              example: 25
-            experience:
+              description: Points to allocate to agility
+            intelligence:
               type: integer
               minimum: 0
-              description: Current experience points
-              example: 125000
-            experience_to_next:
+              description: Points to allocate to intelligence
+            vitality:
               type: integer
               minimum: 0
-              description: Experience needed for next level
-              example: 150000
-        description: 'BACKEND NOTE: Base character entity. Memory-aligned for performance.'
-      - type: object
-        properties:
-          current_level:
-            type: integer
-            minimum: 1
-            maximum: 50
-            description: Current character level
-          total_experience:
-            type: integer
-            minimum: 0
-            description: Total accumulated experience
-          experience_to_next:
-            type: integer
-            minimum: 0
-            description: Experience needed for next level
-          level_progress:
-            type: number
-            minimum: 0
-            maximum: 1
-            description: Progress to next level (0-1)
-      description: 'BACKEND NOTE: Domain inheritance from CharacterEntity + level-specific
-        fields.'
-    CharacterEntity:
-      allOf:
-      - type: object
-        required:
-        - id
-        - created_at
-        - updated_at
-        properties:
-          id:
-            type: string
-            format: uuid
-            description: Unique identifier (UUID v4)
-            example: 123e4567-e89b-12d3-a456-426614174000
-            maxLength: 36
-          created_at:
-            type: string
-            format: date-time
-            description: Creation timestamp (ISO 8601)
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
-          updated_at:
-            type: string
-            format: date-time
-            description: Last modification timestamp (ISO 8601)
-            example: '2025-12-28T10:30:00Z'
-            maxLength: 30
-        description: 'BACKEND NOTE: Base entity with ordered fields for struct alignment.
-          Memory savings: 30-50%. All domain entities should extend this.'
-      - type: object
-        required:
-        - name
-        - level
-        properties:
-          name:
-            type: string
-            description: Character display name
-            example: V, the Mercenary
-            maxLength: 100
-          level:
-            type: integer
-            minimum: 1
-            maximum: 50
-            description: Character level
-            example: 25
-          experience:
-            type: integer
-            minimum: 0
-            description: Current experience points
-            example: 125000
-          experience_to_next:
-            type: integer
-            minimum: 0
-            description: Experience needed for next level
-            example: 150000
-      description: 'BACKEND NOTE: Base character entity. Memory-aligned for performance.'
-    CharacterStats:
+              description: Points to allocate to vitality
+            perception:
+              type: integer
+              minimum: 0
+              description: Points to allocate to perception
+            charisma:
+              type: integer
+              minimum: 0
+              description: Points to allocate to charisma
+          required: []
+        validation_mode:
+          type: string
+          enum:
+          - strict
+          - lenient
+          - preview
+          default: strict
+          description: How strictly to validate allocations
+    CheckAchievementsRequest:
+      description: Request payload for achievement checking
       type: object
       required:
-      - health
-      - max_health
-      - stamina
-      - max_stamina
+      - character_id
       properties:
-        health:
-          type: integer
-          minimum: 0
-          description: Current health points
-          example: 850
-        max_health:
-          type: integer
-          minimum: 1
-          description: Maximum health points
-          example: 1000
-        stamina:
-          type: integer
-          minimum: 0
-          description: Current stamina points
-          example: 75
-        max_stamina:
-          type: integer
-          minimum: 1
-          description: Maximum stamina points
-          example: 100
-        strength:
-          type: integer
-          minimum: 0
-          maximum: 20
-          description: Physical strength attribute
-          example: 15
-        dexterity:
-          type: integer
-          minimum: 0
-          maximum: 20
-          description: Agility and precision
-          example: 18
-        intelligence:
-          type: integer
-          minimum: 0
-          maximum: 20
-          description: Mental acuity and hacking
-          example: 12
-        cool:
-          type: integer
-          minimum: 0
-          maximum: 20
-          description: Composure under pressure
-          example: 16
-        tech:
-          type: integer
-          minimum: 0
-          maximum: 20
-          description: Technical aptitude
-          example: 10
-      description: 'BACKEND NOTE: Character attributes and vital stats.'
-    ItemEntity:
-      allOf:
-      - type: object
-        required:
-        - id
-        - created_at
-        - updated_at
-        properties:
-          id:
-            type: string
-            format: uuid
-            description: Unique identifier (UUID v4)
-            example: 123e4567-e89b-12d3-a456-426614174000
-            maxLength: 36
-          created_at:
-            type: string
-            format: date-time
-            description: Creation timestamp (ISO 8601)
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
-          updated_at:
-            type: string
-            format: date-time
-            description: Last modification timestamp (ISO 8601)
-            example: '2025-12-28T10:30:00Z'
-            maxLength: 30
-        description: 'BACKEND NOTE: Base entity with ordered fields for struct alignment.
-          Memory savings: 30-50%. All domain entities should extend this.'
-      - type: object
-        required:
-        - name
-        - type
-        - rarity
-        properties:
-          name:
-            type: string
-            description: Item display name
-            example: Malorian Arms 3516
-            maxLength: 100
-          type:
-            type: string
-            enum:
-            - weapon
-            - armor
-            - implant
-            - consumable
-            - quest_item
-            - cosmetic
-            description: Item category
-            example: weapon
-          rarity:
-            type: string
-            enum:
-            - common
-            - uncommon
-            - rare
-            - epic
-            - legendary
-            - unique
-            description: Item rarity tier
-            example: epic
-          description:
-            type: string
-            description: Item description/flavor text
-            example: A powerful pistol with cyberpunk aesthetics
-            maxLength: 500
-          icon_url:
-            type: string
-            format: uri
-            description: Item icon image URL
-            example: https://cdn.necpgame.com/items/malorian-3516.png
-          is_stackable:
-            type: boolean
-            description: Whether item can stack in inventory
-            example: false
-          max_stack_size:
-            type: integer
-            minimum: 1
-            description: Maximum stack size if stackable
-            example: 99
-      description: 'BACKEND NOTE: Base item entity with gaming-specific fields.'
-    WeaponEntity:
-      allOf:
-      - $ref: '#/components/schemas/ItemEntity'
-      - type: object
-        required:
-        - damage
-        - fire_rate
-        - ammo_type
-        properties:
-          damage:
-            type: integer
-            minimum: 1
-            description: Base damage per shot
-            example: 45
-          damage_type:
-            type: string
-            enum:
-            - physical
-            - thermal
-            - electrical
-            - chemical
-            - cyber
-            description: Type of damage dealt
-            example: physical
-          fire_rate:
-            type: number
-            minimum: 0.1
-            description: Shots per second
-            example: 8.5
-          ammo_type:
-            type: string
-            description: Required ammunition type
-            example: 9mm
-            maxLength: 50
-          magazine_size:
-            type: integer
-            minimum: 1
-            description: Rounds per magazine
-            example: 12
-          range:
-            type: integer
-            minimum: 1
-            description: Effective range in meters
-            example: 25
-      description: 'BACKEND NOTE: Weapon-specific item properties.'
-    CombatSessionEntity:
-      allOf:
-      - allOf:
-        - $ref: '#/components/schemas/BaseEntity'
-        - type: object
-          required:
-          - version
-          properties:
-            version:
-              type: integer
-              minimum: 1
-              description: Optimistic locking version
-              example: 1
-        description: 'BACKEND NOTE: Extends BaseEntity with version control. Use for
-          concurrent-safe updates.'
-      - type: object
-        required:
-        - participants
-        - status
-        - start_time
-        properties:
-          participants:
-            type: array
-            items:
-              $ref: '#/components/schemas/CharacterEntity'
-            minItems: 2
-            maxItems: 10
-            description: Characters involved in combat
-          status:
-            type: string
-            enum:
-            - active
-            - paused
-            - completed
-            - aborted
-            description: Current combat state
-            example: active
-          start_time:
-            type: string
-            format: date-time
-            description: ISO 8601 timestamp
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
-          end_time:
-            type: string
-            format: date-time
-            description: ISO 8601 timestamp
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
-          current_turn:
-            type: integer
-            minimum: 0
-            description: Current turn number in combat
-            example: 1
-          turn_order:
-            type: array
-            items:
-              type: string
-              format: uuid
-              description: Universally Unique Identifier (UUID v4)
-              example: 123e4567-e89b-12d3-a456-426614174000
-              maxLength: 36
-            description: Order of turns by character ID
-          environment_effects:
-            type: array
-            items:
-              type: string
-            description: Active environmental effects
-            example:
-            - heavy_rain
-            - urban_cover
-      description: 'BACKEND NOTE: Combat session with optimistic locking.'
-    CombatEffectEntity:
-      allOf:
-      - type: object
-        required:
-        - id
-        - created_at
-        - updated_at
-        properties:
-          id:
-            type: string
-            format: uuid
-            description: Unique identifier (UUID v4)
-            example: 123e4567-e89b-12d3-a456-426614174000
-            maxLength: 36
-          created_at:
-            type: string
-            format: date-time
-            description: Creation timestamp (ISO 8601)
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
-          updated_at:
-            type: string
-            format: date-time
-            description: Last modification timestamp (ISO 8601)
-            example: '2025-12-28T10:30:00Z'
-            maxLength: 30
-        description: 'BACKEND NOTE: Base entity with ordered fields for struct alignment.
-          Memory savings: 30-50%. All domain entities should extend this.'
-      - type: object
-        required:
-        - target_id
-        - effect_type
-        - duration
-        properties:
-          target_id:
-            type: string
-            format: uuid
-            description: Universally Unique Identifier (UUID v4)
-            example: 123e4567-e89b-12d3-a456-426614174000
-            maxLength: 36
-          effect_type:
-            type: string
-            enum:
-            - buff
-            - debuff
-            - dot
-            - hot
-            - stun
-            - slow
-            description: Type of combat effect
-            example: buff
-          name:
-            type: string
-            description: Effect display name
-            example: Adrenaline Rush
-            maxLength: 50
-          description:
-            type: string
-            description: Effect description
-            example: +50% movement speed for 30 seconds
-            maxLength: 200
-          duration:
-            type: integer
-            minimum: 1
-            description: Effect duration in seconds
-            example: 30
-          remaining_duration:
-            type: integer
-            minimum: 0
-            description: Time remaining in seconds
-            example: 15
-          magnitude:
-            type: number
-            description: Effect strength/intensity
-            example: 0.5
-          stacks:
-            type: integer
-            minimum: 1
-            maximum: 10
-            description: Number of effect stacks
-            example: 1
-          source_id:
-            type: string
-            format: uuid
-            description: Universally Unique Identifier (UUID v4)
-            example: 123e4567-e89b-12d3-a456-426614174000
-            maxLength: 36
-      description: 'BACKEND NOTE: Combat effects and status conditions.'
-    QuestEntity:
-      allOf:
-      - allOf:
-        - $ref: '#/components/schemas/BaseEntity'
-        - type: object
-          properties:
-            created_by:
-              type: string
-              format: uuid
-              description: ID of user who created the entity
-              example: 123e4567-e89b-12d3-a456-426614174001
-              maxLength: 36
-            updated_by:
-              type: string
-              format: uuid
-              description: ID of user who last modified the entity
-              example: 123e4567-e89b-12d3-a456-426614174002
-              maxLength: 36
-        description: 'BACKEND NOTE: Extends BaseEntity with audit trail. Use for admin-managed
-          entities.'
-      - type: object
-        required:
-        - title
-        - description
-        - type
-        - status
-        properties:
-          title:
-            type: string
-            description: Quest display title
-            example: Phantom Liberty
-            maxLength: 100
-          description:
-            type: string
-            description: Quest description
-            example: Investigate the mysterious data fragment
-            maxLength: 1000
-          type:
-            type: string
-            enum:
-            - main_story
-            - side_quest
-            - gig
-            - romance
-            - faction
-            - cyberpsycho
-            description: Quest category
-            example: main_story
-          status:
-            type: string
-            enum:
-            - available
-            - active
-            - completed
-            - failed
-            - expired
-            description: Quest availability status
-            example: active
-          level_requirement:
-            type: integer
-            minimum: 1
-            maximum: 50
-            description: Minimum character level required
-            example: 20
-          rewards:
-            type: array
-            items:
-              type: object
-              properties:
-                type:
-                  type: string
-                  enum:
-                  - experience
-                  - money
-                  - item
-                  - reputation
-                amount:
-                  type: integer
-                  minimum: 1
-                item_id:
-                  type: string
-                  format: uuid
-                  description: Universally Unique Identifier (UUID v4)
-                  example: 123e4567-e89b-12d3-a456-426614174000
-                  maxLength: 36
-            description: Quest completion rewards
-          objectives:
-            type: array
-            items:
-              type: object
-              required:
-              - description
-              - completed
-              properties:
-                description:
-                  type: string
-                  maxLength: 200
-                completed:
-                  type: boolean
-                progress:
-                  type: integer
-                  minimum: 0
-                target:
-                  type: integer
-                  minimum: 1
-            description: Quest objectives and progress
-      description: 'BACKEND NOTE: Quest definition with progress tracking.'
-    CombatActionEntity:
-      allOf:
-      - type: object
-        required:
-        - id
-        - created_at
-        - updated_at
-        properties:
-          id:
-            type: string
-            format: uuid
-            description: Unique identifier (UUID v4)
-            example: 123e4567-e89b-12d3-a456-426614174000
-            maxLength: 36
-          created_at:
-            type: string
-            format: date-time
-            description: Creation timestamp (ISO 8601)
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
-          updated_at:
-            type: string
-            format: date-time
-            description: Last modification timestamp (ISO 8601)
-            example: '2025-12-28T10:30:00Z'
-            maxLength: 30
-        description: 'BACKEND NOTE: Base entity with ordered fields for struct alignment.
-          Memory savings: 30-50%. All domain entities should extend this.'
-      - type: object
-        required:
-        - session_id
-        - action_type
-        - source_id
-        properties:
-          session_id:
-            type: string
-            format: uuid
-            description: Universally Unique Identifier (UUID v4)
-            example: 123e4567-e89b-12d3-a456-426614174000
-            maxLength: 36
-          action_type:
-            type: string
-            enum:
-            - attack
-            - defend
-            - ability
-            - item
-            - move
-            description: Type of combat action
-            example: attack
-          source_id:
-            type: string
-            format: uuid
-            description: Universally Unique Identifier (UUID v4)
-            example: 123e4567-e89b-12d3-a456-426614174000
-            maxLength: 36
-          target_ids:
-            type: array
-            items:
-              type: string
-              format: uuid
-              description: Universally Unique Identifier (UUID v4)
-              example: 123e4567-e89b-12d3-a456-426614174000
-              maxLength: 36
-            description: Targets of the action
-          damage_dealt:
-            type: integer
-            minimum: 0
-            description: Damage dealt by this action
-            example: 145
-          effects_applied:
-            type: array
-            items:
-              type: string
-              enum:
-              - stun
-              - poison
-              - burn
-              - bleed
-              - slow
-            description: Status effects applied
-          turn_number:
-            type: integer
-            minimum: 1
-            description: Combat turn when action occurred
-            example: 3
-      description: 'BACKEND NOTE: Combat actions with damage and effects tracking.'
-    AbilityEntity:
-      allOf:
-      - type: object
-        required:
-        - id
-        - created_at
-        - updated_at
-        properties:
-          id:
-            type: string
-            format: uuid
-            description: Unique identifier (UUID v4)
-            example: 123e4567-e89b-12d3-a456-426614174000
-            maxLength: 36
-          created_at:
-            type: string
-            format: date-time
-            description: Creation timestamp (ISO 8601)
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
-          updated_at:
-            type: string
-            format: date-time
-            description: Last modification timestamp (ISO 8601)
-            example: '2025-12-28T10:30:00Z'
-            maxLength: 30
-        description: 'BACKEND NOTE: Base entity with ordered fields for struct alignment.
-          Memory savings: 30-50%. All domain entities should extend this.'
-      - type: object
-        required:
-        - name
-        - type
-        - cooldown
-        properties:
-          name:
-            type: string
-            description: Ability display name
-            example: Sandevistan Overdrive
-            maxLength: 100
-          description:
-            type: string
-            description: Ability description
-            example: Temporarily increases movement speed by 300%
-            maxLength: 500
-          type:
-            type: string
-            enum:
-            - offensive
-            - defensive
-            - utility
-            - movement
-            - hacking
-            description: Ability category
-            example: movement
-          cooldown:
-            type: integer
-            minimum: 0
-            description: Cooldown in seconds
-            example: 30
-          mana_cost:
-            type: integer
-            minimum: 0
-            description: Resource cost to use
-            example: 25
-          range:
-            type: integer
-            minimum: 0
-            description: Ability range in meters
-            example: 10
-          damage:
-            type: integer
-            minimum: 0
-            description: Base damage if applicable
-            example: 0
-          healing:
-            type: integer
-            minimum: 0
-            description: Healing amount if applicable
-            example: 50
-          effects:
-            type: array
-            items:
-              type: string
-            description: Effects applied by ability
-            example:
-            - speed_boost
-            - damage_reduction
-          level_requirement:
-            type: integer
-            minimum: 1
-            maximum: 50
-            description: Required character level
-            example: 15
-          icon_url:
-            type: string
-            format: uri
-            description: Ability icon URL
-      description: 'BACKEND NOTE: Character abilities and special moves.'
-    LocationEntity:
-      allOf:
-      - type: object
-        required:
-        - id
-        - created_at
-        - updated_at
-        properties:
-          id:
-            type: string
-            format: uuid
-            description: Unique identifier (UUID v4)
-            example: 123e4567-e89b-12d3-a456-426614174000
-            maxLength: 36
-          created_at:
-            type: string
-            format: date-time
-            description: Creation timestamp (ISO 8601)
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
-          updated_at:
-            type: string
-            format: date-time
-            description: Last modification timestamp (ISO 8601)
-            example: '2025-12-28T10:30:00Z'
-            maxLength: 30
-        description: 'BACKEND NOTE: Base entity with ordered fields for struct alignment.
-          Memory savings: 30-50%. All domain entities should extend this.'
-      - type: object
-        required:
-        - name
-        - coordinates
-        - type
-        properties:
-          name:
-            type: string
-            description: Location display name
-            example: Container Plaza
-            maxLength: 100
-          coordinates:
-            type: object
-            required:
-            - x
-            - y
-            - z
-            properties:
-              x:
-                type: number
-                description: X coordinate
-                example: 1234.56
-              y:
-                type: number
-                description: Y coordinate
-                example: 7890.12
-              z:
-                type: number
-                description: Z coordinate (height)
-                example: 15.5
-            description: 3D world coordinates
-          type:
-            type: string
-            enum:
-            - district
-            - building
-            - landmark
-            - fast_travel
-            - quest_location
-            - vendor
-            description: Location category
-            example: district
-          faction_control:
-            type: string
-            format: uuid
-            description: Universally Unique Identifier (UUID v4)
-            example: 123e4567-e89b-12d3-a456-426614174000
-            maxLength: 36
-          security_level:
-            type: string
-            enum:
-            - safe
-            - moderate
-            - dangerous
-            - deadly
-            description: Location danger level
-            example: moderate
-          is_discovered:
-            type: boolean
-            description: Whether player has discovered this location
-            example: true
-      description: 'BACKEND NOTE: Game world locations and points of interest.'
-    BaseEntity:
-      type: object
-      required:
-      - id
-      - created_at
-      - updated_at
-      properties:
-        id:
+        character_id:
           type: string
           format: uuid
-          description: Unique identifier (UUID v4)
-          example: 123e4567-e89b-12d3-a456-426614174000
-          maxLength: 36
-        created_at:
-          type: string
-          format: date-time
-          description: Creation timestamp (ISO 8601)
-          example: '2025-12-28T10:00:00Z'
-          maxLength: 30
-        updated_at:
-          type: string
-          format: date-time
-          description: Last modification timestamp (ISO 8601)
-          example: '2025-12-28T10:30:00Z'
-          maxLength: 30
-      description: 'BACKEND NOTE: Base entity with ordered fields for struct alignment.
-        Memory savings: 30-50%. All domain entities should extend this.'
-    AuditableEntity:
-      allOf:
-      - $ref: '#/components/schemas/BaseEntity'
-      - type: object
-        properties:
-          created_by:
-            type: string
-            format: uuid
-            description: ID of user who created the entity
-            example: 123e4567-e89b-12d3-a456-426614174001
-            maxLength: 36
-          updated_by:
-            type: string
-            format: uuid
-            description: ID of user who last modified the entity
-            example: 123e4567-e89b-12d3-a456-426614174002
-            maxLength: 36
-      description: 'BACKEND NOTE: Extends BaseEntity with audit trail. Use for admin-managed
-        entities.'
-    VersionedEntity:
-      allOf:
-      - $ref: '#/components/schemas/BaseEntity'
-      - type: object
-        required:
-        - version
-        properties:
-          version:
-            type: integer
-            minimum: 1
-            description: Optimistic locking version
-            example: 1
-      description: 'BACKEND NOTE: Extends BaseEntity with version control. Use for
-        concurrent-safe updates.'
-    SoftDeletableEntity:
-      allOf:
-      - $ref: '#/components/schemas/BaseEntity'
-      - type: object
-        properties:
-          deleted_at:
-            type: string
-            format: date-time
-            nullable: true
-            description: Soft deletion timestamp (null if not deleted)
-            example: null
-            maxLength: 30
-      description: 'BACKEND NOTE: Extends BaseEntity with soft delete capability.
-        Use for recoverable deletions.'
-    UpdateRequest:
-      type: object
-      required:
-      - id
-      description: Base schema for update operations with optimistic locking support.
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        version:
-          type: integer
-          minimum: 1
-          description: Current entity version for optimistic locking
-        metadata:
-          type: object
-          properties:
-            updated_by:
-              $ref: '#/components/schemas/UUID'
-            reason:
-              type: string
-              maxLength: 200
-              description: Update reason for audit trail
-    PaginationParams:
-      type: object
-      properties:
-        limit:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 20
-          example: 20
-        offset:
-          type: integer
-          minimum: 0
-          default: 0
-          example: 0
-    PaginatedResponse:
-      type: object
-      required:
-      - items
-      - total
-      - limit
-      - offset
-      properties:
-        items:
+          description: Character to check achievements for
+        specific_achievements:
           type: array
-          description: Array of items
-        total:
-          type: integer
-          minimum: 0
-          example: 100
-          description: Total number of items
-        limit:
-          type: integer
-          minimum: 1
-          maximum: 100
-          example: 20
-          description: Items per page
-        offset:
-          type: integer
-          minimum: 0
-          example: 0
-          description: Number of items to skip
-    UUID:
-      type: string
-      format: uuid
-      description: Universally Unique Identifier (UUID v4)
-      example: 123e4567-e89b-12d3-a456-426614174000
-      maxLength: 36
-    Email:
-      type: string
-      format: email
-      description: Email address
-      example: user@necpgame.com
-      maxLength: 255
-    Timestamp:
-      type: string
-      format: date-time
-      description: ISO 8601 timestamp
-      example: '2025-12-28T10:00:00Z'
-      maxLength: 30
-    Version:
-      type: string
-      pattern: ^\d+\.\d+\.\d+$
-      description: Semantic version (MAJOR.MINOR.PATCH)
-      example: 1.0.0
-      maxLength: 20
-    ValidationResult:
-      type: object
-      required:
-      - valid
-      properties:
-        valid:
+          items:
+            type: string
+            format: uuid
+          description: Specific achievements to check (empty = all)
+        force_recheck:
           type: boolean
-          description: Whether validation passed
-          example: true
-        errors:
-          type: array
-          items:
-            type: string
-          description: Validation error messages
-          example:
-          - Field is required
-          - Invalid format
-        warnings:
-          type: array
-          items:
-            type: string
-          description: Validation warnings
-          example:
-          - Deprecated field usage
+          default: false
+          description: Force recheck of already completed achievements
+        update_progress_only:
+          type: boolean
+          default: false
+          description: Only update progress, don't award achievements
+  responses:
+    OK:
+      $ref: ../common/responses/success.yaml#/OK
+    Created:
+      $ref: ../common/responses/success.yaml#/Created
+    Updated:
+      $ref: ../common/responses/success.yaml#/Updated
+    BadRequest:
+      $ref: ../common/responses/error.yaml#/BadRequest
+    NotFound:
+      $ref: ../common/responses/error.yaml#/NotFound
+    Conflict:
+      $ref: ../common/responses/error.yaml#/Conflict
+  securitySchemes:
+    BearerAuth:
+      $ref: ../common/security/security.yaml#/BearerAuth
+    ServiceAuth:
+      $ref: ../common/security/security.yaml#/ServiceAuth

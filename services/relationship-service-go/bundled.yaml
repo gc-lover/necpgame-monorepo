@@ -64,2970 +64,60 @@ tags:
   description: System health and performance monitoring
 paths:
   /health:
-    get:
-      summary: Relationship service health check
-      description: '**Enterprise-grade health check endpoint**
-
-        Provides real-time health status of the relationship domain microservice.
-
-        Critical for service discovery, load balancing, and monitoring.
-
-        **Performance:** <1ms response time, cached for 30 seconds
-
-        '
-      operationId: relationshipHealthCheck
-      tags:
-      - Health Monitoring
-      parameters:
-      - name: Accept-Encoding
-        in: header
-        schema:
-          type: string
-          enum:
-          - gzip
-          - deflate
-          - br
-      responses:
-        '200':
-          description: Service is healthy
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                example: max-age=30, s-maxage=60
-            ETag:
-              schema:
-                type: string
-                example: '"relationship-health-v1.0"'
-            Content-Encoding:
-              schema:
-                type: string
-                enum:
-                - gzip
-                - deflate
-                - br
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - status
-                - timestamp
-                properties:
-                  status:
-                    type: string
-                    enum:
-                    - healthy
-                    - degraded
-                    - unhealthy
-                    example: healthy
-                    maxLength: 255
-                  domain:
-                    type: string
-                    example: service-name
-                    maxLength: 255
-                  timestamp:
-                    type: string
-                    format: date-time
-                    example: '2025-12-28T10:00:00Z'
-                    maxLength: 255
-                  version:
-                    type: string
-                    example: 1.0.0
-                    maxLength: 50
-                  uptime_seconds:
-                    type: integer
-                    example: 3600
-                    minimum: 0
-                  active_connections:
-                    type: integer
-                    example: 1500
-                    minimum: 0
-                description: 'BACKEND NOTE: Fields ordered for struct alignment (large
-                  → small). Expected memory savings: 30-50%.'
-        '503':
-          description: Service is unhealthy
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - status
-                - timestamp
-                properties:
-                  status:
-                    type: string
-                    enum:
-                    - healthy
-                    - degraded
-                    - unhealthy
-                    example: healthy
-                    maxLength: 255
-                  domain:
-                    type: string
-                    example: service-name
-                    maxLength: 255
-                  timestamp:
-                    type: string
-                    format: date-time
-                    example: '2025-12-28T10:00:00Z'
-                    maxLength: 255
-                  version:
-                    type: string
-                    example: 1.0.0
-                    maxLength: 50
-                  uptime_seconds:
-                    type: integer
-                    example: 3600
-                    minimum: 0
-                  active_connections:
-                    type: integer
-                    example: 1500
-                    minimum: 0
-                description: 'BACKEND NOTE: Fields ordered for struct alignment (large
-                  → small). Expected memory savings: 30-50%.'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
+    $ref: ./paths/health.yaml#/paths/~1health
   /health/batch:
-    get:
-      summary: Batch health check for relationship dependencies
-      description: '**Batch health check for relationship service dependencies**
-
-        Checks health of social graph, reputation, and relationship subsystems.
-
-        **Performance:** <10ms response time, cached for 15 seconds
-
-        '
-      operationId: relationshipBatchHealthCheck
-      tags:
-      - Health Monitoring
-      responses:
-        '200':
-          description: All subsystems healthy
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - status
-                - timestamp
-                properties:
-                  status:
-                    type: string
-                    enum:
-                    - healthy
-                    - degraded
-                    - unhealthy
-                    example: healthy
-                    maxLength: 255
-                  domain:
-                    type: string
-                    example: service-name
-                    maxLength: 255
-                  timestamp:
-                    type: string
-                    format: date-time
-                    example: '2025-12-28T10:00:00Z'
-                    maxLength: 255
-                  version:
-                    type: string
-                    example: 1.0.0
-                    maxLength: 50
-                  uptime_seconds:
-                    type: integer
-                    example: 3600
-                    minimum: 0
-                  active_connections:
-                    type: integer
-                    example: 1500
-                    minimum: 0
-                description: 'BACKEND NOTE: Fields ordered for struct alignment (large
-                  → small). Expected memory savings: 30-50%.'
-        '207':
-          description: Partial subsystem failure
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - status
-                - timestamp
-                properties:
-                  status:
-                    type: string
-                    enum:
-                    - healthy
-                    - degraded
-                    - unhealthy
-                    example: healthy
-                    maxLength: 255
-                  domain:
-                    type: string
-                    example: service-name
-                    maxLength: 255
-                  timestamp:
-                    type: string
-                    format: date-time
-                    example: '2025-12-28T10:00:00Z'
-                    maxLength: 255
-                  version:
-                    type: string
-                    example: 1.0.0
-                    maxLength: 50
-                  uptime_seconds:
-                    type: integer
-                    example: 3600
-                    minimum: 0
-                  active_connections:
-                    type: integer
-                    example: 1500
-                    minimum: 0
-                description: 'BACKEND NOTE: Fields ordered for struct alignment (large
-                  → small). Expected memory savings: 30-50%.'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
+    $ref: ./paths/health-batch.yaml#/paths/~1health~1batch
   /relationships:
-    get:
-      summary: Get user relationships
-      description: '**Retrieve paginated list of user''s relationships**
-
-        Returns all relationships for the authenticated user with filtering options.
-
-        **Performance:** <60ms with graph traversal optimization
-
-        '
-      operationId: getUserRelationships
-      tags:
-      - Relationships
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: type
-        in: query
-        schema:
-          type: string
-          enum:
-          - friendship
-          - romance
-          - rivalry
-          - mentorship
-          - business
-          - enmity
-        description: Filter by relationship type
-      - name: level_min
-        in: query
-        schema:
-          type: integer
-          minimum: -10
-          maximum: 10
-        description: Minimum relationship level
-      - name: level_max
-        in: query
-        schema:
-          type: integer
-          minimum: -10
-          maximum: 10
-        description: Maximum relationship level
-      - name: status
-        in: query
-        schema:
-          type: string
-          enum:
-          - active
-          - inactive
-          - terminated
-        description: Filter by relationship status
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 50
-        description: Number of relationships to return
-      - name: offset
-        in: query
-        schema:
-          type: integer
-          minimum: 0
-          default: 0
-        description: Pagination offset
-      responses:
-        '200':
-          description: Relationships retrieved successfully
-          content:
-            application/json:
-              schema:
-                allOf:
-                - type: object
-                  required:
-                  - items
-                  - total
-                  - limit
-                  - offset
-                  properties:
-                    items:
-                      type: array
-                      description: Array of items
-                    total:
-                      type: integer
-                      minimum: 0
-                      example: 100
-                      description: Total number of items
-                    limit:
-                      type: integer
-                      minimum: 1
-                      maximum: 100
-                      example: 20
-                      description: Items per page
-                    offset:
-                      type: integer
-                      minimum: 0
-                      example: 0
-                      description: Number of items to skip
-                - type: object
-                  properties:
-                    items:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/RelationshipResponse'
-        '401':
-          description: Authentication required
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-    post:
-      summary: Create relationship
-      description: '**Create a new relationship between characters**
-
-        Initiates relationship of specified type with initial parameters.
-
-        **Performance:** <80ms with validation and mutual consent checks
-
-        '
-      operationId: createRelationship
-      tags:
-      - Relationships
-      security:
-      - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateRelationshipRequest'
-      responses:
-        '201':
-          description: Relationship created successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RelationshipResponse'
-        '400':
-          description: Invalid request parameters
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-        '409':
-          description: Relationship already exists
-          content:
-            application/json:
-              schema:
-                description: Resource conflict
-                content:
-                  application/json:
-                    schema:
-                      type: object
-                      required:
-                      - code
-                      - message
-                      properties:
-                        code:
-                          type: integer
-                          example: 500
-                          format: int32
-                          minimum: 100
-                          maximum: 599
-                        message:
-                          type: string
-                          example: Internal server error
-                          maxLength: 1000
-                        details:
-                          type: object
-                          description: Additional error details
-                      description: Standard error response format
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
+    $ref: ./paths/relationships.yaml#/paths/~1relationships
   /relationships/{relationshipId}:
-    get:
-      summary: Get relationship details
-      description: '**Retrieve detailed information about a specific relationship**
-
-        Includes full history, events, and current status.
-
-        **Performance:** <35ms with relationship-specific caching
-
-        '
-      operationId: getRelationship
-      tags:
-      - Relationships
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: relationshipId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-          description: Universally Unique Identifier (UUID v4)
-          example: 123e4567-e89b-12d3-a456-426614174000
-          maxLength: 36
-      responses:
-        '200':
-          description: Relationship details retrieved
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RelationshipDetailResponse'
-        '404':
-          description: Resource not found
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-    put:
-      summary: Update relationship
-      description: '**Update relationship properties and level**
-
-        Modifies relationship intensity, description, and flags.
-
-        **Performance:** <45ms with consistency checks
-
-        '
-      operationId: updateRelationship
-      tags:
-      - Relationships
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: relationshipId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-          description: Universally Unique Identifier (UUID v4)
-          example: 123e4567-e89b-12d3-a456-426614174000
-          maxLength: 36
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateRelationshipRequest'
-      responses:
-        '200':
-          description: Relationship updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RelationshipResponse'
-        '403':
-          description: Access denied
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-    delete:
-      summary: Terminate relationship
-      description: '**Terminate/end a relationship**
-
-        Sets relationship as terminated with reason and cleanup.
-
-        **Performance:** <40ms with relationship cleanup
-
-        '
-      operationId: terminateRelationship
-      tags:
-      - Relationships
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: relationshipId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-          description: Universally Unique Identifier (UUID v4)
-          example: 123e4567-e89b-12d3-a456-426614174000
-          maxLength: 36
-      - name: reason
-        in: query
-        schema:
-          type: string
-          maxLength: 200
-        description: Reason for termination
-      responses:
-        '204':
-          description: Relationship terminated successfully
-        '403':
-          description: Access denied
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
+    $ref: ./paths/relationships-{relationshipId}.yaml#/paths/~1relationships~1{relationshipId}
   /relationships/search:
-    get:
-      summary: Search relationships
-      description: '**Advanced relationship search with social graph traversal**
-
-        Finds relationships by criteria with relevance scoring.
-
-        **Performance:** <100ms with graph database optimization
-
-        '
-      operationId: searchRelationships
-      tags:
-      - Relationships
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: character_id
-        in: query
-        required: true
-        schema:
-          type: string
-          format: uuid
-          description: Universally Unique Identifier (UUID v4)
-          example: 123e4567-e89b-12d3-a456-426614174000
-          maxLength: 36
-        description: Character to search relationships for
-      - name: type
-        in: query
-        schema:
-          type: string
-          enum:
-          - friendship
-          - romance
-          - rivalry
-          - mentorship
-          - business
-          - enmity
-        description: Relationship type filter
-      - name: min_level
-        in: query
-        schema:
-          type: integer
-          minimum: -10
-          maximum: 10
-          default: 1
-        description: Minimum relationship level
-      - name: mutual
-        in: query
-        schema:
-          type: boolean
-          default: true
-        description: Only mutual relationships
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 50
-          default: 20
-        description: Number of results to return
-      responses:
-        '200':
-          description: Relationship search results
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  relationships:
-                    type: array
-                    items:
-                      allOf:
-                      - $ref: '#/components/schemas/RelationshipResponse'
-                      - type: object
-                        properties:
-                          search_score:
-                            type: number
-                            description: Search relevance score
-                            example: 0.95
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
+    $ref: ./paths/relationships-search.yaml#/paths/~1relationships~1search
   /friendships:
-    get:
-      summary: Get user friendships
-      description: '**Retrieve user''s friendship relationships**
-
-        Optimized endpoint for friendship-specific operations.
-
-        **Performance:** <40ms with friendship-optimized queries
-
-        '
-      operationId: getUserFriendships
-      tags:
-      - Friendship
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: status
-        in: query
-        schema:
-          type: string
-          enum:
-          - pending
-          - accepted
-          - blocked
-          default: accepted
-        description: Friendship status filter
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 50
-        description: Number of friendships to return
-      - name: offset
-        in: query
-        schema:
-          type: integer
-          minimum: 0
-          default: 0
-        description: Pagination offset
-      responses:
-        '200':
-          description: Friendships retrieved successfully
-          content:
-            application/json:
-              schema:
-                allOf:
-                - type: object
-                  required:
-                  - items
-                  - total
-                  - limit
-                  - offset
-                  properties:
-                    items:
-                      type: array
-                      description: Array of items
-                    total:
-                      type: integer
-                      minimum: 0
-                      example: 100
-                      description: Total number of items
-                    limit:
-                      type: integer
-                      minimum: 1
-                      maximum: 100
-                      example: 20
-                      description: Items per page
-                    offset:
-                      type: integer
-                      minimum: 0
-                      example: 0
-                      description: Number of items to skip
-                - type: object
-                  properties:
-                    items:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/FriendshipResponse'
-        '401':
-          description: Authentication required
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-    post:
-      summary: Send friend request
-      description: '**Send a friend request to another user**
-
-        Creates pending friendship relationship.
-
-        **Performance:** <50ms with duplicate request prevention
-
-        '
-      operationId: sendFriendRequest
-      tags:
-      - Friendship
-      security:
-      - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SendFriendRequest'
-      responses:
-        '202':
-          description: Friend request sent
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FriendRequestResponse'
-        '400':
-          description: Invalid request parameters
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-        '409':
-          description: Friend request already exists
-          content:
-            application/json:
-              schema:
-                description: Resource conflict
-                content:
-                  application/json:
-                    schema:
-                      type: object
-                      required:
-                      - code
-                      - message
-                      properties:
-                        code:
-                          type: integer
-                          example: 500
-                          format: int32
-                          minimum: 100
-                          maximum: 599
-                        message:
-                          type: string
-                          example: Internal server error
-                          maxLength: 1000
-                        details:
-                          type: object
-                          description: Additional error details
-                      description: Standard error response format
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
+    $ref: ./paths/friendships.yaml#/paths/~1friendships
   /friendships/{friendshipId}:
-    put:
-      summary: Respond to friend request
-      description: '**Accept or decline a friend request**
-
-        Updates friendship status and creates relationship.
-
-        **Performance:** <40ms with status validation
-
-        '
-      operationId: respondToFriendRequest
-      tags:
-      - Friendship
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: friendshipId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-          description: Universally Unique Identifier (UUID v4)
-          example: 123e4567-e89b-12d3-a456-426614174000
-          maxLength: 36
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/FriendRequestResponse'
-      responses:
-        '200':
-          description: Friend request responded to
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FriendshipResponse'
-        '403':
-          description: Access denied
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-    delete:
-      summary: Remove friendship
-      description: '**Remove/unfriend another user**
-
-        Terminates friendship relationship.
-
-        **Performance:** <35ms with relationship cleanup
-
-        '
-      operationId: removeFriendship
-      tags:
-      - Friendship
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: friendshipId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-          description: Universally Unique Identifier (UUID v4)
-          example: 123e4567-e89b-12d3-a456-426614174000
-          maxLength: 36
-      responses:
-        '204':
-          description: Friendship removed successfully
-        '403':
-          description: Access denied
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
+    $ref: ./paths/friendships-{friendshipId}.yaml#/paths/~1friendships~1{friendshipId}
   /reputation/{userId}:
-    get:
-      summary: Get user reputation
-      description: '**Retrieve user''s reputation profile**
-
-        Includes overall reputation and category breakdowns.
-
-        **Performance:** <25ms with reputation caching
-
-        '
-      operationId: getUserReputation
-      tags:
-      - Reputation
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: userId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-          description: Universally Unique Identifier (UUID v4)
-          example: 123e4567-e89b-12d3-a456-426614174000
-          maxLength: 36
-      responses:
-        '200':
-          description: User reputation retrieved
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserReputationResponse'
-        '404':
-          description: Resource not found
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
+    $ref: ./paths/reputation-{userId}.yaml#/paths/~1reputation~1{userId}
   /reputation/{userId}/history:
-    get:
-      summary: Get reputation history
-      description: '**Retrieve user''s reputation change history**
-
-        Shows reputation events and their impact over time.
-
-        **Performance:** <45ms with history pagination
-
-        '
-      operationId: getReputationHistory
-      tags:
-      - Reputation
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: userId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-          description: Universally Unique Identifier (UUID v4)
-          example: 123e4567-e89b-12d3-a456-426614174000
-          maxLength: 36
-      - name: category
-        in: query
-        schema:
-          type: string
-          enum:
-          - trading
-          - combat
-          - social
-          - leadership
-          - craftsmanship
-          - reliability
-          - generosity
-          - combat_skill
-        description: Filter by reputation category
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 50
-        description: Number of history entries to return
-      - name: offset
-        in: query
-        schema:
-          type: integer
-          minimum: 0
-          default: 0
-        description: Pagination offset
-      responses:
-        '200':
-          description: Reputation history retrieved
-          content:
-            application/json:
-              schema:
-                allOf:
-                - type: object
-                  required:
-                  - items
-                  - total
-                  - limit
-                  - offset
-                  properties:
-                    items:
-                      type: array
-                      description: Array of items
-                    total:
-                      type: integer
-                      minimum: 0
-                      example: 100
-                      description: Total number of items
-                    limit:
-                      type: integer
-                      minimum: 1
-                      maximum: 100
-                      example: 20
-                      description: Items per page
-                    offset:
-                      type: integer
-                      minimum: 0
-                      example: 0
-                      description: Number of items to skip
-                - type: object
-                  properties:
-                    items:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/ReputationEventResponse'
-        '404':
-          description: Resource not found
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
+    $ref: ./paths/reputation-{userId}-history.yaml#/paths/~1reputation~1{userId}~1history
   /reputation/events:
-    post:
-      summary: Record reputation event
-      description: '**Record a reputation-affecting event**
-
-        Updates user reputation based on event type and impact.
-
-        **Performance:** <35ms with reputation calculation
-
-        '
-      operationId: recordReputationEvent
-      tags:
-      - Reputation
-      security:
-      - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RecordReputationEventRequest'
-      responses:
-        '201':
-          description: Reputation event recorded
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ReputationEventResponse'
-        '400':
-          description: Invalid request parameters
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
+    $ref: ./paths/reputation-events.yaml#/paths/~1reputation~1events
+  /reputation/quest-triggers:
+    $ref: ./paths/reputation-quest-triggers.yaml#/paths/~1reputation~1quest-triggers
   /social-network/{userId}/connections:
-    get:
-      summary: Get social connections
-      description: '**Retrieve user''s social network connections**
-
-        Returns graph of relationships up to specified depth.
-
-        **Performance:** <80ms with graph traversal limits
-
-        '
-      operationId: getSocialConnections
-      tags:
-      - Social Network
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: userId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-          description: Universally Unique Identifier (UUID v4)
-          example: 123e4567-e89b-12d3-a456-426614174000
-          maxLength: 36
-      - name: depth
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 3
-          default: 2
-        description: Connection depth to traverse
-      - name: relationship_types
-        in: query
-        schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - friendship
-            - romance
-            - rivalry
-            - mentorship
-            - business
-            - enmity
-        description: Types of relationships to include
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 200
-          default: 100
-        description: Maximum connections to return
-      responses:
-        '200':
-          description: Social connections retrieved
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SocialNetworkResponse'
-        '404':
-          description: Resource not found
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
+    $ref: ./paths/social-network-{userId}-connections.yaml#/paths/~1social-network~1{userId}~1connections
   /social-network/{userId}/influence:
-    get:
-      summary: Calculate social influence
-      description: '**Calculate user''s social influence score**
-
-        Based on relationship network, reputation, and community standing.
-
-        **Performance:** <60ms with cached calculations
-
-        '
-      operationId: getSocialInfluence
-      tags:
-      - Social Network
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: userId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-          description: Universally Unique Identifier (UUID v4)
-          example: 123e4567-e89b-12d3-a456-426614174000
-          maxLength: 36
-      responses:
-        '200':
-          description: Social influence calculated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SocialInfluenceResponse'
-        '404':
-          description: Resource not found
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
+    $ref: ./paths/social-network-{userId}-influence.yaml#/paths/~1social-network~1{userId}~1influence
   /mentorship:
-    get:
-      summary: Get mentorship relationships
-      description: '**Retrieve user''s mentorship relationships**
-
-        Shows both mentor and mentee relationships.
-
-        **Performance:** <45ms with mentorship filtering
-
-        '
-      operationId: getMentorshipRelationships
-      tags:
-      - Mentorship
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: role
-        in: query
-        schema:
-          type: string
-          enum:
-          - mentor
-          - mentee
-          - both
-          default: both
-        description: Filter by mentorship role
-      - name: status
-        in: query
-        schema:
-          type: string
-          enum:
-          - active
-          - completed
-          - terminated
-          default: active
-        description: Filter by mentorship status
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 50
-          default: 20
-        description: Number of relationships to return
-      responses:
-        '200':
-          description: Mentorship relationships retrieved
-          content:
-            application/json:
-              schema:
-                allOf:
-                - type: object
-                  required:
-                  - items
-                  - total
-                  - limit
-                  - offset
-                  properties:
-                    items:
-                      type: array
-                      description: Array of items
-                    total:
-                      type: integer
-                      minimum: 0
-                      example: 100
-                      description: Total number of items
-                    limit:
-                      type: integer
-                      minimum: 1
-                      maximum: 100
-                      example: 20
-                      description: Items per page
-                    offset:
-                      type: integer
-                      minimum: 0
-                      example: 0
-                      description: Number of items to skip
-                - type: object
-                  properties:
-                    items:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/MentorshipResponse'
-        '401':
-          description: Authentication required
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-    post:
-      summary: Initiate mentorship
-      description: '**Initiate a mentorship relationship**
-
-        Creates mentorship proposal with terms and conditions.
-
-        **Performance:** <55ms with mentorship validation
-
-        '
-      operationId: initiateMentorship
-      tags:
-      - Mentorship
-      security:
-      - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/InitiateMentorshipRequest'
-      responses:
-        '201':
-          description: Mentorship initiated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MentorshipResponse'
-        '400':
-          description: Invalid request parameters
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
+    $ref: ./paths/mentorship.yaml#/paths/~1mentorship
   /mentorship/{mentorshipId}:
-    put:
-      summary: Update mentorship
-      description: '**Update mentorship status and progress**
-
-        Modifies mentorship terms, progress, or terminates relationship.
-
-        **Performance:** <40ms with mentorship validation
-
-        '
-      operationId: updateMentorship
-      tags:
-      - Mentorship
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: mentorshipId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-          description: Universally Unique Identifier (UUID v4)
-          example: 123e4567-e89b-12d3-a456-426614174000
-          maxLength: 36
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateMentorshipRequest'
-      responses:
-        '200':
-          description: Mentorship updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MentorshipResponse'
-        '403':
-          description: Access denied
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
+    $ref: ./paths/mentorship-{mentorshipId}.yaml#/paths/~1mentorship~1{mentorshipId}
   /mentorship/{mentorshipId}/progress:
-    post:
-      summary: Record mentorship progress
-      description: '**Record progress in mentorship relationship**
-
-        Logs lessons, achievements, and skill development.
-
-        **Performance:** <35ms with progress tracking
-
-        '
-      operationId: recordMentorshipProgress
-      tags:
-      - Mentorship
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: mentorshipId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-          description: Universally Unique Identifier (UUID v4)
-          example: 123e4567-e89b-12d3-a456-426614174000
-          maxLength: 36
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RecordProgressRequest'
-      responses:
-        '201':
-          description: Progress recorded successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MentorshipProgressResponse'
-        '403':
-          description: Access denied
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
+    $ref: ./paths/mentorship-{mentorshipId}-progress.yaml#/paths/~1mentorship~1{mentorshipId}~1progress
   /romance:
-    get:
-      summary: Get romantic relationships
-      description: '**Retrieve user''s romantic relationships**
-
-        Private endpoint for romantic connection management.
-
-        **Performance:** <40ms with privacy controls
-
-        '
-      operationId: getRomanticRelationships
-      tags:
-      - Romance
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: status
-        in: query
-        schema:
-          type: string
-          enum:
-          - dating
-          - engaged
-          - married
-          - separated
-          - divorced
-          default: dating
-        description: Filter by romantic status
-      - name: privacy_level
-        in: query
-        schema:
-          type: string
-          enum:
-          - private
-          - friends
-          - public
-          default: private
-        description: Privacy level of relationships to show
-      responses:
-        '200':
-          description: Romantic relationships retrieved
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  relationships:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/RomanticRelationshipResponse'
-        '401':
-          description: Authentication required
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
+    $ref: ./paths/romance.yaml#/paths/~1romance
   /romance/proposals:
-    post:
-      summary: Send romantic proposal
-      description: '**Send a romantic proposal to another character**
-
-        Initiates romantic relationship with configurable privacy.
-
-        **Performance:** <50ms with consent and privacy validation
-
-        '
-      operationId: sendRomanticProposal
-      tags:
-      - Romance
-      security:
-      - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RomanticProposalRequest'
-      responses:
-        '202':
-          description: Romantic proposal sent
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RomanticProposalResponse'
-        '400':
-          description: Invalid request parameters
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
+    $ref: ./paths/romance-proposals.yaml#/paths/~1romance~1proposals
   /rivalries:
-    get:
-      summary: Get user rivalries
-      description: '**Retrieve user''s rivalry relationships**
-
-        Shows competitive and antagonistic relationships.
-
-        **Performance:** <40ms with rivalry filtering
-
-        '
-      operationId: getUserRivalries
-      tags:
-      - Rivalry
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: intensity
-        in: query
-        schema:
-          type: string
-          enum:
-          - minor
-          - moderate
-          - major
-          - deadly
-          default: moderate
-        description: Filter by rivalry intensity
-      - name: active
-        in: query
-        schema:
-          type: boolean
-          default: true
-        description: Only active rivalries
-      responses:
-        '200':
-          description: Rivalries retrieved successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  rivalries:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/RivalryResponse'
-        '401':
-          description: Authentication required
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-    post:
-      summary: Declare rivalry
-      description: '**Declare rivalry with another character**
-
-        Creates antagonistic relationship with intensity tracking.
-
-        **Performance:** <45ms with rivalry validation
-
-        '
-      operationId: declareRivalry
-      tags:
-      - Rivalry
-      security:
-      - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DeclareRivalryRequest'
-      responses:
-        '201':
-          description: Rivalry declared successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RivalryResponse'
-        '400':
-          description: Invalid request parameters
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - code
-                - message
-                properties:
-                  code:
-                    type: integer
-                    example: 500
-                    format: int32
-                    minimum: 100
-                    maximum: 599
-                  message:
-                    type: string
-                    example: Internal server error
-                    maxLength: 1000
-                  details:
-                    type: object
-                    description: Additional error details
-                description: Standard error response format
+    $ref: ./paths/rivalries.yaml#/paths/~1rivalries
 components:
-  responses:
-    OK:
-      description: Operation completed successfully
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              success:
-                type: boolean
-                example: true
-              message:
-                type: string
-                example: Operation completed
-    Created:
-      description: Resource created successfully
-      headers:
-        Location:
-          schema:
-            type: string
-            format: uri
-          description: URI of the created resource
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              id:
-                type: string
-                format: uuid
-                description: Unique identifier of created resource
-              created_at:
-                type: string
-                format: date-time
-                description: Creation timestamp
-    Updated:
-      description: Resource updated successfully
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              id:
-                type: string
-                format: uuid
-                description: Unique identifier of updated resource
-              updated_at:
-                type: string
-                format: date-time
-                description: Last modification timestamp
-    Deleted:
-      description: Resource deleted successfully
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              id:
-                type: string
-                format: uuid
-                description: Unique identifier of deleted resource
-              deleted_at:
-                type: string
-                format: date-time
-                description: Deletion timestamp
-    BadRequest:
-      description: Invalid request parameters
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-            - code
-            - message
-            properties:
-              code:
-                type: integer
-                example: 500
-                format: int32
-                minimum: 100
-                maximum: 599
-              message:
-                type: string
-                example: Internal server error
-                maxLength: 1000
-              details:
-                type: object
-                description: Additional error details
-            description: Standard error response format
-    Unauthorized:
-      description: Authentication required
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-            - code
-            - message
-            properties:
-              code:
-                type: integer
-                example: 500
-                format: int32
-                minimum: 100
-                maximum: 599
-              message:
-                type: string
-                example: Internal server error
-                maxLength: 1000
-              details:
-                type: object
-                description: Additional error details
-            description: Standard error response format
-    Forbidden:
-      description: Access denied
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-            - code
-            - message
-            properties:
-              code:
-                type: integer
-                example: 500
-                format: int32
-                minimum: 100
-                maximum: 599
-              message:
-                type: string
-                example: Internal server error
-                maxLength: 1000
-              details:
-                type: object
-                description: Additional error details
-            description: Standard error response format
-    NotFound:
-      description: Resource not found
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-            - code
-            - message
-            properties:
-              code:
-                type: integer
-                example: 500
-                format: int32
-                minimum: 100
-                maximum: 599
-              message:
-                type: string
-                example: Internal server error
-                maxLength: 1000
-              details:
-                type: object
-                description: Additional error details
-            description: Standard error response format
-    Conflict:
-      description: Resource conflict
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-            - code
-            - message
-            properties:
-              code:
-                type: integer
-                example: 500
-                format: int32
-                minimum: 100
-                maximum: 599
-              message:
-                type: string
-                example: Internal server error
-                maxLength: 1000
-              details:
-                type: object
-                description: Additional error details
-            description: Standard error response format
-    TooManyRequests:
-      description: Too many requests - rate limit exceeded
-      content:
-        application/json:
-          schema:
-            allOf:
-            - type: object
-              required:
-              - code
-              - message
-              properties:
-                code:
-                  type: integer
-                  example: 500
-                  format: int32
-                  minimum: 100
-                  maximum: 599
-                message:
-                  type: string
-                  example: Internal server error
-                  maxLength: 1000
-                details:
-                  type: object
-                  description: Additional error details
-              description: Standard error response format
-            - type: object
-              properties:
-                retry_after:
-                  type: integer
-                  example: 60
-                  description: Seconds to wait before retrying
   schemas:
     RelationshipResponse:
       allOf:
-      - allOf:
-        - type: object
-          required:
-          - id
-          - created_at
-          - updated_at
-          properties:
-            id:
-              type: string
-              format: uuid
-              description: Unique identifier (UUID v4)
-              example: 123e4567-e89b-12d3-a456-426614174000
-              maxLength: 36
-            created_at:
-              type: string
-              format: date-time
-              description: Creation timestamp (ISO 8601)
-              example: '2025-12-28T10:00:00Z'
-              maxLength: 30
-            updated_at:
-              type: string
-              format: date-time
-              description: Last modification timestamp (ISO 8601)
-              example: '2025-12-28T10:30:00Z'
-              maxLength: 30
-          description: 'BACKEND NOTE: Base entity with ordered fields for struct alignment.
-            Memory savings: 30-50%. All domain entities should extend this.'
-        - type: object
-          required:
-          - character_id
-          - target_id
-          - type
-          - level
-          properties:
-            character_id:
-              type: string
-              format: uuid
-              description: Universally Unique Identifier (UUID v4)
-              example: 123e4567-e89b-12d3-a456-426614174000
-              maxLength: 36
-            target_id:
-              type: string
-              format: uuid
-              description: Universally Unique Identifier (UUID v4)
-              example: 123e4567-e89b-12d3-a456-426614174000
-              maxLength: 36
-            type:
-              type: string
-              enum:
-              - friendship
-              - romance
-              - rivalry
-              - mentorship
-              - business
-              - enmity
-              description: Relationship type
-              example: romance
-            level:
-              type: integer
-              minimum: -10
-              maximum: 10
-              description: Relationship intensity (-10 to +10)
-              example: 7
-            description:
-              type: string
-              description: Relationship description
-              example: Close romantic partner
-              maxLength: 200
-            established_at:
-              type: string
-              format: date-time
-              description: ISO 8601 timestamp
-              example: '2025-12-28T10:00:00Z'
-              maxLength: 30
-            last_interaction_at:
-              type: string
-              format: date-time
-              description: ISO 8601 timestamp
-              example: '2025-12-28T10:00:00Z'
-              maxLength: 30
-            interaction_count:
-              type: integer
-              minimum: 0
-              description: Number of interactions
-              example: 23
-            flags:
-              type: array
-              items:
-                type: string
-                enum:
-                - exclusive
-                - public
-                - secret
-                - temporary
-              description: Relationship flags
-        description: 'BACKEND NOTE: Character relationships with intensity tracking.'
+      - $ref: ../common/schemas/social-entities.yaml#/RelationshipEntity
       - type: object
         properties:
           character_profile:
-            allOf:
-            - allOf:
-              - $ref: '#/components/schemas/BaseEntity'
-              - type: object
-                properties:
-                  created_by:
-                    type: string
-                    format: uuid
-                    description: ID of user who created the entity
-                    example: 123e4567-e89b-12d3-a456-426614174001
-                    maxLength: 36
-                  updated_by:
-                    type: string
-                    format: uuid
-                    description: ID of user who last modified the entity
-                    example: 123e4567-e89b-12d3-a456-426614174002
-                    maxLength: 36
-              description: 'BACKEND NOTE: Extends BaseEntity with audit trail. Use
-                for admin-managed entities.'
-            - type: object
-              required:
-              - username
-              - display_name
-              properties:
-                username:
-                  type: string
-                  pattern: ^[a-zA-Z0-9_-]{3,30}$
-                  description: Unique username
-                  example: night_runner_2077
-                  maxLength: 30
-                display_name:
-                  type: string
-                  description: Display name shown to other players
-                  example: Night Runner
-                  maxLength: 50
-                email:
-                  type: string
-                  format: email
-                  description: Email address
-                  example: user@necpgame.com
-                  maxLength: 255
-                avatar_url:
-                  type: string
-                  format: uri
-                  description: Profile avatar image URL
-                  example: https://cdn.necpgame.com/avatars/night_runner.png
-                bio:
-                  type: string
-                  description: User biography/description
-                  example: Cyberpunk mercenary with a heart of gold
-                  maxLength: 500
-                country:
-                  type: string
-                  pattern: ^[A-Z]{2}$
-                  description: ISO 3166-1 alpha-2 country code
-                  example: US
-                timezone:
-                  type: string
-                  description: User timezone (IANA format)
-                  example: America/New_York
-                  maxLength: 50
-                preferred_language:
-                  type: string
-                  pattern: ^[a-z]{2}(-[A-Z]{2})?$
-                  description: Preferred language (ISO 639-1)
-                  example: en-US
-                is_online:
-                  type: boolean
-                  description: Current online status
-                  example: true
-                last_seen_at:
-                  type: string
-                  format: date-time
-                  description: ISO 8601 timestamp
-                  example: '2025-12-28T10:00:00Z'
-                  maxLength: 30
-                reputation_score:
-                  type: integer
-                  minimum: 0
-                  description: Community reputation score
-                  example: 1250
-            description: 'BACKEND NOTE: User profiles with social metadata.'
+            $ref: ../common/schemas/social-entities.yaml#/UserProfileEntity
           target_profile:
-            allOf:
-            - allOf:
-              - $ref: '#/components/schemas/BaseEntity'
-              - type: object
-                properties:
-                  created_by:
-                    type: string
-                    format: uuid
-                    description: ID of user who created the entity
-                    example: 123e4567-e89b-12d3-a456-426614174001
-                    maxLength: 36
-                  updated_by:
-                    type: string
-                    format: uuid
-                    description: ID of user who last modified the entity
-                    example: 123e4567-e89b-12d3-a456-426614174002
-                    maxLength: 36
-              description: 'BACKEND NOTE: Extends BaseEntity with audit trail. Use
-                for admin-managed entities.'
-            - type: object
-              required:
-              - username
-              - display_name
-              properties:
-                username:
-                  type: string
-                  pattern: ^[a-zA-Z0-9_-]{3,30}$
-                  description: Unique username
-                  example: night_runner_2077
-                  maxLength: 30
-                display_name:
-                  type: string
-                  description: Display name shown to other players
-                  example: Night Runner
-                  maxLength: 50
-                email:
-                  type: string
-                  format: email
-                  description: Email address
-                  example: user@necpgame.com
-                  maxLength: 255
-                avatar_url:
-                  type: string
-                  format: uri
-                  description: Profile avatar image URL
-                  example: https://cdn.necpgame.com/avatars/night_runner.png
-                bio:
-                  type: string
-                  description: User biography/description
-                  example: Cyberpunk mercenary with a heart of gold
-                  maxLength: 500
-                country:
-                  type: string
-                  pattern: ^[A-Z]{2}$
-                  description: ISO 3166-1 alpha-2 country code
-                  example: US
-                timezone:
-                  type: string
-                  description: User timezone (IANA format)
-                  example: America/New_York
-                  maxLength: 50
-                preferred_language:
-                  type: string
-                  pattern: ^[a-z]{2}(-[A-Z]{2})?$
-                  description: Preferred language (ISO 639-1)
-                  example: en-US
-                is_online:
-                  type: boolean
-                  description: Current online status
-                  example: true
-                last_seen_at:
-                  type: string
-                  format: date-time
-                  description: ISO 8601 timestamp
-                  example: '2025-12-28T10:00:00Z'
-                  maxLength: 30
-                reputation_score:
-                  type: integer
-                  minimum: 0
-                  description: Community reputation score
-                  example: 1250
-            description: 'BACKEND NOTE: User profiles with social metadata.'
+            $ref: ../common/schemas/social-entities.yaml#/UserProfileEntity
           is_mutual:
             type: boolean
             description: Whether relationship is mutual
             example: true
           last_interaction_at:
-            type: string
-            format: date-time
-            description: ISO 8601 timestamp
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
+            $ref: ../common/schemas/common.yaml#/Timestamp
     RelationshipDetailResponse:
       allOf:
       - $ref: '#/components/schemas/RelationshipResponse'
@@ -3046,11 +136,7 @@ components:
                   - interaction
                   - terminated
                 timestamp:
-                  type: string
-                  format: date-time
-                  description: ISO 8601 timestamp
-                  example: '2025-12-28T10:00:00Z'
-                  maxLength: 30
+                  $ref: ../common/schemas/common.yaml#/Timestamp
                 description:
                   type: string
                   maxLength: 200
@@ -3127,174 +213,11 @@ components:
           description: Relationship flags
     FriendshipResponse:
       allOf:
-      - allOf:
-        - type: object
-          required:
-          - id
-          - created_at
-          - updated_at
-          properties:
-            id:
-              type: string
-              format: uuid
-              description: Unique identifier (UUID v4)
-              example: 123e4567-e89b-12d3-a456-426614174000
-              maxLength: 36
-            created_at:
-              type: string
-              format: date-time
-              description: Creation timestamp (ISO 8601)
-              example: '2025-12-28T10:00:00Z'
-              maxLength: 30
-            updated_at:
-              type: string
-              format: date-time
-              description: Last modification timestamp (ISO 8601)
-              example: '2025-12-28T10:30:00Z'
-              maxLength: 30
-          description: 'BACKEND NOTE: Base entity with ordered fields for struct alignment.
-            Memory savings: 30-50%. All domain entities should extend this.'
-        - type: object
-          required:
-          - user_id
-          - friend_id
-          - status
-          properties:
-            user_id:
-              type: string
-              format: uuid
-              description: Universally Unique Identifier (UUID v4)
-              example: 123e4567-e89b-12d3-a456-426614174000
-              maxLength: 36
-            friend_id:
-              type: string
-              format: uuid
-              description: Universally Unique Identifier (UUID v4)
-              example: 123e4567-e89b-12d3-a456-426614174000
-              maxLength: 36
-            status:
-              type: string
-              enum:
-              - pending
-              - accepted
-              - blocked
-              description: Friendship status
-              example: accepted
-            requested_at:
-              type: string
-              format: date-time
-              description: ISO 8601 timestamp
-              example: '2025-12-28T10:00:00Z'
-              maxLength: 30
-            accepted_at:
-              type: string
-              format: date-time
-              description: ISO 8601 timestamp
-              example: '2025-12-28T10:00:00Z'
-              maxLength: 30
-            blocked_at:
-              type: string
-              format: date-time
-              description: ISO 8601 timestamp
-              example: '2025-12-28T10:00:00Z'
-              maxLength: 30
-            friendship_level:
-              type: integer
-              minimum: 1
-              maximum: 10
-              description: Friendship intimacy level
-              example: 5
-            shared_experiences:
-              type: integer
-              minimum: 0
-              description: Number of shared gaming sessions
-              example: 47
-        description: 'BACKEND NOTE: Friendship relationships with status tracking.'
+      - $ref: ../common/schemas/social-entities.yaml#/FriendshipEntity
       - type: object
         properties:
           friend_profile:
-            allOf:
-            - allOf:
-              - $ref: '#/components/schemas/BaseEntity'
-              - type: object
-                properties:
-                  created_by:
-                    type: string
-                    format: uuid
-                    description: ID of user who created the entity
-                    example: 123e4567-e89b-12d3-a456-426614174001
-                    maxLength: 36
-                  updated_by:
-                    type: string
-                    format: uuid
-                    description: ID of user who last modified the entity
-                    example: 123e4567-e89b-12d3-a456-426614174002
-                    maxLength: 36
-              description: 'BACKEND NOTE: Extends BaseEntity with audit trail. Use
-                for admin-managed entities.'
-            - type: object
-              required:
-              - username
-              - display_name
-              properties:
-                username:
-                  type: string
-                  pattern: ^[a-zA-Z0-9_-]{3,30}$
-                  description: Unique username
-                  example: night_runner_2077
-                  maxLength: 30
-                display_name:
-                  type: string
-                  description: Display name shown to other players
-                  example: Night Runner
-                  maxLength: 50
-                email:
-                  type: string
-                  format: email
-                  description: Email address
-                  example: user@necpgame.com
-                  maxLength: 255
-                avatar_url:
-                  type: string
-                  format: uri
-                  description: Profile avatar image URL
-                  example: https://cdn.necpgame.com/avatars/night_runner.png
-                bio:
-                  type: string
-                  description: User biography/description
-                  example: Cyberpunk mercenary with a heart of gold
-                  maxLength: 500
-                country:
-                  type: string
-                  pattern: ^[A-Z]{2}$
-                  description: ISO 3166-1 alpha-2 country code
-                  example: US
-                timezone:
-                  type: string
-                  description: User timezone (IANA format)
-                  example: America/New_York
-                  maxLength: 50
-                preferred_language:
-                  type: string
-                  pattern: ^[a-z]{2}(-[A-Z]{2})?$
-                  description: Preferred language (ISO 639-1)
-                  example: en-US
-                is_online:
-                  type: boolean
-                  description: Current online status
-                  example: true
-                last_seen_at:
-                  type: string
-                  format: date-time
-                  description: ISO 8601 timestamp
-                  example: '2025-12-28T10:00:00Z'
-                  maxLength: 30
-                reputation_score:
-                  type: integer
-                  minimum: 0
-                  description: Community reputation score
-                  example: 1250
-            description: 'BACKEND NOTE: User profiles with social metadata.'
+            $ref: ../common/schemas/social-entities.yaml#/UserProfileEntity
           friendship_level:
             type: integer
             minimum: 1
@@ -3315,11 +238,7 @@ components:
       type: object
       properties:
         friendship_id:
-          type: string
-          format: uuid
-          description: Universally Unique Identifier (UUID v4)
-          example: 123e4567-e89b-12d3-a456-426614174000
-          maxLength: 36
+          $ref: ../common/schemas/common.yaml#/UUID
         status:
           type: string
           enum:
@@ -3328,22 +247,14 @@ components:
           - declined
           example: pending
         requested_at:
-          type: string
-          format: date-time
-          description: ISO 8601 timestamp
-          example: '2025-12-28T10:00:00Z'
-          maxLength: 30
+          $ref: ../common/schemas/common.yaml#/Timestamp
         message:
           type: string
     UserReputationResponse:
       type: object
       properties:
         user_id:
-          type: string
-          format: uuid
-          description: Universally Unique Identifier (UUID v4)
-          example: 123e4567-e89b-12d3-a456-426614174000
-          maxLength: 36
+          $ref: ../common/schemas/common.yaml#/UUID
         overall_score:
           type: integer
           minimum: -1000
@@ -3374,11 +285,7 @@ components:
           description: Total number of reputation events
           example: 127
         last_updated:
-          type: string
-          format: date-time
-          description: ISO 8601 timestamp
-          example: '2025-12-28T10:00:00Z'
-          maxLength: 30
+          $ref: ../common/schemas/common.yaml#/Timestamp
     ReputationCategory:
       type: object
       properties:
@@ -3402,280 +309,13 @@ components:
           example: improving
     ReputationEventResponse:
       allOf:
-      - allOf:
-        - type: object
-          required:
-          - id
-          - created_at
-          - updated_at
-          properties:
-            id:
-              type: string
-              format: uuid
-              description: Unique identifier (UUID v4)
-              example: 123e4567-e89b-12d3-a456-426614174000
-              maxLength: 36
-            created_at:
-              type: string
-              format: date-time
-              description: Creation timestamp (ISO 8601)
-              example: '2025-12-28T10:00:00Z'
-              maxLength: 30
-            updated_at:
-              type: string
-              format: date-time
-              description: Last modification timestamp (ISO 8601)
-              example: '2025-12-28T10:30:00Z'
-              maxLength: 30
-          description: 'BACKEND NOTE: Base entity with ordered fields for struct alignment.
-            Memory savings: 30-50%. All domain entities should extend this.'
-        - type: object
-          required:
-          - subject_id
-          - target_id
-          - score
-          properties:
-            subject_id:
-              type: string
-              format: uuid
-              description: Universally Unique Identifier (UUID v4)
-              example: 123e4567-e89b-12d3-a456-426614174000
-              maxLength: 36
-            target_id:
-              type: string
-              format: uuid
-              description: Universally Unique Identifier (UUID v4)
-              example: 123e4567-e89b-12d3-a456-426614174000
-              maxLength: 36
-            score:
-              type: integer
-              minimum: -100
-              maximum: 100
-              description: Reputation score (-100 to +100)
-              example: 45
-            category:
-              type: string
-              enum:
-              - trading
-              - combat
-              - social
-              - leadership
-              - craftsmanship
-              - reliability
-              - generosity
-              - combat_skill
-              description: Reputation category
-              example: trading
-            evidence_count:
-              type: integer
-              minimum: 0
-              description: Number of reputation events
-              example: 12
-            last_updated_at:
-              type: string
-              format: date-time
-              description: ISO 8601 timestamp
-              example: '2025-12-28T10:00:00Z'
-              maxLength: 30
-            is_public:
-              type: boolean
-              description: Whether reputation is visible to others
-              example: true
-            evidence:
-              type: array
-              items:
-                type: object
-                properties:
-                  event_type:
-                    type: string
-                    enum:
-                    - trade_completed
-                    - combat_assist
-                    - guild_help
-                    - quest_shared
-                  points:
-                    type: integer
-                  timestamp:
-                    type: string
-                    format: date-time
-                    description: ISO 8601 timestamp
-                    example: '2025-12-28T10:00:00Z'
-                    maxLength: 30
-                  description:
-                    type: string
-                    maxLength: 200
-              description: Reputation evidence/events
-              maxItems: 50
-        description: 'BACKEND NOTE: Reputation system with evidence tracking and multiple
-          categories.'
+      - $ref: ../common/schemas/social-entities.yaml#/ReputationEntity
       - type: object
         properties:
           subject_profile:
-            allOf:
-            - allOf:
-              - $ref: '#/components/schemas/BaseEntity'
-              - type: object
-                properties:
-                  created_by:
-                    type: string
-                    format: uuid
-                    description: ID of user who created the entity
-                    example: 123e4567-e89b-12d3-a456-426614174001
-                    maxLength: 36
-                  updated_by:
-                    type: string
-                    format: uuid
-                    description: ID of user who last modified the entity
-                    example: 123e4567-e89b-12d3-a456-426614174002
-                    maxLength: 36
-              description: 'BACKEND NOTE: Extends BaseEntity with audit trail. Use
-                for admin-managed entities.'
-            - type: object
-              required:
-              - username
-              - display_name
-              properties:
-                username:
-                  type: string
-                  pattern: ^[a-zA-Z0-9_-]{3,30}$
-                  description: Unique username
-                  example: night_runner_2077
-                  maxLength: 30
-                display_name:
-                  type: string
-                  description: Display name shown to other players
-                  example: Night Runner
-                  maxLength: 50
-                email:
-                  type: string
-                  format: email
-                  description: Email address
-                  example: user@necpgame.com
-                  maxLength: 255
-                avatar_url:
-                  type: string
-                  format: uri
-                  description: Profile avatar image URL
-                  example: https://cdn.necpgame.com/avatars/night_runner.png
-                bio:
-                  type: string
-                  description: User biography/description
-                  example: Cyberpunk mercenary with a heart of gold
-                  maxLength: 500
-                country:
-                  type: string
-                  pattern: ^[A-Z]{2}$
-                  description: ISO 3166-1 alpha-2 country code
-                  example: US
-                timezone:
-                  type: string
-                  description: User timezone (IANA format)
-                  example: America/New_York
-                  maxLength: 50
-                preferred_language:
-                  type: string
-                  pattern: ^[a-z]{2}(-[A-Z]{2})?$
-                  description: Preferred language (ISO 639-1)
-                  example: en-US
-                is_online:
-                  type: boolean
-                  description: Current online status
-                  example: true
-                last_seen_at:
-                  type: string
-                  format: date-time
-                  description: ISO 8601 timestamp
-                  example: '2025-12-28T10:00:00Z'
-                  maxLength: 30
-                reputation_score:
-                  type: integer
-                  minimum: 0
-                  description: Community reputation score
-                  example: 1250
-            description: 'BACKEND NOTE: User profiles with social metadata.'
+            $ref: ../common/schemas/social-entities.yaml#/UserProfileEntity
           target_profile:
-            allOf:
-            - allOf:
-              - $ref: '#/components/schemas/BaseEntity'
-              - type: object
-                properties:
-                  created_by:
-                    type: string
-                    format: uuid
-                    description: ID of user who created the entity
-                    example: 123e4567-e89b-12d3-a456-426614174001
-                    maxLength: 36
-                  updated_by:
-                    type: string
-                    format: uuid
-                    description: ID of user who last modified the entity
-                    example: 123e4567-e89b-12d3-a456-426614174002
-                    maxLength: 36
-              description: 'BACKEND NOTE: Extends BaseEntity with audit trail. Use
-                for admin-managed entities.'
-            - type: object
-              required:
-              - username
-              - display_name
-              properties:
-                username:
-                  type: string
-                  pattern: ^[a-zA-Z0-9_-]{3,30}$
-                  description: Unique username
-                  example: night_runner_2077
-                  maxLength: 30
-                display_name:
-                  type: string
-                  description: Display name shown to other players
-                  example: Night Runner
-                  maxLength: 50
-                email:
-                  type: string
-                  format: email
-                  description: Email address
-                  example: user@necpgame.com
-                  maxLength: 255
-                avatar_url:
-                  type: string
-                  format: uri
-                  description: Profile avatar image URL
-                  example: https://cdn.necpgame.com/avatars/night_runner.png
-                bio:
-                  type: string
-                  description: User biography/description
-                  example: Cyberpunk mercenary with a heart of gold
-                  maxLength: 500
-                country:
-                  type: string
-                  pattern: ^[A-Z]{2}$
-                  description: ISO 3166-1 alpha-2 country code
-                  example: US
-                timezone:
-                  type: string
-                  description: User timezone (IANA format)
-                  example: America/New_York
-                  maxLength: 50
-                preferred_language:
-                  type: string
-                  pattern: ^[a-z]{2}(-[A-Z]{2})?$
-                  description: Preferred language (ISO 639-1)
-                  example: en-US
-                is_online:
-                  type: boolean
-                  description: Current online status
-                  example: true
-                last_seen_at:
-                  type: string
-                  format: date-time
-                  description: ISO 8601 timestamp
-                  example: '2025-12-28T10:00:00Z'
-                  maxLength: 30
-                reputation_score:
-                  type: integer
-                  minimum: 0
-                  description: Community reputation score
-                  example: 1250
-            description: 'BACKEND NOTE: User profiles with social metadata.'
+            $ref: ../common/schemas/social-entities.yaml#/UserProfileEntity
     RecordReputationEventRequest:
       required:
       - subject_id
@@ -3683,104 +323,60 @@ components:
       - category
       - points
       - description
-      $ref: null
+      properties:
+        subject_id:
+          $ref: ../common/schemas/common.yaml#/UUID
+          description: ID of the player whose reputation is being affected
+        target_id:
+          $ref: ../common/schemas/common.yaml#/UUID
+          description: ID of the target (player, faction, location) of the reputation
+            event
+        category:
+          type: string
+          enum:
+          - combat
+          - social
+          - trading
+          - leadership
+          - craftsmanship
+          - reliability
+          - generosity
+          - combat_skill
+          description: Category of reputation being affected
+        points:
+          type: integer
+          minimum: -1000
+          maximum: 1000
+          description: Points to add/subtract from reputation (positive = gain, negative
+            = loss)
+        description:
+          type: string
+          maxLength: 500
+          description: Description of the event that affected reputation
+        consequences:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReputationConsequence'
+          description: Dynamic consequences that should be triggered by this reputation
+            change
+        quest_triggers:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestTrigger'
+          description: Quest triggers that should be evaluated based on this reputation
+            change
     SocialNetworkResponse:
       type: object
       properties:
         user_id:
-          type: string
-          format: uuid
-          description: Universally Unique Identifier (UUID v4)
-          example: 123e4567-e89b-12d3-a456-426614174000
-          maxLength: 36
+          $ref: ../common/schemas/common.yaml#/UUID
         connections:
           type: array
           items:
             type: object
             properties:
               character:
-                allOf:
-                - allOf:
-                  - $ref: '#/components/schemas/BaseEntity'
-                  - type: object
-                    properties:
-                      created_by:
-                        type: string
-                        format: uuid
-                        description: ID of user who created the entity
-                        example: 123e4567-e89b-12d3-a456-426614174001
-                        maxLength: 36
-                      updated_by:
-                        type: string
-                        format: uuid
-                        description: ID of user who last modified the entity
-                        example: 123e4567-e89b-12d3-a456-426614174002
-                        maxLength: 36
-                  description: 'BACKEND NOTE: Extends BaseEntity with audit trail.
-                    Use for admin-managed entities.'
-                - type: object
-                  required:
-                  - username
-                  - display_name
-                  properties:
-                    username:
-                      type: string
-                      pattern: ^[a-zA-Z0-9_-]{3,30}$
-                      description: Unique username
-                      example: night_runner_2077
-                      maxLength: 30
-                    display_name:
-                      type: string
-                      description: Display name shown to other players
-                      example: Night Runner
-                      maxLength: 50
-                    email:
-                      type: string
-                      format: email
-                      description: Email address
-                      example: user@necpgame.com
-                      maxLength: 255
-                    avatar_url:
-                      type: string
-                      format: uri
-                      description: Profile avatar image URL
-                      example: https://cdn.necpgame.com/avatars/night_runner.png
-                    bio:
-                      type: string
-                      description: User biography/description
-                      example: Cyberpunk mercenary with a heart of gold
-                      maxLength: 500
-                    country:
-                      type: string
-                      pattern: ^[A-Z]{2}$
-                      description: ISO 3166-1 alpha-2 country code
-                      example: US
-                    timezone:
-                      type: string
-                      description: User timezone (IANA format)
-                      example: America/New_York
-                      maxLength: 50
-                    preferred_language:
-                      type: string
-                      pattern: ^[a-z]{2}(-[A-Z]{2})?$
-                      description: Preferred language (ISO 639-1)
-                      example: en-US
-                    is_online:
-                      type: boolean
-                      description: Current online status
-                      example: true
-                    last_seen_at:
-                      type: string
-                      format: date-time
-                      description: ISO 8601 timestamp
-                      example: '2025-12-28T10:00:00Z'
-                      maxLength: 30
-                    reputation_score:
-                      type: integer
-                      minimum: 0
-                      description: Community reputation score
-                      example: 1250
-                description: 'BACKEND NOTE: User profiles with social metadata.'
+                $ref: ../common/schemas/social-entities.yaml#/UserProfileEntity
               relationship:
                 $ref: '#/components/schemas/RelationshipResponse'
               connection_path:
@@ -3789,11 +385,7 @@ components:
                   type: object
                   properties:
                     character_id:
-                      type: string
-                      format: uuid
-                      description: Universally Unique Identifier (UUID v4)
-                      example: 123e4567-e89b-12d3-a456-426614174000
-                      maxLength: 36
+                      $ref: ../common/schemas/common.yaml#/UUID
                     relationship_type:
                       type: string
                     relationship_level:
@@ -3818,11 +410,7 @@ components:
       type: object
       properties:
         user_id:
-          type: string
-          format: uuid
-          description: Universally Unique Identifier (UUID v4)
-          example: 123e4567-e89b-12d3-a456-426614174000
-          maxLength: 36
+          $ref: ../common/schemas/common.yaml#/UUID
         influence_score:
           type: integer
           minimum: 0
@@ -3857,102 +445,7 @@ components:
     MentorshipResponse:
       type: object
       allOf:
-      - allOf:
-        - type: object
-          required:
-          - id
-          - created_at
-          - updated_at
-          properties:
-            id:
-              type: string
-              format: uuid
-              description: Unique identifier (UUID v4)
-              example: 123e4567-e89b-12d3-a456-426614174000
-              maxLength: 36
-            created_at:
-              type: string
-              format: date-time
-              description: Creation timestamp (ISO 8601)
-              example: '2025-12-28T10:00:00Z'
-              maxLength: 30
-            updated_at:
-              type: string
-              format: date-time
-              description: Last modification timestamp (ISO 8601)
-              example: '2025-12-28T10:30:00Z'
-              maxLength: 30
-          description: 'BACKEND NOTE: Base entity with ordered fields for struct alignment.
-            Memory savings: 30-50%. All domain entities should extend this.'
-        - type: object
-          required:
-          - character_id
-          - target_id
-          - type
-          - level
-          properties:
-            character_id:
-              type: string
-              format: uuid
-              description: Universally Unique Identifier (UUID v4)
-              example: 123e4567-e89b-12d3-a456-426614174000
-              maxLength: 36
-            target_id:
-              type: string
-              format: uuid
-              description: Universally Unique Identifier (UUID v4)
-              example: 123e4567-e89b-12d3-a456-426614174000
-              maxLength: 36
-            type:
-              type: string
-              enum:
-              - friendship
-              - romance
-              - rivalry
-              - mentorship
-              - business
-              - enmity
-              description: Relationship type
-              example: romance
-            level:
-              type: integer
-              minimum: -10
-              maximum: 10
-              description: Relationship intensity (-10 to +10)
-              example: 7
-            description:
-              type: string
-              description: Relationship description
-              example: Close romantic partner
-              maxLength: 200
-            established_at:
-              type: string
-              format: date-time
-              description: ISO 8601 timestamp
-              example: '2025-12-28T10:00:00Z'
-              maxLength: 30
-            last_interaction_at:
-              type: string
-              format: date-time
-              description: ISO 8601 timestamp
-              example: '2025-12-28T10:00:00Z'
-              maxLength: 30
-            interaction_count:
-              type: integer
-              minimum: 0
-              description: Number of interactions
-              example: 23
-            flags:
-              type: array
-              items:
-                type: string
-                enum:
-                - exclusive
-                - public
-                - secret
-                - temporary
-              description: Relationship flags
-        description: 'BACKEND NOTE: Character relationships with intensity tracking.'
+      - $ref: ../common/schemas/social-entities.yaml#/RelationshipEntity
       - type: object
         required:
         - mentor_id
@@ -3960,17 +453,9 @@ components:
         - contract_terms
         properties:
           mentor_id:
-            type: string
-            format: uuid
-            description: Universally Unique Identifier (UUID v4)
-            example: 123e4567-e89b-12d3-a456-426614174000
-            maxLength: 36
+            $ref: ../common/schemas/common.yaml#/UUID
           mentee_id:
-            type: string
-            format: uuid
-            description: Universally Unique Identifier (UUID v4)
-            example: 123e4567-e89b-12d3-a456-426614174000
-            maxLength: 36
+            $ref: ../common/schemas/common.yaml#/UUID
           contract_terms:
             type: object
             properties:
@@ -4124,23 +609,11 @@ components:
       type: object
       properties:
         progress_id:
-          type: string
-          format: uuid
-          description: Universally Unique Identifier (UUID v4)
-          example: 123e4567-e89b-12d3-a456-426614174000
-          maxLength: 36
+          $ref: ../common/schemas/common.yaml#/UUID
         mentorship_id:
-          type: string
-          format: uuid
-          description: Universally Unique Identifier (UUID v4)
-          example: 123e4567-e89b-12d3-a456-426614174000
-          maxLength: 36
+          $ref: ../common/schemas/common.yaml#/UUID
         recorded_at:
-          type: string
-          format: date-time
-          description: ISO 8601 timestamp
-          example: '2025-12-28T10:00:00Z'
-          maxLength: 30
+          $ref: ../common/schemas/common.yaml#/Timestamp
         progress_type:
           type: string
           enum:
@@ -4181,26 +654,14 @@ components:
             - public
             example: private
           anniversary:
-            type: string
-            format: date-time
-            description: ISO 8601 timestamp
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
+            $ref: ../common/schemas/common.yaml#/Timestamp
           engagement_details:
             type: object
             properties:
               ring_item_id:
-                type: string
-                format: uuid
-                description: Universally Unique Identifier (UUID v4)
-                example: 123e4567-e89b-12d3-a456-426614174000
-                maxLength: 36
+                $ref: ../common/schemas/common.yaml#/UUID
               proposal_date:
-                type: string
-                format: date-time
-                description: ISO 8601 timestamp
-                example: '2025-12-28T10:00:00Z'
-                maxLength: 30
+                $ref: ../common/schemas/common.yaml#/Timestamp
               proposal_message:
                 type: string
                 maxLength: 500
@@ -4238,11 +699,7 @@ components:
       type: object
       properties:
         proposal_id:
-          type: string
-          format: uuid
-          description: Universally Unique Identifier (UUID v4)
-          example: 123e4567-e89b-12d3-a456-426614174000
-          maxLength: 36
+          $ref: ../common/schemas/common.yaml#/UUID
         status:
           type: string
           enum:
@@ -4251,11 +708,7 @@ components:
           - declined
           example: pending
         expires_at:
-          type: string
-          format: date-time
-          description: ISO 8601 timestamp
-          example: '2025-12-28T10:00:00Z'
-          maxLength: 30
+          $ref: ../common/schemas/common.yaml#/Timestamp
         proposal_type:
           type: string
           enum:
@@ -4286,11 +739,7 @@ components:
             description: Number of active conflicts
             example: 2
           last_conflict_at:
-            type: string
-            format: date-time
-            description: ISO 8601 timestamp
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
+            $ref: ../common/schemas/common.yaml#/Timestamp
     DeclareRivalryRequest:
       type: object
       required:
@@ -4318,1029 +767,265 @@ components:
           type: boolean
           default: true
           description: Whether rivalry declaration is public
-    BaseEntity:
+    ReputationConsequence:
       type: object
       required:
-      - id
-      - created_at
-      - updated_at
+      - type
+      - target
       properties:
-        id:
-          type: string
-          format: uuid
-          description: Unique identifier (UUID v4)
-          example: 123e4567-e89b-12d3-a456-426614174000
-          maxLength: 36
-        created_at:
-          type: string
-          format: date-time
-          description: Creation timestamp (ISO 8601)
-          example: '2025-12-28T10:00:00Z'
-          maxLength: 30
-        updated_at:
-          type: string
-          format: date-time
-          description: Last modification timestamp (ISO 8601)
-          example: '2025-12-28T10:30:00Z'
-          maxLength: 30
-      description: 'BACKEND NOTE: Base entity with ordered fields for struct alignment.
-        Memory savings: 30-50%. All domain entities should extend this.'
-    AuditableEntity:
-      allOf:
-      - $ref: '#/components/schemas/BaseEntity'
-      - type: object
-        properties:
-          created_by:
-            type: string
-            format: uuid
-            description: ID of user who created the entity
-            example: 123e4567-e89b-12d3-a456-426614174001
-            maxLength: 36
-          updated_by:
-            type: string
-            format: uuid
-            description: ID of user who last modified the entity
-            example: 123e4567-e89b-12d3-a456-426614174002
-            maxLength: 36
-      description: 'BACKEND NOTE: Extends BaseEntity with audit trail. Use for admin-managed
-        entities.'
-    VersionedEntity:
-      allOf:
-      - $ref: '#/components/schemas/BaseEntity'
-      - type: object
-        required:
-        - version
-        properties:
-          version:
-            type: integer
-            minimum: 1
-            description: Optimistic locking version
-            example: 1
-      description: 'BACKEND NOTE: Extends BaseEntity with version control. Use for
-        concurrent-safe updates.'
-    SoftDeletableEntity:
-      allOf:
-      - $ref: '#/components/schemas/BaseEntity'
-      - type: object
-        properties:
-          deleted_at:
-            type: string
-            format: date-time
-            nullable: true
-            description: Soft deletion timestamp (null if not deleted)
-            example: null
-            maxLength: 30
-      description: 'BACKEND NOTE: Extends BaseEntity with soft delete capability.
-        Use for recoverable deletions.'
-    UpdateRequest:
-      type: object
-      required:
-      - id
-      description: Base schema for update operations with optimistic locking support.
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        version:
-          type: integer
-          minimum: 1
-          description: Current entity version for optimistic locking
-        metadata:
-          type: object
-          properties:
-            updated_by:
-              $ref: '#/components/schemas/UUID'
-            reason:
-              type: string
-              maxLength: 200
-              description: Update reason for audit trail
-    HealthResponse:
-      type: object
-      required:
-      - status
-      - timestamp
-      properties:
-        status:
+        type:
           type: string
           enum:
-          - healthy
-          - degraded
-          - unhealthy
-          example: healthy
-          maxLength: 255
-        domain:
+          - social_penalty
+          - economic_penalty
+          - quest_penalty
+          - faction_penalty
+          - access_restriction
+          - relationship_damage
+          description: Type of consequence triggered by reputation change
+        target:
           type: string
-          example: service-name
-          maxLength: 255
-        timestamp:
+          enum:
+          - player
+          - faction
+          - location
+          - global
+          description: Scope of the consequence
+        severity:
           type: string
-          format: date-time
-          example: '2025-12-28T10:00:00Z'
-          maxLength: 255
-        version:
-          type: string
-          example: 1.0.0
-          maxLength: 50
-        uptime_seconds:
+          enum:
+          - minor
+          - moderate
+          - major
+          - critical
+          default: moderate
+          description: Severity level of the consequence
+        duration_hours:
           type: integer
-          example: 3600
-          minimum: 0
-        active_connections:
-          type: integer
-          example: 1500
-          minimum: 0
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%.'
-    Error:
-      type: object
-      required:
-      - code
-      - message
-      properties:
-        code:
-          type: integer
-          example: 500
-          format: int32
-          minimum: 100
-          maximum: 599
-        message:
+          minimum: 1
+          maximum: 8760
+          description: How long the consequence lasts (in hours)
+        description:
           type: string
-          example: Internal server error
-          maxLength: 1000
-        details:
+          maxLength: 200
+          description: Human-readable description of the consequence
+        parameters:
           type: object
-          description: Additional error details
-      description: Standard error response format
-    PaginationParams:
+          description: Additional parameters specific to the consequence type
+          properties:
+            penalty_multiplier:
+              type: number
+              minimum: 0.1
+              maximum: 5.0
+              description: Multiplier for penalties
+            affected_entities:
+              type: array
+              items:
+                type: string
+                format: uuid
+              description: IDs of entities affected by this consequence
+    QuestTrigger:
       type: object
+      required:
+      - quest_id
+      - trigger_type
       properties:
-        limit:
+        quest_id:
+          type: string
+          description: ID of the quest that may be triggered
+        trigger_type:
+          type: string
+          enum:
+          - unlock
+          - block
+          - modify_requirements
+          - change_rewards
+          description: Type of trigger action
+        condition:
+          $ref: '#/components/schemas/ReputationCondition'
+          description: Reputation condition that must be met for trigger
+        priority:
           type: integer
           minimum: 1
           maximum: 100
-          default: 20
-          example: 20
-        offset:
-          type: integer
-          minimum: 0
-          default: 0
-          example: 0
-    PaginatedResponse:
+          default: 50
+          description: Priority of this trigger (higher = more important)
+    ReputationCondition:
       type: object
       required:
-      - items
-      - total
-      - limit
-      - offset
+      - category
+      - operator
+      - threshold
       properties:
-        items:
-          type: array
-          description: Array of items
-        total:
+        category:
+          type: string
+          enum:
+          - combat
+          - social
+          - trading
+          - leadership
+          - craftsmanship
+          - reliability
+          - generosity
+          - combat_skill
+          - overall
+          description: Reputation category to check
+        operator:
+          type: string
+          enum:
+          - greater_than
+          - less_than
+          - equal
+          - greater_equal
+          - less_equal
+          - between
+          description: Comparison operator
+        threshold:
           type: integer
-          minimum: 0
-          example: 100
-          description: Total number of items
-        limit:
+          minimum: -1000
+          maximum: 1000
+          description: Reputation threshold value
+        threshold_max:
           type: integer
-          minimum: 1
-          maximum: 100
-          example: 20
-          description: Items per page
-        offset:
-          type: integer
-          minimum: 0
-          example: 0
-          description: Number of items to skip
-    UUID:
-      type: string
-      format: uuid
-      description: Universally Unique Identifier (UUID v4)
-      example: 123e4567-e89b-12d3-a456-426614174000
-      maxLength: 36
-    Email:
-      type: string
-      format: email
-      description: Email address
-      example: user@necpgame.com
-      maxLength: 255
-    Timestamp:
-      type: string
-      format: date-time
-      description: ISO 8601 timestamp
-      example: '2025-12-28T10:00:00Z'
-      maxLength: 30
-    Version:
-      type: string
-      pattern: ^\d+\.\d+\.\d+$
-      description: Semantic version (MAJOR.MINOR.PATCH)
-      example: 1.0.0
-      maxLength: 20
-    ValidationResult:
+          minimum: -1000
+          maximum: 1000
+          description: Upper threshold for 'between' operator
+        target:
+          type: string
+          enum:
+          - player
+          - faction
+          - location
+          default: player
+          description: Target of reputation check
+    EvaluateQuestTriggersRequest:
       type: object
       required:
-      - valid
+      - player_id
+      - reputation_changes
       properties:
-        valid:
-          type: boolean
-          description: Whether validation passed
-          example: true
-        errors:
+        player_id:
+          $ref: ../common/schemas/common.yaml#/UUID
+          description: ID of the player whose quest triggers are being evaluated
+        reputation_changes:
           type: array
           items:
-            type: string
-          description: Validation error messages
-          example:
-          - Field is required
-          - Invalid format
-        warnings:
-          type: array
-          items:
-            type: string
-          description: Validation warnings
-          example:
-          - Deprecated field usage
-    UserProfileEntity:
-      allOf:
-      - allOf:
-        - $ref: '#/components/schemas/BaseEntity'
-        - type: object
-          properties:
-            created_by:
-              type: string
-              format: uuid
-              description: ID of user who created the entity
-              example: 123e4567-e89b-12d3-a456-426614174001
-              maxLength: 36
-            updated_by:
-              type: string
-              format: uuid
-              description: ID of user who last modified the entity
-              example: 123e4567-e89b-12d3-a456-426614174002
-              maxLength: 36
-        description: 'BACKEND NOTE: Extends BaseEntity with audit trail. Use for admin-managed
-          entities.'
-      - type: object
-        required:
-        - username
-        - display_name
-        properties:
-          username:
-            type: string
-            pattern: ^[a-zA-Z0-9_-]{3,30}$
-            description: Unique username
-            example: night_runner_2077
-            maxLength: 30
-          display_name:
-            type: string
-            description: Display name shown to other players
-            example: Night Runner
-            maxLength: 50
-          email:
-            type: string
-            format: email
-            description: Email address
-            example: user@necpgame.com
-            maxLength: 255
-          avatar_url:
-            type: string
-            format: uri
-            description: Profile avatar image URL
-            example: https://cdn.necpgame.com/avatars/night_runner.png
-          bio:
-            type: string
-            description: User biography/description
-            example: Cyberpunk mercenary with a heart of gold
-            maxLength: 500
-          country:
-            type: string
-            pattern: ^[A-Z]{2}$
-            description: ISO 3166-1 alpha-2 country code
-            example: US
-          timezone:
-            type: string
-            description: User timezone (IANA format)
-            example: America/New_York
-            maxLength: 50
-          preferred_language:
-            type: string
-            pattern: ^[a-z]{2}(-[A-Z]{2})?$
-            description: Preferred language (ISO 639-1)
-            example: en-US
-          is_online:
-            type: boolean
-            description: Current online status
-            example: true
-          last_seen_at:
-            type: string
-            format: date-time
-            description: ISO 8601 timestamp
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
-          reputation_score:
-            type: integer
-            minimum: 0
-            description: Community reputation score
-            example: 1250
-      description: 'BACKEND NOTE: User profiles with social metadata.'
-    FriendshipEntity:
-      allOf:
-      - type: object
-        required:
-        - id
-        - created_at
-        - updated_at
-        properties:
-          id:
-            type: string
-            format: uuid
-            description: Unique identifier (UUID v4)
-            example: 123e4567-e89b-12d3-a456-426614174000
-            maxLength: 36
-          created_at:
-            type: string
-            format: date-time
-            description: Creation timestamp (ISO 8601)
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
-          updated_at:
-            type: string
-            format: date-time
-            description: Last modification timestamp (ISO 8601)
-            example: '2025-12-28T10:30:00Z'
-            maxLength: 30
-        description: 'BACKEND NOTE: Base entity with ordered fields for struct alignment.
-          Memory savings: 30-50%. All domain entities should extend this.'
-      - type: object
-        required:
-        - user_id
-        - friend_id
-        - status
-        properties:
-          user_id:
-            type: string
-            format: uuid
-            description: Universally Unique Identifier (UUID v4)
-            example: 123e4567-e89b-12d3-a456-426614174000
-            maxLength: 36
-          friend_id:
-            type: string
-            format: uuid
-            description: Universally Unique Identifier (UUID v4)
-            example: 123e4567-e89b-12d3-a456-426614174000
-            maxLength: 36
-          status:
-            type: string
-            enum:
-            - pending
-            - accepted
-            - blocked
-            description: Friendship status
-            example: accepted
-          requested_at:
-            type: string
-            format: date-time
-            description: ISO 8601 timestamp
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
-          accepted_at:
-            type: string
-            format: date-time
-            description: ISO 8601 timestamp
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
-          blocked_at:
-            type: string
-            format: date-time
-            description: ISO 8601 timestamp
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
-          friendship_level:
-            type: integer
-            minimum: 1
-            maximum: 10
-            description: Friendship intimacy level
-            example: 5
-          shared_experiences:
-            type: integer
-            minimum: 0
-            description: Number of shared gaming sessions
-            example: 47
-      description: 'BACKEND NOTE: Friendship relationships with status tracking.'
-    GuildEntity:
-      allOf:
-      - allOf:
-        - $ref: '#/components/schemas/BaseEntity'
-        - type: object
-          properties:
-            created_by:
-              type: string
-              format: uuid
-              description: ID of user who created the entity
-              example: 123e4567-e89b-12d3-a456-426614174001
-              maxLength: 36
-            updated_by:
-              type: string
-              format: uuid
-              description: ID of user who last modified the entity
-              example: 123e4567-e89b-12d3-a456-426614174002
-              maxLength: 36
-        description: 'BACKEND NOTE: Extends BaseEntity with audit trail. Use for admin-managed
-          entities.'
-      - type: object
-        required:
-        - name
-        - leader_id
-        - member_count
-        properties:
-          name:
-            type: string
-            description: Guild display name
-            example: Cyberpunk Legends
-            maxLength: 50
-          description:
-            type: string
-            description: Guild description
-            example: Elite cyberpunk mercenaries
-            maxLength: 500
-          leader_id:
-            type: string
-            format: uuid
-            description: Universally Unique Identifier (UUID v4)
-            example: 123e4567-e89b-12d3-a456-426614174000
-            maxLength: 36
-          tag:
-            type: string
-            pattern: ^[A-Z0-9]{2,5}$
-            description: Guild tag/acronym
-            example: CPL
-            maxLength: 5
-          member_count:
-            type: integer
-            minimum: 1
-            maximum: 1000
-            description: Current member count
-            example: 156
-          max_members:
-            type: integer
-            minimum: 1
-            maximum: 1000
-            description: Maximum allowed members
-            example: 200
-          level:
-            type: integer
-            minimum: 1
-            description: Guild level
-            example: 25
-          experience:
-            type: integer
-            minimum: 0
-            description: Guild experience points
-            example: 50000
-          reputation:
-            type: integer
-            description: Guild reputation score
-            example: 8750
-          is_recruiting:
-            type: boolean
-            description: Whether guild is accepting new members
-            example: true
-          requirements:
             type: object
+            required:
+            - category
+            - old_value
+            - new_value
             properties:
-              min_level:
+              category:
+                type: string
+                enum:
+                - combat
+                - social
+                - trading
+                - leadership
+                - craftsmanship
+                - reliability
+                - generosity
+                - combat_skill
+                description: Reputation category that changed
+              old_value:
                 type: integer
-                minimum: 1
-              min_reputation:
+                minimum: -1000
+                maximum: 1000
+                description: Previous reputation value
+              new_value:
                 type: integer
-                minimum: 0
-            description: Membership requirements
-          emblem_url:
-            type: string
-            format: uri
-            description: Guild emblem/logo URL
-          founded_at:
-            type: string
-            format: date-time
-            description: ISO 8601 timestamp
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
-      description: 'BACKEND NOTE: Guild/clan organizations with membership management.'
-    GuildMemberEntity:
-      allOf:
-      - type: object
-        required:
-        - id
-        - created_at
-        - updated_at
-        properties:
-          id:
-            type: string
-            format: uuid
-            description: Unique identifier (UUID v4)
-            example: 123e4567-e89b-12d3-a456-426614174000
-            maxLength: 36
-          created_at:
-            type: string
-            format: date-time
-            description: Creation timestamp (ISO 8601)
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
-          updated_at:
-            type: string
-            format: date-time
-            description: Last modification timestamp (ISO 8601)
-            example: '2025-12-28T10:30:00Z'
-            maxLength: 30
-        description: 'BACKEND NOTE: Base entity with ordered fields for struct alignment.
-          Memory savings: 30-50%. All domain entities should extend this.'
-      - type: object
-        required:
-        - guild_id
-        - user_id
-        - role
-        - joined_at
-        properties:
-          guild_id:
-            type: string
-            format: uuid
-            description: Universally Unique Identifier (UUID v4)
-            example: 123e4567-e89b-12d3-a456-426614174000
-            maxLength: 36
-          user_id:
-            type: string
-            format: uuid
-            description: Universally Unique Identifier (UUID v4)
-            example: 123e4567-e89b-12d3-a456-426614174000
-            maxLength: 36
-          role:
-            type: string
-            enum:
-            - leader
-            - officer
-            - veteran
-            - member
-            - recruit
-            description: Member role in guild
-            example: officer
-          joined_at:
-            type: string
-            format: date-time
-            description: ISO 8601 timestamp
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
-          rank:
-            type: integer
-            minimum: 1
-            description: Member rank/position
-            example: 3
-          contribution_points:
-            type: integer
-            minimum: 0
-            description: Points contributed to guild
-            example: 1250
-          permissions:
-            type: array
-            items:
-              type: string
-              enum:
-              - invite_members
-              - kick_members
-              - manage_roles
-              - manage_bank
-              - declare_war
-            description: Granted permissions
-          is_active:
-            type: boolean
-            description: Whether member is active
-            example: true
-          last_active_at:
-            type: string
-            format: date-time
-            description: ISO 8601 timestamp
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
-      description: 'BACKEND NOTE: Guild membership with roles and permissions.'
-    ChatChannelEntity:
-      allOf:
-      - allOf:
-        - $ref: '#/components/schemas/BaseEntity'
-        - type: object
-          properties:
-            created_by:
-              type: string
-              format: uuid
-              description: ID of user who created the entity
-              example: 123e4567-e89b-12d3-a456-426614174001
-              maxLength: 36
-            updated_by:
-              type: string
-              format: uuid
-              description: ID of user who last modified the entity
-              example: 123e4567-e89b-12d3-a456-426614174002
-              maxLength: 36
-        description: 'BACKEND NOTE: Extends BaseEntity with audit trail. Use for admin-managed
-          entities.'
-      - type: object
-        required:
-        - name
-        - type
-        - is_private
-        properties:
-          name:
-            type: string
-            description: Channel display name
-            example: General Chat
-            maxLength: 50
-          type:
-            type: string
-            enum:
-            - global
-            - guild
-            - party
-            - private
-            - trade
-            - help
-            description: Channel type
-            example: guild
-          is_private:
-            type: boolean
-            description: Whether channel is private
-            example: false
-          owner_id:
-            type: string
-            format: uuid
-            description: Universally Unique Identifier (UUID v4)
-            example: 123e4567-e89b-12d3-a456-426614174000
-            maxLength: 36
-          guild_id:
-            type: string
-            format: uuid
-            description: Universally Unique Identifier (UUID v4)
-            example: 123e4567-e89b-12d3-a456-426614174000
-            maxLength: 36
-          member_count:
-            type: integer
-            minimum: 0
-            description: Current member count
-            example: 42
-          max_members:
-            type: integer
-            minimum: 1
-            description: Maximum allowed members
-            example: 100
-          last_message_at:
-            type: string
-            format: date-time
-            description: ISO 8601 timestamp
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
-          is_moderated:
-            type: boolean
-            description: Whether channel has moderation
-            example: true
-          allowed_roles:
-            type: array
-            items:
-              type: string
-            description: Roles allowed to join
-      description: 'BACKEND NOTE: Chat channels with access control.'
-    ChatMessageEntity:
-      allOf:
-      - type: object
-        required:
-        - id
-        - created_at
-        - updated_at
-        properties:
-          id:
-            type: string
-            format: uuid
-            description: Unique identifier (UUID v4)
-            example: 123e4567-e89b-12d3-a456-426614174000
-            maxLength: 36
-          created_at:
-            type: string
-            format: date-time
-            description: Creation timestamp (ISO 8601)
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
-          updated_at:
-            type: string
-            format: date-time
-            description: Last modification timestamp (ISO 8601)
-            example: '2025-12-28T10:30:00Z'
-            maxLength: 30
-        description: 'BACKEND NOTE: Base entity with ordered fields for struct alignment.
-          Memory savings: 30-50%. All domain entities should extend this.'
-      - type: object
-        required:
-        - channel_id
-        - sender_id
-        - content
-        - sent_at
-        properties:
-          channel_id:
-            type: string
-            format: uuid
-            description: Universally Unique Identifier (UUID v4)
-            example: 123e4567-e89b-12d3-a456-426614174000
-            maxLength: 36
-          sender_id:
-            type: string
-            format: uuid
-            description: Universally Unique Identifier (UUID v4)
-            example: 123e4567-e89b-12d3-a456-426614174000
-            maxLength: 36
-          content:
-            type: string
-            description: Message content
-            example: Anyone up for a gig tonight?
-            maxLength: 2000
-          sent_at:
-            type: string
-            format: date-time
-            description: ISO 8601 timestamp
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
-          edited_at:
-            type: string
-            format: date-time
-            description: ISO 8601 timestamp
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
-          is_deleted:
-            type: boolean
-            description: Whether message was deleted
-            example: false
-          attachments:
-            type: array
-            items:
-              type: object
-              properties:
-                type:
-                  type: string
-                  enum:
-                  - image
-                  - link
-                  - item
-                  - location
-                url:
-                  type: string
-                  format: uri
-                metadata:
-                  type: object
-            description: Message attachments
-          mentions:
-            type: array
-            items:
-              type: string
-              format: uuid
-              description: Universally Unique Identifier (UUID v4)
-              example: 123e4567-e89b-12d3-a456-426614174000
-              maxLength: 36
-            description: Mentioned user IDs
-          reactions:
-            type: array
-            items:
-              type: object
-              required:
-              - emoji
-              - user_id
-              properties:
-                emoji:
-                  type: string
-                  maxLength: 10
-                user_id:
-                  type: string
-                  format: uuid
-                  description: Universally Unique Identifier (UUID v4)
-                  example: 123e4567-e89b-12d3-a456-426614174000
-                  maxLength: 36
-                reacted_at:
-                  type: string
-                  format: date-time
-                  description: ISO 8601 timestamp
-                  example: '2025-12-28T10:00:00Z'
-                  maxLength: 30
-            description: Message reactions
-      description: 'BACKEND NOTE: Chat messages with rich content and reactions.'
-    RelationshipEntity:
-      allOf:
-      - type: object
-        required:
-        - id
-        - created_at
-        - updated_at
-        properties:
-          id:
-            type: string
-            format: uuid
-            description: Unique identifier (UUID v4)
-            example: 123e4567-e89b-12d3-a456-426614174000
-            maxLength: 36
-          created_at:
-            type: string
-            format: date-time
-            description: Creation timestamp (ISO 8601)
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
-          updated_at:
-            type: string
-            format: date-time
-            description: Last modification timestamp (ISO 8601)
-            example: '2025-12-28T10:30:00Z'
-            maxLength: 30
-        description: 'BACKEND NOTE: Base entity with ordered fields for struct alignment.
-          Memory savings: 30-50%. All domain entities should extend this.'
-      - type: object
-        required:
-        - character_id
-        - target_id
-        - type
-        - level
-        properties:
-          character_id:
-            type: string
-            format: uuid
-            description: Universally Unique Identifier (UUID v4)
-            example: 123e4567-e89b-12d3-a456-426614174000
-            maxLength: 36
-          target_id:
-            type: string
-            format: uuid
-            description: Universally Unique Identifier (UUID v4)
-            example: 123e4567-e89b-12d3-a456-426614174000
-            maxLength: 36
-          type:
-            type: string
-            enum:
-            - friendship
-            - romance
-            - rivalry
-            - mentorship
-            - business
-            - enmity
-            description: Relationship type
-            example: romance
-          level:
-            type: integer
-            minimum: -10
-            maximum: 10
-            description: Relationship intensity (-10 to +10)
-            example: 7
-          description:
-            type: string
-            description: Relationship description
-            example: Close romantic partner
-            maxLength: 200
-          established_at:
-            type: string
-            format: date-time
-            description: ISO 8601 timestamp
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
-          last_interaction_at:
-            type: string
-            format: date-time
-            description: ISO 8601 timestamp
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
-          interaction_count:
-            type: integer
-            minimum: 0
-            description: Number of interactions
-            example: 23
-          flags:
-            type: array
-            items:
-              type: string
-              enum:
-              - exclusive
-              - public
-              - secret
-              - temporary
-            description: Relationship flags
-      description: 'BACKEND NOTE: Character relationships with intensity tracking.'
-    ReputationEntity:
-      allOf:
-      - type: object
-        required:
-        - id
-        - created_at
-        - updated_at
-        properties:
-          id:
-            type: string
-            format: uuid
-            description: Unique identifier (UUID v4)
-            example: 123e4567-e89b-12d3-a456-426614174000
-            maxLength: 36
-          created_at:
-            type: string
-            format: date-time
-            description: Creation timestamp (ISO 8601)
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
-          updated_at:
-            type: string
-            format: date-time
-            description: Last modification timestamp (ISO 8601)
-            example: '2025-12-28T10:30:00Z'
-            maxLength: 30
-        description: 'BACKEND NOTE: Base entity with ordered fields for struct alignment.
-          Memory savings: 30-50%. All domain entities should extend this.'
-      - type: object
-        required:
-        - subject_id
-        - target_id
-        - score
-        properties:
-          subject_id:
-            type: string
-            format: uuid
-            description: Universally Unique Identifier (UUID v4)
-            example: 123e4567-e89b-12d3-a456-426614174000
-            maxLength: 36
-          target_id:
-            type: string
-            format: uuid
-            description: Universally Unique Identifier (UUID v4)
-            example: 123e4567-e89b-12d3-a456-426614174000
-            maxLength: 36
-          score:
-            type: integer
-            minimum: -100
-            maximum: 100
-            description: Reputation score (-100 to +100)
-            example: 45
-          category:
-            type: string
-            enum:
-            - trading
-            - combat
-            - social
-            - leadership
-            - craftsmanship
-            - reliability
-            - generosity
-            - combat_skill
-            description: Reputation category
-            example: trading
-          evidence_count:
-            type: integer
-            minimum: 0
-            description: Number of reputation events
-            example: 12
-          last_updated_at:
-            type: string
-            format: date-time
-            description: ISO 8601 timestamp
-            example: '2025-12-28T10:00:00Z'
-            maxLength: 30
-          is_public:
-            type: boolean
-            description: Whether reputation is visible to others
-            example: true
-          evidence:
-            type: array
-            items:
-              type: object
-              properties:
-                event_type:
-                  type: string
-                  enum:
-                  - trade_completed
-                  - combat_assist
-                  - guild_help
-                  - quest_shared
-                points:
-                  type: integer
-                timestamp:
-                  type: string
-                  format: date-time
-                  description: ISO 8601 timestamp
-                  example: '2025-12-28T10:00:00Z'
-                  maxLength: 30
-                description:
-                  type: string
-                  maxLength: 200
-            description: Reputation evidence/events
-            maxItems: 50
-      description: 'BACKEND NOTE: Reputation system with evidence tracking and multiple
-        categories.'
+                minimum: -1000
+                maximum: 1000
+                description: New reputation value
+              target_id:
+                $ref: ../common/schemas/common.yaml#/UUID
+                description: ID of the target (faction/location) if applicable
+        evaluate_all_active:
+          type: boolean
+          default: false
+          description: Whether to evaluate all active quest triggers, not just those
+            affected by recent changes
+    QuestTriggersResponse:
+      type: object
+      required:
+      - player_id
+      - triggered_quests
+      properties:
+        player_id:
+          $ref: ../common/schemas/common.yaml#/UUID
+          description: ID of the player
+        triggered_quests:
+          type: array
+          items:
+            type: object
+            required:
+            - quest_id
+            - trigger_type
+            - reason
+            properties:
+              quest_id:
+                type: string
+                description: ID of the triggered quest
+              trigger_type:
+                type: string
+                enum:
+                - unlocked
+                - blocked
+                - requirements_modified
+                - rewards_modified
+                description: Type of trigger that occurred
+              reason:
+                type: string
+                maxLength: 200
+                description: Explanation of why this quest was triggered
+              quest_details:
+                type: object
+                description: Additional quest information
+                properties:
+                  title:
+                    type: string
+                    description: Quest title
+                  category:
+                    type: string
+                    description: Quest category
+                  level_requirement:
+                    type: integer
+                    description: Required player level
+              metadata:
+                type: object
+                description: Additional metadata about the trigger
+        evaluated_triggers:
+          type: integer
+          description: Total number of triggers evaluated
+        execution_time_ms:
+          type: number
+          description: Time taken to evaluate triggers (in milliseconds)
+  responses:
+    OK:
+      $ref: ../common/responses/success.yaml#/OK
+    Created:
+      $ref: ../common/responses/success.yaml#/Created
+    Updated:
+      $ref: ../common/responses/success.yaml#/Updated
+    Deleted:
+      $ref: ../common/responses/success.yaml#/Deleted
+    BadRequest:
+      $ref: ../common/responses/error.yaml#/BadRequest
+    Unauthorized:
+      $ref: ../common/responses/error.yaml#/Unauthorized
+    Forbidden:
+      $ref: ../common/responses/error.yaml#/Forbidden
+    NotFound:
+      $ref: ../common/responses/error.yaml#/NotFound
+    Conflict:
+      $ref: ../common/responses/error.yaml#/Conflict
+    TooManyRequests:
+      $ref: ../common/responses/error.yaml#/TooManyRequests
   securitySchemes:
     BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: JWT Bearer token authentication
+      $ref: ../common/security/security.yaml#/BearerAuth
     ApiKeyAuth:
-      type: apiKey
-      in: header
-      name: X-API-Key
-      description: API Key authentication
+      $ref: ../common/security/security.yaml#/ApiKeyAuth
     ServiceAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: Service-to-service authentication token
+      $ref: ../common/security/security.yaml#/ServiceAuth
