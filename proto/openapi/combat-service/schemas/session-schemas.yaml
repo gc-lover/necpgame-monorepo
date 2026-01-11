@@ -56,3 +56,234 @@ components:
           minimum: 0
           example: 12
           description: Current number of spectators
+
+    # Tournament Combat Session Schema
+    TournamentSession:
+      type: object
+      required:
+        - tournament_id
+        - session_id
+        - bracket_position
+        - participants
+      properties:
+        tournament_id:
+          type: string
+          format: uuid
+          description: Parent tournament identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        session_id:
+          type: string
+          format: uuid
+          description: Combat session identifier
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        bracket_position:
+          type: string
+          description: Position in tournament bracket (e.g., "round_1_match_3")
+          example: "quarterfinal_2"
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/TournamentParticipant'
+          minItems: 2
+          maxItems: 16
+          description: Tournament participants in this match
+        tournament_rules:
+          $ref: '#/components/schemas/TournamentRules'
+          description: Tournament-specific rules
+        spectators_allowed:
+          type: boolean
+          default: true
+          description: Whether spectators are allowed
+        recording_enabled:
+          type: boolean
+          default: true
+          description: Whether match is being recorded for replay
+
+    # Tournament Participant Schema
+    TournamentParticipant:
+      type: object
+      required:
+        - player_id
+        - team_name
+        - seed_rank
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player unique identifier
+        team_name:
+          type: string
+          maxLength: 50
+          description: Team or player name
+          example: "CyberNinjas"
+        seed_rank:
+          type: integer
+          minimum: 1
+          description: Tournament seeding rank
+          example: 8
+        statistics:
+          type: object
+          properties:
+            wins:
+              type: integer
+              minimum: 0
+              description: Tournament wins
+            losses:
+              type: integer
+              minimum: 0
+              description: Tournament losses
+            elo_rating:
+              type: integer
+              minimum: 0
+              description: Current ELO rating
+          description: Tournament statistics
+
+    # Tournament Rules Schema
+    TournamentRules:
+      type: object
+      required:
+        - game_mode
+        - max_duration_minutes
+        - victory_condition
+      properties:
+        game_mode:
+          type: string
+          enum: [team_deathmatch, capture_the_flag, domination, elimination]
+          description: Tournament game mode
+          example: "team_deathmatch"
+        max_duration_minutes:
+          type: integer
+          minimum: 5
+          maximum: 60
+          description: Maximum match duration in minutes
+          example: 15
+        victory_condition:
+          type: string
+          enum: [first_to_score, time_limit, elimination]
+          description: How victory is determined
+          example: "first_to_score"
+        target_score:
+          type: integer
+          minimum: 1
+          description: Target score for victory (if applicable)
+          example: 50
+        respawn_enabled:
+          type: boolean
+          default: true
+          description: Whether respawning is enabled
+        custom_rules:
+          type: object
+          additionalProperties: true
+          description: Tournament-specific custom rules
+
+    # Real-time Leaderboard Entry Schema
+    LeaderboardEntry:
+      type: object
+      required:
+        - player_id
+        - score
+        - rank
+        - session_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player unique identifier
+        player_name:
+          type: string
+          maxLength: 50
+          description: Display name
+          example: "CyberNinja_X"
+        team_name:
+          type: string
+          maxLength: 50
+          description: Team name (if applicable)
+        score:
+          type: integer
+          minimum: 0
+          description: Current score
+          example: 2450
+        rank:
+          type: integer
+          minimum: 1
+          description: Current rank (1-based)
+          example: 3
+        previous_rank:
+          type: integer
+          minimum: 1
+          description: Rank in previous update
+        session_id:
+          type: string
+          format: uuid
+          description: Combat session identifier
+        statistics:
+          type: object
+          properties:
+            kills:
+              type: integer
+              minimum: 0
+              description: Total kills
+            deaths:
+              type: integer
+              minimum: 0
+              description: Total deaths
+            assists:
+              type: integer
+              minimum: 0
+              description: Total assists
+            accuracy:
+              type: number
+              format: float
+              minimum: 0.0
+              maximum: 1.0
+              description: Shooting accuracy (0.0-1.0)
+            headshots:
+              type: integer
+              minimum: 0
+              description: Headshot kills
+          description: Detailed combat statistics
+        last_updated:
+          type: string
+          format: date-time
+          description: When this entry was last updated
+        rank_change:
+          type: integer
+          description: Rank change since last update (+ for improvement, - for decline)
+
+    # Leaderboard Update Event Schema
+    LeaderboardUpdateEvent:
+      type: object
+      required:
+        - event_type
+        - session_id
+        - timestamp
+        - entries
+      properties:
+        event_type:
+          type: string
+          enum: [full_update, rank_change, score_update, new_entry, player_left]
+          description: Type of leaderboard update
+          example: "rank_change"
+        session_id:
+          type: string
+          format: uuid
+          description: Combat session identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaderboardEntry'
+          description: Updated leaderboard entries
+        affected_players:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Players affected by this update
+        leaderboard_size:
+          type: integer
+          minimum: 0
+          description: Total number of entries in leaderboard

@@ -49,6 +49,16 @@ security:
 tags:
   - name: Combat Sessions
     description: Combat session management and lifecycle
+  - name: Tournament
+    description: Tournament match management and brackets
+  - name: Leaderboard
+    description: Real-time leaderboard and ranking systems
+  - name: Spectator
+    description: Spectator mode and viewing capabilities
+  - name: Analytics
+    description: Combat analytics and performance metrics
+  - name: WebSocket
+    description: Real-time WebSocket communication endpoints
   - name: Real-time Updates
     description: WebSocket-based real-time combat updates
   - name: Position Sync
@@ -829,6 +839,433 @@ paths:
                 $ref: '../common/responses/error.yaml#/components/schemas/Error'
         '404':
           description: Combat session or replay data not found
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/components/schemas/Error'
+
+  # Tournament Management
+  /tournaments/{tournament_id}/sessions:
+    get:
+      summary: Get tournament combat sessions
+      description: |
+        Retrieves all combat sessions for a specific tournament.
+
+        **BACKEND NOTE:** Used for tournament brackets, scheduling, and spectator navigation.
+      operationId: getTournamentSessions
+      tags:
+        - Tournament
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tournament_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Tournament identifier
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [scheduled, in_progress, completed, cancelled]
+          description: Filter by session status
+        - name: bracket_round
+          in: query
+          schema:
+            type: string
+          description: Filter by bracket round (e.g., "quarterfinal", "semifinal")
+      responses:
+        '200':
+          description: Tournament sessions retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tournament_id:
+                    type: string
+                    format: uuid
+                  sessions:
+                    type: array
+                    items:
+                      $ref: './schemas/session-schemas.yaml#/components/schemas/TournamentSession'
+                  total_sessions:
+                    type: integer
+                    minimum: 0
+        '404':
+          description: Tournament not found
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/components/schemas/Error'
+
+  /tournaments/{tournament_id}/leaderboard:
+    get:
+      summary: Get tournament leaderboard
+      description: |
+        Retrieves current tournament leaderboard with real-time updates.
+
+        **BACKEND NOTE:** Aggregates scores across all tournament matches. Updates in real-time during active sessions.
+      operationId: getTournamentLeaderboard
+      tags:
+        - Tournament
+        - Leaderboard
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tournament_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Tournament identifier
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Maximum number of entries to return
+        - name: include_stats
+          in: query
+          schema:
+            type: boolean
+            default: true
+          description: Include detailed statistics
+      responses:
+        '200':
+          description: Tournament leaderboard retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tournament_id:
+                    type: string
+                    format: uuid
+                  leaderboard:
+                    type: array
+                    items:
+                      $ref: './schemas/session-schemas.yaml#/components/schemas/LeaderboardEntry'
+                  last_updated:
+                    type: string
+                    format: date-time
+                  total_participants:
+                    type: integer
+                    minimum: 0
+        '404':
+          description: Tournament not found
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/components/schemas/Error'
+
+  # Real-time Leaderboard
+  /sessions/{session_id}/leaderboard:
+    get:
+      summary: Get session leaderboard
+      description: |
+        Retrieves real-time leaderboard for a combat session.
+
+        **BACKEND NOTE:** Returns current rankings, scores, and statistics. Optimized for frequent polling.
+      operationId: getSessionLeaderboard
+      tags:
+        - Leaderboard
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session identifier
+        - name: include_spectators
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Include spectator statistics
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [score, kills, accuracy, rank]
+            default: score
+          description: Sort leaderboard by this metric
+      responses:
+        '200':
+          description: Session leaderboard retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session_id:
+                    type: string
+                    format: uuid
+                  leaderboard:
+                    type: array
+                    items:
+                      $ref: './schemas/session-schemas.yaml#/components/schemas/LeaderboardEntry'
+                  session_stats:
+                    type: object
+                    properties:
+                      total_players:
+                        type: integer
+                        minimum: 0
+                      average_score:
+                        type: number
+                        format: float
+                      highest_score:
+                        type: integer
+                        minimum: 0
+                      total_kills:
+                        type: integer
+                        minimum: 0
+                  last_updated:
+                    type: string
+                    format: date-time
+        '404':
+          description: Combat session not found
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/components/schemas/Error'
+
+
+  # Tournament Spectator Mode
+  /tournaments/{tournament_id}/spectate:
+    post:
+      summary: Join tournament as spectator
+      description: |
+        Join a tournament match as a spectator with advanced viewing options.
+
+        **BACKEND NOTE:** Creates spectator session with tournament-specific features.
+        Supports multiple camera angles and match selection.
+      operationId: joinTournamentSpectator
+      tags:
+        - Tournament
+        - Spectator
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tournament_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Tournament identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                preferred_match:
+                  type: string
+                  format: uuid
+                  description: Specific match to spectate (optional)
+                camera_mode:
+                  type: string
+                  enum: [free, follow_player, overview, cinematic, tournament_overview]
+                  default: tournament_overview
+                  description: Initial camera mode
+                follow_player:
+                  type: string
+                  format: uuid
+                  description: Player to follow (if camera_mode is follow_player)
+                quality_preference:
+                  type: string
+                  enum: [low, medium, high, ultra]
+                  default: high
+                  description: Stream quality preference
+      responses:
+        '200':
+          description: Spectator session created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  spectator_session:
+                    $ref: './schemas/session-schemas.yaml#/components/schemas/SpectateResponse'
+                  tournament_info:
+                    type: object
+                    properties:
+                      current_round:
+                        type: string
+                        example: "quarterfinals"
+                      active_matches:
+                        type: integer
+                        minimum: 0
+                      total_matches:
+                        type: integer
+                        minimum: 0
+                      next_match_start:
+                        type: string
+                        format: date-time
+                  available_matches:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        match_id:
+                          type: string
+                          format: uuid
+                        bracket_position:
+                          type: string
+                        participants:
+                          type: array
+                          items:
+                            type: string
+                            maxLength: 50
+                        status:
+                          type: string
+                          enum: [waiting, in_progress, completed]
+                        spectator_count:
+                          type: integer
+                          minimum: 0
+        '400':
+          description: Invalid spectator request
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/components/schemas/Error'
+        '404':
+          description: Tournament not found
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/components/schemas/Error'
+        '429':
+          description: Tournament spectator limit reached
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/components/schemas/Error'
+
+  # Advanced Combat Analytics
+  /analytics/combat/{session_id}:
+    get:
+      summary: Get combat analytics for session
+      description: |
+        Retrieves detailed combat analytics and statistics for a session.
+
+        **BACKEND NOTE:** Aggregates real-time data for performance analysis, balance testing, and player insights.
+        Includes heatmaps, player paths, and statistical breakdowns.
+      operationId: getCombatAnalytics
+      tags:
+        - Analytics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session identifier
+        - name: include_heatmaps
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Include position heatmaps (resource intensive)
+        - name: include_player_paths
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Include player movement paths
+        - name: time_range
+          in: query
+          schema:
+            type: string
+            enum: [full_session, last_5_minutes, last_1_minute]
+            default: full_session
+          description: Time range for analytics
+      responses:
+        '200':
+          description: Combat analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session_id:
+                    type: string
+                    format: uuid
+                  duration_seconds:
+                    type: integer
+                    minimum: 0
+                  player_count:
+                    type: integer
+                    minimum: 0
+                  statistics:
+                    type: object
+                    properties:
+                      total_shots:
+                        type: integer
+                        minimum: 0
+                      total_hits:
+                        type: integer
+                        minimum: 0
+                      accuracy_percentage:
+                        type: number
+                        format: float
+                        minimum: 0.0
+                        maximum: 100.0
+                      average_response_time:
+                        type: number
+                        format: float
+                        description: Average player response time in milliseconds
+                      peak_concurrent_players:
+                        type: integer
+                        minimum: 0
+                  heatmaps:
+                    type: object
+                    description: Position heatmaps (if requested)
+                    additionalProperties:
+                      type: array
+                      items:
+                        type: array
+                        items:
+                          type: number
+                          format: float
+                  player_paths:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        player_id:
+                          type: string
+                          format: uuid
+                        path:
+                          type: array
+                          items:
+                            $ref: './schemas/position-schemas.yaml#/components/schemas/Vector3'
+                        timestamps:
+                          type: array
+                          items:
+                            type: string
+                            format: date-time
+                    description: Player movement paths (if requested)
+                  combat_events:
+                    type: array
+                    items:
+                      $ref: './schemas/action-schemas.yaml#/components/schemas/CombatActionRequest'
+                    description: Timeline of combat events
+        '404':
+          description: Combat session not found
           content:
             application/json:
               schema:
