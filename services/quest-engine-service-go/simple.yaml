@@ -1,0 +1,235 @@
+openapi: 3.0.3
+info:
+  title: Quest Engine Service API
+  description: Simple Quest Engine API
+  version: "1.0.0"
+
+servers:
+  - url: http://localhost:8080/api/v1/quest-engine
+    description: Local development
+
+security:
+  - BearerAuth: []
+
+paths:
+  /health:
+    get:
+      operationId: questEngineHealthCheck
+      summary: Basic health check
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /quests:
+    get:
+      operationId: listQuests
+      summary: List quests
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of quests
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  quests:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/QuestSummary'
+                  total:
+                    type: integer
+
+    post:
+      operationId: createQuest
+      summary: Create quest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - description
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                objectives:
+                  type: array
+                  items:
+                    type: object
+                rewards:
+                  type: array
+                  items:
+                    type: object
+      responses:
+        '200':
+          description: Quest created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestResponse'
+
+  /quests/{questId}:
+    get:
+      operationId: getQuest
+      summary: Get quest
+      parameters:
+        - name: questId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Quest details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestResponse'
+        '404':
+          description: Quest not found
+
+    put:
+      operationId: updateQuest
+      summary: Update quest
+      parameters:
+        - name: questId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                status:
+                  type: string
+      responses:
+        '200':
+          description: Quest updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestResponse'
+
+    delete:
+      operationId: deleteQuest
+      summary: Delete quest
+      parameters:
+        - name: questId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Quest deleted
+
+components:
+  schemas:
+    QuestSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+        difficulty:
+          type: string
+        rewards:
+          type: array
+          items:
+            type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    QuestResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+        difficulty:
+          type: string
+        objectives:
+          type: array
+          items:
+            type: object
+        rewards:
+          type: array
+          items:
+            type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
