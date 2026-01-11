@@ -1,0 +1,2699 @@
+openapi: 3.0.3
+info:
+  title: Crafting Network Service API - Enterprise-Grade Real-Time Crafting
+  description: '**Enterprise-Grade Real-Time Crafting Network API for NECPGAME**
+
+    This API manages real-time crafting operations, progress synchronization, and
+    network-optimized crafting workflows in the Night City universe. Critical for
+    MMOFPS crafting with sub-millisecond latency requirements.
+
+    ## Key Features
+
+    - **Real-Time Progress**: WebSocket-based crafting session monitoring - **High-Frequency
+    Sync**: UDP protocol for compressed crafting state updates - **Queue Management**:
+    Real-time crafting queue and resource notifications - **Latency Compensation**:
+    Network lag mitigation for crafting operations - **Performance Optimized**: MMOFPS-grade
+    network performance with <1ms P99 latency
+
+    ## Domain Purpose
+
+    The Crafting Network domain handles all real-time networking aspects of item creation
+    and material processing. Players receive instant feedback on crafting progress,
+    material availability, and queue status through optimized network protocols.
+
+    ## Performance Targets
+
+    - WebSocket Latency: <5ms message delivery - UDP Sync Latency: <1ms state updates
+    - Memory per Session: <10KB active crafting - Concurrent Crafters: 10,000+ simultaneous
+    sessions - Network Bandwidth: <50KB/s per active session
+
+    '
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+- url: https://api.necpgame.com/v1/crafting-network
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/crafting-network
+  description: Staging server
+- url: http://localhost:8080/api/v1/crafting-network
+  description: Local development server
+security:
+- BearerAuth: []
+tags:
+- name: Real-Time Crafting
+  description: WebSocket-based real-time crafting operations
+- name: UDP Synchronization
+  description: High-frequency UDP crafting state synchronization
+- name: Health Monitoring
+  description: System health and performance monitoring
+paths:
+  /health:
+    get:
+      summary: Crafting network service health check
+      description: '**Enterprise-grade health check endpoint**
+
+        Provides real-time health status of the crafting network microservice. Critical
+        for service discovery, load balancing, and monitoring. **Performance:** <1ms
+        response time, cached for 30 seconds
+
+        '
+      operationId: craftingNetworkServiceHealthCheck
+      tags:
+      - Health Monitoring
+      parameters:
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
+      responses:
+        '200':
+          description: Service is healthy
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=30, s-maxage=60
+            ETag:
+              schema:
+                type: string
+                example: '"crafting-network-health-v1.0"'
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                - gzip
+                - deflate
+                - br
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - status
+                - timestamp
+                properties:
+                  status:
+                    type: string
+                    enum:
+                    - ok
+                    - degraded
+                    - critical
+                    example: ok
+                    description: Current health status
+                  message:
+                    type: string
+                    example: Service is healthy
+                    description: Human-readable status message
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2024-01-15T10:30:00Z'
+                    description: Time when health check was performed
+                  version:
+                    type: string
+                    example: 1.0.0
+                    description: Service version
+                  uptime:
+                    type: integer
+                    example: 3600
+                    description: Service uptime in seconds
+                  checks:
+                    type: object
+                    description: Detailed health checks
+                    additionalProperties:
+                      type: object
+                      properties:
+                        status:
+                          type: string
+                          enum:
+                          - ok
+                          - degraded
+                          - critical
+                        message:
+                          type: string
+                        response_time:
+                          type: integer
+                          description: Response time in milliseconds
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - status
+                - timestamp
+                properties:
+                  status:
+                    type: string
+                    enum:
+                    - ok
+                    - degraded
+                    - critical
+                    example: ok
+                    description: Current health status
+                  message:
+                    type: string
+                    example: Service is healthy
+                    description: Human-readable status message
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2024-01-15T10:30:00Z'
+                    description: Time when health check was performed
+                  version:
+                    type: string
+                    example: 1.0.0
+                    description: Service version
+                  uptime:
+                    type: integer
+                    example: 3600
+                    description: Service uptime in seconds
+                  checks:
+                    type: object
+                    description: Detailed health checks
+                    additionalProperties:
+                      type: object
+                      properties:
+                        status:
+                          type: string
+                          enum:
+                          - ok
+                          - degraded
+                          - critical
+                        message:
+                          type: string
+                        response_time:
+                          type: integer
+                          description: Response time in milliseconds
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+                description: Seconds to wait before retrying
+            X-RateLimit-Limit:
+              schema:
+                type: integer
+                description: Maximum requests per time window
+            X-RateLimit-Remaining:
+              schema:
+                type: integer
+                description: Remaining requests in current window
+            X-RateLimit-Reset:
+              schema:
+                type: string
+                format: date-time
+                description: Time when rate limit resets
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+  /health/batch:
+    post:
+      summary: Batch health check for multiple network services
+      description: '**Performance optimization:** Check multiple network health in
+        single request
+
+        Reduces N HTTP calls to 1 call. Critical for microservice orchestration.
+
+        Eliminates network overhead in health monitoring scenarios.
+
+        **Use case:** Service mesh health checks, Kubernetes readiness probes
+
+        '
+      operationId: craftingNetworkServiceBatchHealthCheck
+      tags:
+      - Health Monitoring
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - services
+              properties:
+                services:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                    - crafting-network
+                    - crafting-service
+                    - real-time-combat
+                  maxItems: 10
+                  description: List of services to check
+      responses:
+        '200':
+          description: Batch health check completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - overall_status
+                - timestamp
+                - results
+                properties:
+                  overall_status:
+                    type: string
+                    enum:
+                    - healthy
+                    - degraded
+                    - critical
+                    example: healthy
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2024-01-15T10:30:00Z'
+                  results:
+                    type: object
+                    additionalProperties:
+                      type: object
+                      required:
+                      - status
+                      - timestamp
+                      properties:
+                        status:
+                          type: string
+                          enum:
+                          - ok
+                          - degraded
+                          - critical
+                          example: ok
+                          description: Current health status
+                        message:
+                          type: string
+                          example: Service is healthy
+                          description: Human-readable status message
+                        timestamp:
+                          type: string
+                          format: date-time
+                          example: '2024-01-15T10:30:00Z'
+                          description: Time when health check was performed
+                        version:
+                          type: string
+                          example: 1.0.0
+                          description: Service version
+                        uptime:
+                          type: integer
+                          example: 3600
+                          description: Service uptime in seconds
+                        checks:
+                          type: object
+                          description: Detailed health checks
+                          additionalProperties:
+                            type: object
+                            properties:
+                              status:
+                                type: string
+                                enum:
+                                - ok
+                                - degraded
+                                - critical
+                              message:
+                                type: string
+                              response_time:
+                                type: integer
+                                description: Response time in milliseconds
+                    description: Health status for each requested service
+        '400':
+          description: Invalid request - malformed service list
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+                description: Seconds to wait before retrying
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+  /health/ws:
+    get:
+      summary: Real-time health monitoring WebSocket
+      description: '**Performance optimization:** Real-time health updates without
+        polling
+
+        Eliminates periodic HTTP requests, reduces server load by ~90%.
+
+        Perfect for dashboard monitoring and alerting systems.
+
+        **Protocol:** WebSocket with JSON payloads
+
+        **Heartbeat:** 30 second intervals
+
+        **Reconnection:** Automatic with exponential backoff
+
+        '
+      operationId: craftingNetworkServiceHealthWebSocket
+      tags:
+      - Health Monitoring
+      parameters:
+      - name: services
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - crafting-network
+            - crafting-service
+            - real-time-combat
+        description: Services to monitor (optional, monitors all if not specified)
+      responses:
+        '200':
+          description: WebSocket upgrade information returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  websocket_url:
+                    type: string
+                    example: ws://localhost:8080/api/v1/crafting-network/health/ws
+                  supported_protocols:
+                    type: array
+                    items:
+                      type: string
+                    example:
+                    - health-monitoring-v1
+        '101':
+          description: WebSocket connection established successfully
+          headers:
+            Upgrade:
+              schema:
+                type: string
+                example: websocket
+            Connection:
+              schema:
+                type: string
+                example: Upgrade
+            Sec-WebSocket-Accept:
+              schema:
+                type: string
+                description: WebSocket handshake acceptance key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebSocketHealthMessage'
+        '400':
+          description: Invalid request - malformed service parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        '401':
+          description: Unauthorized - authentication required for WebSocket
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        '429':
+          description: Too many requests - WebSocket connection limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+  /ws/crafting/{session_id}:
+    get:
+      summary: WebSocket connection for real-time crafting session
+      description: '**Real-time crafting progress monitoring**
+
+        Establishes WebSocket connection for monitoring crafting session progress,
+        material availability, and queue status updates.
+
+        **Performance:** <5ms message latency, compressed payloads
+
+        **Protocol:** WebSocket with binary message framing
+
+        **Compression:** LZ4 for message payloads
+
+        **Reconnection:** Automatic with state recovery
+
+        '
+      operationId: craftingSessionWebSocket
+      tags:
+      - Real-Time Crafting
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Crafting session identifier
+      - name: player_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player identifier for authorization
+      responses:
+        '101':
+          description: WebSocket connection established for crafting session
+          headers:
+            Upgrade:
+              schema:
+                type: string
+                example: websocket
+            Connection:
+              schema:
+                type: string
+                example: Upgrade
+            Sec-WebSocket-Accept:
+              schema:
+                type: string
+                description: WebSocket handshake acceptance key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebSocketCraftingMessage'
+        '400':
+          description: Invalid session or player parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        '403':
+          description: Forbidden - player not authorized for this session
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        '404':
+          description: Crafting session not found
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        '429':
+          description: Too many connections - WebSocket limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+  /ws/queue/{player_id}:
+    get:
+      summary: WebSocket connection for crafting queue monitoring
+      description: '**Real-time crafting queue management**
+
+        Monitors player''s crafting queue status, priority changes, and available
+        crafting stations.
+
+        **Performance:** Real-time queue position updates
+
+        **Features:** Queue jumping notifications, station availability alerts
+
+        '
+      operationId: craftingQueueWebSocket
+      tags:
+      - Real-Time Crafting
+      parameters:
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player identifier
+      responses:
+        '101':
+          description: WebSocket connection established for queue monitoring
+          headers:
+            Upgrade:
+              schema:
+                type: string
+                example: websocket
+            Connection:
+              schema:
+                type: string
+                example: Upgrade
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebSocketQueueMessage'
+        '403':
+          description: Forbidden - invalid player authorization
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        '429':
+          description: Connection limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+  /udp/sessions/{session_id}/connect:
+    post:
+      summary: Establish UDP connection for crafting session
+      description: '**High-frequency crafting state synchronization**
+
+        Initiates UDP connection for real-time crafting progress updates. Critical
+        for MMOFPS crafting with sub-millisecond latency requirements.
+
+        **Performance:** <1ms state sync latency
+
+        **Protocol:** UDP with reliability layer
+
+        **Compression:** Custom binary protocol with delta encoding
+
+        '
+      operationId: udpCraftingSessionConnect
+      tags:
+      - UDP Synchronization
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Crafting session identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UdpConnectRequest'
+      responses:
+        '200':
+          description: UDP connection parameters established
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UdpConnectResponse'
+        '400':
+          description: Invalid connection parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        '403':
+          description: Forbidden - session access denied
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+        '404':
+          description: Crafting session not found
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    minimum: 100
+                    maximum: 599
+                    example: 400
+                  message:
+                    type: string
+                    example: Bad request
+                  details:
+                    type: object
+                    description: Additional error details
+  /udp/sessions/{session_id}/progress:
+    post:
+      summary: UDP endpoint for crafting progress synchronization
+      description: '**Real-time crafting progress updates**
+
+        Receives compressed crafting progress data via UDP for high-frequency state
+        synchronization.
+
+        **Optimization:** Delta-encoded progress updates
+
+        **Reliability:** Best-effort delivery with periodic full state sync
+
+        '
+      operationId: udpCraftingProgressSync
+      tags:
+      - UDP Synchronization
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Crafting session identifier
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              $ref: '#/components/schemas/UdpProgressUpdate'
+      responses:
+        '200':
+          description: Progress update accepted
+        '400':
+          description: Invalid progress data
+        '403':
+          description: Session access denied
+        '404':
+          description: Session not found
+  /udp/sessions/{session_id}/materials:
+    post:
+      summary: UDP endpoint for material availability synchronization
+      description: '**Real-time material availability notifications**
+
+        Synchronizes material availability changes with minimal latency. Critical
+        for crafting queue management and resource planning.
+
+        **Performance:** Instant availability updates
+
+        **Compression:** Bit-packed material state changes
+
+        '
+      operationId: udpMaterialAvailabilitySync
+      tags:
+      - UDP Synchronization
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Crafting session identifier
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              $ref: '#/components/schemas/UdpMaterialUpdate'
+      responses:
+        '200':
+          description: Material update processed
+        '400':
+          description: Invalid material data
+        '403':
+          description: Session access denied
+        '404':
+          description: Session not found
+components:
+  responses:
+    HealthBatchSuccess:
+      description: Batch health check completed successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - overall_status
+            - timestamp
+            - results
+            properties:
+              overall_status:
+                type: string
+                enum:
+                - healthy
+                - degraded
+                - critical
+                example: healthy
+              timestamp:
+                type: string
+                format: date-time
+                example: '2024-01-15T10:30:00Z'
+              results:
+                type: object
+                additionalProperties:
+                  type: object
+                  required:
+                  - status
+                  - timestamp
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                      - ok
+                      - degraded
+                      - critical
+                      example: ok
+                      description: Current health status
+                    message:
+                      type: string
+                      example: Service is healthy
+                      description: Human-readable status message
+                    timestamp:
+                      type: string
+                      format: date-time
+                      example: '2024-01-15T10:30:00Z'
+                      description: Time when health check was performed
+                    version:
+                      type: string
+                      example: 1.0.0
+                      description: Service version
+                    uptime:
+                      type: integer
+                      example: 3600
+                      description: Service uptime in seconds
+                    checks:
+                      type: object
+                      description: Detailed health checks
+                      additionalProperties:
+                        type: object
+                        properties:
+                          status:
+                            type: string
+                            enum:
+                            - ok
+                            - degraded
+                            - critical
+                          message:
+                            type: string
+                          response_time:
+                            type: integer
+                            description: Response time in milliseconds
+                description: Health status for each requested service
+    OK:
+      description: Operation completed successfully
+      headers:
+        Content-Type:
+          schema:
+            type: string
+            example: application/json
+        ETag:
+          schema:
+            type: string
+            description: Entity version for optimistic locking
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - success
+            - message
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: Operation completed successfully
+              data:
+                type: object
+                description: Response data payload
+    Created:
+      description: Resource created successfully
+      headers:
+        Content-Type:
+          schema:
+            type: string
+            example: application/json
+        Location:
+          schema:
+            type: string
+            description: URL of the created resource
+        ETag:
+          schema:
+            type: string
+            description: Entity version for optimistic locking
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - success
+            - message
+            - id
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: Resource created successfully
+              id:
+                type: string
+                format: uuid
+                description: ID of the created resource
+                example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+              data:
+                type: object
+                description: Created resource data
+    BadRequest:
+      description: Bad request - validation failed or malformed data
+      headers:
+        Content-Type:
+          schema:
+            type: string
+            example: application/json
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                minimum: 100
+                maximum: 599
+                example: 400
+              message:
+                type: string
+                example: Bad request
+              details:
+                type: object
+                description: Additional error details
+    Unauthorized:
+      description: Unauthorized - authentication required or invalid token
+      headers:
+        WWW-Authenticate:
+          schema:
+            type: string
+            example: Bearer realm="NECPGAME API"
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                minimum: 100
+                maximum: 599
+                example: 400
+              message:
+                type: string
+                example: Bad request
+              details:
+                type: object
+                description: Additional error details
+    Forbidden:
+      description: Forbidden - insufficient permissions for this operation
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                minimum: 100
+                maximum: 599
+                example: 400
+              message:
+                type: string
+                example: Bad request
+              details:
+                type: object
+                description: Additional error details
+    NotFound:
+      description: Not found - requested resource does not exist
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                minimum: 100
+                maximum: 599
+                example: 400
+              message:
+                type: string
+                example: Bad request
+              details:
+                type: object
+                description: Additional error details
+    Conflict:
+      description: Conflict - resource has been modified by another request
+    InternalServerError:
+      description: Internal server error - unexpected system error occurred
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                minimum: 100
+                maximum: 599
+                example: 400
+              message:
+                type: string
+                example: Bad request
+              details:
+                type: object
+                description: Additional error details
+    HealthOK:
+      $ref: ../common/responses/success.yaml#/components/responses/HealthOK
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+      - status
+      - timestamp
+      properties:
+        status:
+          type: string
+          enum:
+          - ok
+          - degraded
+          - critical
+          example: ok
+          description: Current health status
+        message:
+          type: string
+          example: Service is healthy
+          description: Human-readable status message
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-01-15T10:30:00Z'
+          description: Time when health check was performed
+        version:
+          type: string
+          example: 1.0.0
+          description: Service version
+        uptime:
+          type: integer
+          example: 3600
+          description: Service uptime in seconds
+        checks:
+          type: object
+          description: Detailed health checks
+          additionalProperties:
+            type: object
+            properties:
+              status:
+                type: string
+                enum:
+                - ok
+                - degraded
+                - critical
+              message:
+                type: string
+              response_time:
+                type: integer
+                description: Response time in milliseconds
+    WebSocketHealthMessage:
+      type: object
+      required:
+      - type
+      - timestamp
+      - health
+      properties:
+        type:
+          type: string
+          enum:
+          - health_update
+          - health_alert
+          - service_down
+          example: health_update
+        timestamp:
+          type: string
+          format: date-time
+        message_timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the health message
+        health:
+          type: object
+          required:
+          - status
+          - timestamp
+          properties:
+            status:
+              type: string
+              enum:
+              - ok
+              - degraded
+              - critical
+              example: ok
+              description: Current health status
+            message:
+              type: string
+              example: Service is healthy
+              description: Human-readable status message
+            timestamp:
+              type: string
+              format: date-time
+              example: '2024-01-15T10:30:00Z'
+              description: Time when health check was performed
+            version:
+              type: string
+              example: 1.0.0
+              description: Service version
+            uptime:
+              type: integer
+              example: 3600
+              description: Service uptime in seconds
+            checks:
+              type: object
+              description: Detailed health checks
+              additionalProperties:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                    - ok
+                    - degraded
+                    - critical
+                  message:
+                    type: string
+                  response_time:
+                    type: integer
+                    description: Response time in milliseconds
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    WebSocketCraftingMessage:
+      type: object
+      required:
+      - type
+      - session_id
+      - timestamp
+      properties:
+        type:
+          type: string
+          enum:
+          - progress_update
+          - material_notification
+          - queue_status
+          - crafting_complete
+          - crafting_failed
+          example: progress_update
+        session_id:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        progress_data:
+          $ref: '#/components/schemas/CraftingProgressData'
+        material_data:
+          $ref: '#/components/schemas/MaterialNotification'
+        queue_data:
+          $ref: '#/components/schemas/QueueStatusData'
+      description: 'BACKEND NOTE: WebSocket message optimized for real-time crafting.
+        Compressed JSON payloads reduce bandwidth by 60%.'
+    WebSocketQueueMessage:
+      type: object
+      required:
+      - type
+      - player_id
+      - timestamp
+      properties:
+        type:
+          type: string
+          enum:
+          - queue_position
+          - station_available
+          - priority_boost
+          - queue_timeout
+          example: queue_position
+        player_id:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        queue_position:
+          type: integer
+          minimum: 1
+        estimated_wait_time:
+          type: integer
+          description: Estimated wait time in seconds
+        station_type:
+          type: string
+          enum:
+          - basic_workbench
+          - advanced_workbench
+          - cyberware_station
+          - vehicle_bay
+          - laboratory
+      description: 'BACKEND NOTE: Queue messages optimized for instant notifications.
+        Minimal payload size for mobile compatibility.'
+    UdpConnectRequest:
+      type: object
+      required:
+      - player_id
+      - client_version
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        client_version:
+          type: string
+          pattern: ^\d+\.\d+\.\d+$
+        supported_compression:
+          type: array
+          items:
+            type: string
+            enum:
+            - lz4
+            - zstd
+            - none
+          default:
+          - lz4
+        max_packet_size:
+          type: integer
+          minimum: 64
+          maximum: 65536
+          default: 4096
+      description: 'BACKEND NOTE: UDP connection parameters optimized for MMOFPS.
+        Client capabilities validated before connection establishment.'
+    UdpConnectResponse:
+      type: object
+      required:
+      - session_token
+      - server_endpoint
+      - compression_enabled
+      properties:
+        session_token:
+          type: string
+          description: UDP session authentication token
+        server_endpoint:
+          type: string
+          description: UDP server endpoint (host:port)
+        compression_enabled:
+          type: boolean
+          default: true
+        negotiated_packet_size:
+          type: integer
+          minimum: 64
+          maximum: 65536
+        heartbeat_interval:
+          type: integer
+          minimum: 1000
+          maximum: 30000
+          default: 5000
+          description: Heartbeat interval in milliseconds
+      description: 'BACKEND NOTE: Connection response optimized for immediate UDP
+        setup. Token-based authentication prevents session hijacking.'
+    UdpProgressUpdate:
+      type: object
+      description: 'BACKEND NOTE: Binary protocol reduces payload size by 80%. Delta
+        encoding minimizes redundant data transmission.'
+      properties:
+        packet_header:
+          $ref: '#/components/schemas/UdpPacketHeader'
+        progress_data:
+          $ref: '#/components/schemas/CompressedProgressData'
+    UdpMaterialUpdate:
+      type: object
+      description: 'BACKEND NOTE: Bit-packed material updates for efficiency. Critical
+        for real-time resource management.'
+      properties:
+        packet_header:
+          $ref: '#/components/schemas/UdpPacketHeader'
+        material_changes:
+          type: array
+          items:
+            $ref: '#/components/schemas/MaterialChange'
+    UdpPacketHeader:
+      type: object
+      required:
+      - packet_type
+      - sequence_number
+      - timestamp
+      properties:
+        packet_type:
+          type: integer
+          minimum: 0
+          maximum: 255
+          description: Packet type identifier
+        sequence_number:
+          type: integer
+          minimum: 0
+          description: Sequence number for ordering
+        timestamp:
+          type: integer
+          description: Unix timestamp in milliseconds
+        session_id:
+          type: string
+          format: uuid
+          description: Crafting session identifier
+      description: 'BACKEND NOTE: Minimal header for UDP packets. 16-byte aligned
+        for network optimization.'
+    CompressedProgressData:
+      type: object
+      required:
+      - session_id
+      - progress_percentage
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        progress_percentage:
+          type: integer
+          minimum: 0
+          maximum: 100
+        remaining_time:
+          type: integer
+          description: Remaining crafting time in seconds
+        quality_current:
+          type: integer
+          minimum: 1
+          maximum: 100
+        quality_target:
+          type: integer
+          minimum: 1
+          maximum: 100
+        flags:
+          type: integer
+          description: Bit flags for crafting state (paused, interrupted, etc.)
+      description: 'BACKEND NOTE: Compressed progress data optimized for UDP. Delta-encoded
+        updates reduce bandwidth by 90%.'
+    MaterialChange:
+      type: object
+      required:
+      - material_id
+      - change_type
+      properties:
+        material_id:
+          type: string
+          format: uuid
+        change_type:
+          type: string
+          enum:
+          - added
+          - removed
+          - quantity_changed
+          - quality_changed
+        new_quantity:
+          type: integer
+          minimum: 0
+        new_quality:
+          type: integer
+          minimum: 1
+          maximum: 100
+      description: 'BACKEND NOTE: Material changes optimized for bit-packing. Minimal
+        data structure for high-frequency updates.'
+    CraftingProgressData:
+      type: object
+      required:
+      - session_id
+      - progress_percentage
+      - status
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        progress_percentage:
+          type: integer
+          minimum: 0
+          maximum: 100
+        remaining_time_seconds:
+          type: integer
+          minimum: 0
+        current_quality:
+          type: integer
+          minimum: 1
+          maximum: 100
+        target_quality:
+          type: integer
+          minimum: 1
+          maximum: 100
+        status:
+          type: string
+          enum:
+          - active
+          - paused
+          - interrupted
+          - completed
+          - failed
+        failure_reason:
+          type: string
+          description: Reason for crafting failure (if applicable)
+      description: 'BACKEND NOTE: Progress data structured for WebSocket efficiency.
+        JSON compression reduces payload size significantly.'
+    MaterialNotification:
+      type: object
+      required:
+      - material_id
+      - notification_type
+      properties:
+        material_id:
+          type: string
+          format: uuid
+        notification_type:
+          type: string
+          enum:
+          - insufficient_quantity
+          - quality_too_low
+          - material_unavailable
+          - material_restored
+        required_quantity:
+          type: integer
+          minimum: 1
+        available_quantity:
+          type: integer
+          minimum: 0
+        required_quality:
+          type: integer
+          minimum: 1
+          maximum: 100
+        available_quality:
+          type: integer
+          minimum: 1
+          maximum: 100
+      description: 'BACKEND NOTE: Material notifications optimized for user experience.
+        Immediate feedback prevents crafting failures.'
+    QueueStatusData:
+      type: object
+      required:
+      - player_id
+      - queue_position
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        queue_position:
+          type: integer
+          minimum: 1
+        total_in_queue:
+          type: integer
+          minimum: 1
+        estimated_wait_seconds:
+          type: integer
+          minimum: 0
+        station_type:
+          type: string
+          enum:
+          - basic_workbench
+          - advanced_workbench
+          - cyberware_station
+          - vehicle_bay
+          - laboratory
+        can_jump_queue:
+          type: boolean
+          description: Whether player can pay to jump queue
+        jump_queue_cost:
+          type: integer
+          description: Cost in game currency to jump queue
+      description: 'BACKEND NOTE: Queue status optimized for decision making. Real-time
+        updates enable strategic queue management.'
+    DetailedHealthResponse:
+      allOf:
+      - $ref: '#/components/schemas/HealthResponse'
+      - type: object
+        properties:
+          dependencies:
+            type: object
+            description: Health status of service dependencies
+            properties:
+              database:
+                $ref: '#/components/schemas/HealthResponse'
+              redis:
+                $ref: '#/components/schemas/HealthResponse'
+              external_services:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      example: payment-service
+                    status:
+                      type: string
+                      enum:
+                      - ok
+                      - degraded
+                      - critical
+                    response_time:
+                      type: integer
+          metrics:
+            type: object
+            description: Service performance metrics
+            properties:
+              active_connections:
+                type: integer
+                example: 150
+              requests_per_second:
+                type: number
+                example: 45.2
+              average_response_time:
+                type: integer
+                example: 25
+              error_rate:
+                type: number
+                example: 0.001
+    HealthBatchRequest:
+      type: object
+      properties:
+        services:
+          type: array
+          items:
+            type: string
+            example: database
+          description: List of services to check
+        timeout:
+          type: integer
+          minimum: 1
+          maximum: 30
+          default: 5
+          description: Timeout for each health check in seconds
+    HealthBatchResponse:
+      type: object
+      properties:
+        overall_status:
+          type: string
+          enum:
+          - ok
+          - degraded
+          - critical
+          example: ok
+          description: Overall health status across all checked services
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-01-15T10:30:00Z'
+        results:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/HealthResponse'
+          description: Health results for each service
+    InfrastructureEntity:
+      type: object
+      required:
+      - id
+      - created_at
+      - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for infrastructure entity
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        created_at:
+          type: string
+          format: date-time
+          description: Entity creation timestamp
+          example: '2024-01-15T10:30:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: Last modification timestamp
+          example: '2024-01-15T14:20:00Z'
+        version:
+          type: integer
+          minimum: 1
+          description: Optimistic locking version for concurrent operations
+          example: 1
+    ErrorResponse:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: integer
+          minimum: 100
+          maximum: 599
+          example: 400
+        message:
+          type: string
+          example: Bad request
+        details:
+          type: object
+          description: Additional error details
+    BaseEntity:
+      type: object
+      required:
+      - id
+      - created_at
+      - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: '2024-01-15T10:30:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: Last modification timestamp
+          example: '2024-01-15T14:20:00Z'
+    OptimisticLock:
+      type: object
+      properties:
+        version:
+          type: integer
+          minimum: 1
+          description: Version for optimistic locking
+          example: 1
+    UserAccountEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - username
+        - email
+        - account_status
+        - registration_method
+        properties:
+          username:
+            type: string
+            minLength: 3
+            maxLength: 30
+            pattern: ^[a-zA-Z0-9_-]+$
+            description: Unique username for login
+            example: nightrunner2077
+          email:
+            type: string
+            format: email
+            description: Primary email address
+            example: nightrunner@necpgame.com
+          email_verified:
+            type: boolean
+            description: Whether email is verified
+            example: true
+          email_verification_token:
+            type: string
+            description: Token for email verification
+            example: abc123def456
+          password_hash:
+            type: string
+            description: Bcrypt password hash
+            example: $2b$10$...
+          account_status:
+            type: string
+            enum:
+            - active
+            - suspended
+            - banned
+            - pending_verification
+            - deactivated
+            description: Account status
+            example: active
+          registration_method:
+            type: string
+            enum:
+            - email_password
+            - google_oauth
+            - discord_oauth
+            - steam_oauth
+            - guest
+            description: How user registered
+            example: email_password
+          registration_ip:
+            type: string
+            description: IP address used during registration
+            example: 192.168.1.100
+          last_login_ip:
+            type: string
+            description: IP address of last login
+            example: 10.0.0.50
+          last_login_at:
+            type: string
+            format: date-time
+            description: Timestamp of last successful login
+            example: '2024-01-15T14:20:00Z'
+          login_count:
+            type: integer
+            minimum: 0
+            description: Total number of logins
+            example: 147
+          failed_login_attempts:
+            type: integer
+            minimum: 0
+            description: Recent failed login attempts
+            example: 0
+          account_locked_until:
+            type: string
+            format: date-time
+            description: When account lock expires
+            example: '2024-01-15T16:00:00Z'
+          two_factor_enabled:
+            type: boolean
+            description: Whether 2FA is enabled
+            example: true
+          two_factor_secret:
+            type: string
+            description: TOTP secret for 2FA
+            example: JBSWY3DPEHPK3PXP
+          recovery_email:
+            type: string
+            format: email
+            description: Backup email for account recovery
+            example: backup@necpgame.com
+          preferred_language:
+            type: string
+            enum:
+            - en
+            - es
+            - zh
+            - ja
+            - ru
+            - de
+            - fr
+            - pl
+            - ko
+            - pt
+            description: User's preferred language
+            example: en
+    SessionEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - user_id
+        - session_token
+        - ip_address
+        - user_agent
+        - expires_at
+        properties:
+          user_id:
+            type: string
+            format: uuid
+            description: User this session belongs to
+            example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+          session_token:
+            type: string
+            minLength: 32
+            maxLength: 128
+            description: Unique session identifier/token
+            example: abc123def456ghi789jkl012mno345pqr678stu901vwx
+          refresh_token:
+            type: string
+            minLength: 32
+            maxLength: 128
+            description: Token for refreshing session
+            example: yz234abc567def890ghi123jkl456mno789pqr012stu
+          ip_address:
+            type: string
+            description: Client IP address
+            example: 192.168.1.100
+          user_agent:
+            type: string
+            description: Client user agent string
+            example: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
+          device_fingerprint:
+            type: string
+            description: Unique device identifier
+            example: fp_abcdef1234567890
+          location:
+            type: string
+            description: Approximate location based on IP
+            example: New York, US
+          expires_at:
+            type: string
+            format: date-time
+            description: When session expires
+            example: '2024-01-15T16:20:00Z'
+          is_active:
+            type: boolean
+            description: Whether session is currently active
+            example: true
+          last_activity_at:
+            type: string
+            format: date-time
+            description: Last user activity in this session
+            example: '2024-01-15T15:45:00Z'
+          security_level:
+            type: string
+            enum:
+            - standard
+            - elevated
+            - maximum
+            description: Security level of session
+            example: standard
+          session_metadata:
+            type: object
+            description: Additional session data
+            properties:
+              game_version:
+                type: string
+                description: Client game version
+                example: 1.2.3
+              platform:
+                type: string
+                enum:
+                - windows
+                - macos
+                - linux
+                - ios
+                - android
+                - web
+                description: Client platform
+                example: windows
+              vpn_detected:
+                type: boolean
+                description: Whether VPN usage was detected
+                example: false
+    AuditLogEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - event_type
+        - actor_id
+        - resource_type
+        - action
+        - severity
+        properties:
+          event_type:
+            type: string
+            enum:
+            - user_action
+            - system_event
+            - security_event
+            - admin_action
+            - api_call
+            description: Category of audit event
+            example: user_action
+          actor_id:
+            type: string
+            format: uuid
+            description: User/system that performed the action
+            example: b2c3d4e5-f6g7-8901-bcde-f23456789012
+          actor_type:
+            type: string
+            enum:
+            - user
+            - system
+            - admin
+            - api_client
+            description: Type of actor
+            example: user
+          resource_type:
+            type: string
+            enum:
+            - user
+            - session
+            - character
+            - guild
+            - item
+            - transaction
+            - quest
+            - chat
+            - file
+            description: Type of resource affected
+            example: character
+          resource_id:
+            type: string
+            format: uuid
+            description: Specific resource that was affected
+            example: c3d4e5f6-g7h8-9012-cdef-345678901234
+          action:
+            type: string
+            enum:
+            - create
+            - read
+            - update
+            - delete
+            - login
+            - logout
+            - ban
+            - unban
+            - transfer
+            - execute
+            description: Action performed
+            example: update
+          old_values:
+            type: object
+            description: Previous state of modified fields
+            example:
+              level: 24
+              experience: 12000
+          new_values:
+            type: object
+            description: New state of modified fields
+            example:
+              level: 25
+              experience: 12500
+          severity:
+            type: string
+            enum:
+            - low
+            - medium
+            - high
+            - critical
+            description: Security/impact severity
+            example: low
+          ip_address:
+            type: string
+            description: IP address of the actor
+            example: 192.168.1.100
+          user_agent:
+            type: string
+            description: User agent of the actor
+            example: NECPGAME Client v1.2.3
+          location:
+            type: string
+            description: Approximate location
+            example: Night City, NC
+          success:
+            type: boolean
+            description: Whether the action succeeded
+            example: true
+          error_message:
+            type: string
+            description: Error message if action failed
+            example: Insufficient permissions
+          metadata:
+            type: object
+            description: Additional audit data
+            properties:
+              request_id:
+                type: string
+                description: Unique request identifier
+                example: req_abc123def456
+              session_id:
+                type: string
+                format: uuid
+                description: Associated session ID
+                example: d4e5f6g7-h8i9-0123-def0-456789012345
+              api_endpoint:
+                type: string
+                description: API endpoint called
+                example: /api/v1/characters/upgrade
+              response_time_ms:
+                type: integer
+                description: API response time
+                example: 45
+    ApiKeyEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - owner_id
+        - name
+        - key_hash
+        - permissions
+        - status
+        properties:
+          owner_id:
+            type: string
+            format: uuid
+            description: User or service that owns this API key
+            example: e5f6g7h8-i9j0-1234-ef01-567890123456
+          name:
+            type: string
+            minLength: 1
+            maxLength: 50
+            description: Human-readable name for the key
+            example: Mobile App Key
+          description:
+            type: string
+            maxLength: 200
+            description: Description of key usage
+            example: API key for mobile application authentication
+          key_hash:
+            type: string
+            description: SHA-256 hash of the actual API key
+            example: a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3
+          key_prefix:
+            type: string
+            minLength: 8
+            maxLength: 8
+            description: First 8 characters of API key for identification
+            example: ncp_1a2b
+          permissions:
+            type: array
+            items:
+              type: string
+              enum:
+              - read_user
+              - write_user
+              - read_character
+              - write_character
+              - read_inventory
+              - write_inventory
+              - admin
+            description: Granted permissions
+            example:
+            - read_user
+            - read_character
+            - read_inventory
+          status:
+            type: string
+            enum:
+            - active
+            - suspended
+            - revoked
+            - expired
+            description: API key status
+            example: active
+          expires_at:
+            type: string
+            format: date-time
+            description: When key expires (null = never)
+            example: '2025-01-15T10:30:00Z'
+          last_used_at:
+            type: string
+            format: date-time
+            description: Last time key was used
+            example: '2024-01-15T14:20:00Z'
+          usage_count:
+            type: integer
+            minimum: 0
+            description: Total API calls made with this key
+            example: 15420
+          rate_limit:
+            type: integer
+            minimum: 1
+            description: Requests per minute allowed
+            example: 60
+          allowed_ips:
+            type: array
+            items:
+              type: string
+            description: IP addresses allowed to use this key
+            example:
+            - 192.168.1.0/24
+            - 10.0.0.1
+          metadata:
+            type: object
+            description: Additional key metadata
+            properties:
+              created_by:
+                type: string
+                format: uuid
+                description: User who created this key
+                example: f6g7h8i9-j0k1-2345-f012-678901234567
+              application:
+                type: string
+                description: Application using this key
+                example: NECPGAME Mobile App
+              environment:
+                type: string
+                enum:
+                - development
+                - staging
+                - production
+                description: Environment this key is for
+                example: production
+    ConfigurationEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - config_key
+        - config_value
+        - config_type
+        - environment
+        properties:
+          config_key:
+            type: string
+            minLength: 1
+            maxLength: 100
+            pattern: ^[a-zA-Z0-9_\-\.]+$
+            description: Configuration key
+            example: game.max_players_per_server
+          config_value:
+            type: string
+            description: Configuration value (stored as string)
+            example: '1000'
+          config_type:
+            type: string
+            enum:
+            - string
+            - integer
+            - float
+            - boolean
+            - json
+            description: Data type of the value
+            example: integer
+          environment:
+            type: string
+            enum:
+            - development
+            - staging
+            - production
+            - all
+            description: Environment this config applies to
+            example: production
+          description:
+            type: string
+            maxLength: 500
+            description: Description of what this config controls
+            example: Maximum number of players allowed per game server
+          default_value:
+            type: string
+            description: Default value if not set
+            example: '500'
+          validation_rules:
+            type: object
+            description: Validation rules for the value
+            properties:
+              min_value:
+                type: number
+                description: Minimum allowed value
+                example: 1
+              max_value:
+                type: number
+                description: Maximum allowed value
+                example: 10000
+              allowed_values:
+                type: array
+                items:
+                  type: string
+                description: List of allowed values
+                example:
+                - '100'
+                - '500'
+                - '1000'
+                - '2000'
+          is_encrypted:
+            type: boolean
+            description: Whether value is encrypted
+            example: false
+          last_modified_by:
+            type: string
+            format: uuid
+            description: User who last modified this config
+            example: g7h8i9j0-k1l2-3456-0123-456789012345
+          requires_restart:
+            type: boolean
+            description: Whether server restart is required after change
+            example: true
+    ServiceHealthEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - service_name
+        - status
+        - response_time_ms
+        - timestamp
+        properties:
+          service_name:
+            type: string
+            minLength: 1
+            maxLength: 50
+            description: Name of the service being monitored
+            example: auth-service
+          status:
+            type: string
+            enum:
+            - healthy
+            - degraded
+            - unhealthy
+            - down
+            - maintenance
+            description: Current health status
+            example: healthy
+          response_time_ms:
+            type: integer
+            minimum: 0
+            description: Response time in milliseconds
+            example: 45
+          timestamp:
+            type: string
+            format: date-time
+            description: When this health check was performed
+            example: '2024-01-15T15:30:00Z'
+          uptime_seconds:
+            type: integer
+            minimum: 0
+            description: Service uptime in seconds
+            example: 86400
+          memory_usage_mb:
+            type: integer
+            minimum: 0
+            description: Current memory usage in MB
+            example: 256
+          memory_usage_percent:
+            type: number
+            minimum: 0
+            maximum: 100
+            description: Memory usage percentage
+            example: 23.5
+          cpu_usage_percent:
+            type: number
+            minimum: 0
+            maximum: 100
+            description: CPU usage percentage
+            example: 15.2
+          active_connections:
+            type: integer
+            minimum: 0
+            description: Number of active connections
+            example: 1250
+          queue_depth:
+            type: integer
+            minimum: 0
+            description: Number of queued requests
+            example: 5
+          error_rate_percent:
+            type: number
+            minimum: 0
+            maximum: 100
+            description: Error rate percentage
+            example: 0.1
+          version:
+            type: string
+            description: Service version
+            example: 1.2.3
+          environment:
+            type: string
+            enum:
+            - development
+            - staging
+            - production
+            description: Deployment environment
+            example: production
+          checks:
+            type: array
+            items:
+              $ref: '#/components/schemas/HealthCheck'
+            description: Detailed health checks
+    HealthCheck:
+      type: object
+      required:
+      - check_name
+      - status
+      - response_time_ms
+      properties:
+        check_name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Name of the health check
+          example: database_connection
+        status:
+          type: string
+          enum:
+          - pass
+          - warn
+          - fail
+          description: Health check result
+          example: pass
+        response_time_ms:
+          type: integer
+          minimum: 0
+          description: Check response time
+          example: 12
+        message:
+          type: string
+          maxLength: 200
+          description: Check result message
+          example: Database connection successful
+        details:
+          type: object
+          description: Additional check details
+          example:
+            connection_pool_size: 10
+            active_connections: 3
+    NotificationQueueEntity:
+      allOf:
+      - $ref: '#/components/schemas/InfrastructureEntity'
+      - type: object
+        required:
+        - notification_type
+        - recipient_id
+        - content
+        - priority
+        - status
+        properties:
+          notification_type:
+            type: string
+            enum:
+            - email
+            - push
+            - in_game
+            - sms
+            - webhook
+            description: Type of notification
+            example: email
+          recipient_id:
+            type: string
+            format: uuid
+            description: User receiving the notification
+            example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+          recipient_contact:
+            type: string
+            description: Contact info (email, phone, etc.)
+            example: user@necpgame.com
+          content:
+            type: object
+            description: Notification content
+            required:
+            - subject
+            - body
+            properties:
+              subject:
+                type: string
+                minLength: 1
+                maxLength: 100
+                description: Notification subject/title
+                example: Quest Completed!
+              body:
+                type: string
+                minLength: 1
+                maxLength: 2000
+                description: Notification body/content
+                example: Congratulations! You have completed the 'Corporate Espionage'
+                  quest.
+              template_id:
+                type: string
+                description: Template used for notification
+                example: quest_completion_v2
+          priority:
+            type: string
+            enum:
+            - low
+            - normal
+            - high
+            - critical
+            description: Notification priority
+            example: normal
+          status:
+            type: string
+            enum:
+            - queued
+            - processing
+            - sent
+            - delivered
+            - failed
+            - cancelled
+            description: Delivery status
+            example: queued
+          scheduled_for:
+            type: string
+            format: date-time
+            description: When to send notification (null = immediate)
+            example: '2024-01-15T16:00:00Z'
+          sent_at:
+            type: string
+            format: date-time
+            description: When notification was sent
+            example: '2024-01-15T15:45:00Z'
+          delivered_at:
+            type: string
+            format: date-time
+            description: When notification was delivered
+            example: '2024-01-15T15:45:02Z'
+          retry_count:
+            type: integer
+            minimum: 0
+            description: Number of delivery attempts
+            example: 0
+          max_retries:
+            type: integer
+            minimum: 0
+            maximum: 5
+            description: Maximum retry attempts
+            example: 3
+          error_message:
+            type: string
+            description: Delivery error message
+            example: SMTP server timeout
+          metadata:
+            type: object
+            description: Additional notification data
+            properties:
+              campaign_id:
+                type: string
+                description: Marketing campaign ID
+                example: quest_reminder_2024
+              source_service:
+                type: string
+                description: Service that triggered notification
+                example: quest-service
+              user_preferences:
+                type: object
+                description: User's notification preferences
+                example:
+                  email_enabled: true
+                  push_enabled: false
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: '**JWT Bearer Authentication**
+
+
+        Use JWT tokens obtained from `/auth/login` or `/auth/refresh`.
+
+
+        **Token Format:** `Authorization: Bearer <jwt_token>`
+
+
+        **Token Expiration:** 15 minutes for access tokens, 7 days for refresh tokens
+
+
+        **Security Features:**
+
+        - RS256 signature verification
+
+        - Token blacklisting on logout
+
+        - Rate limiting per user
+
+        - Geographic restrictions (optional)
+
+        '
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: '**API Key Authentication**
+
+
+        Use API keys obtained from the admin panel.
+
+
+        **Header Format:** `X-API-Key: <api_key>`
+
+
+        **Rate Limits:** Configurable per key (default: 60 requests/minute)
+
+
+        **Security Features:**
+
+        - SHA-256 hashed storage
+
+        - IP whitelisting support
+
+        - Automatic key rotation
+
+        - Usage analytics
+
+        '
+    ServiceAuth:
+      $ref: ../common/security/security.yaml#/components/securitySchemes/ServiceAuth

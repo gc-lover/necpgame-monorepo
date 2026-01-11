@@ -21,25 +21,23 @@ type CombatSystemRules struct {
 
 //go:align 64
 type DamageRules struct {
-	BaseDamageMultiplier     float64               `json:"base_damage_multiplier" db:"base_damage_multiplier"`
-	CriticalHitMultiplier    float64               `json:"critical_hit_multiplier" db:"critical_hit_multiplier"`
-	ArmorReductionFactor     float64               `json:"armor_reduction_factor" db:"armor_reduction_factor"`
+	BaseDamageMultiplier     float32               `json:"base_damage_multiplier" db:"base_damage_multiplier"`
+	CriticalHitMultiplier    float32               `json:"critical_hit_multiplier" db:"critical_hit_multiplier"`
+	ArmorReductionFactor     float32               `json:"armor_reduction_factor" db:"armor_reduction_factor"`
 	EnvironmentalModifiers   EnvironmentalModifiers `json:"environmental_modifiers,omitempty" db:"environmental_modifiers"`
 }
 
 //go:align 64
 type EnvironmentalModifiers struct {
-	WeatherDamageModifier float64 `json:"weather_damage_modifier,omitempty" db:"weather_damage_modifier"`
-	TimeOfDayModifier     float64 `json:"time_of_day_modifier,omitempty" db:"time_of_day_modifier"`
+	WeatherDamageModifier float32 `json:"weather_damage_modifier,omitempty" db:"weather_damage_modifier"`
+	TimeOfDayModifier     float32 `json:"time_of_day_modifier,omitempty" db:"time_of_day_modifier"`
 }
 
 //go:align 64
 type CombatMechanics struct {
-	TurnBasedEnabled    bool                  `json:"turn_based_enabled" db:"turn_based_enabled"`
-	ActionPointsSystem  ActionPointsSystem    `json:"action_points_system" db:"action_points_system"`
-	InterruptionRules   InterruptionRules     `json:"interruption_rules" db:"interruption_rules"`
-	CooldownSystem      CooldownSystem        `json:"cooldown_system" db:"cooldown_system"`
-	TargetingRules      TargetingRules        `json:"targeting_rules" db:"targeting_rules"`
+	TurnBasedEnabled   bool              `json:"turn_based_enabled" db:"turn_based_enabled"`
+	ActionPointsSystem ActionPointsSystem `json:"action_points_system" db:"action_points_system"`
+	InterruptionRules  InterruptionRules `json:"interruption_rules" db:"interruption_rules"`
 }
 
 //go:align 64
@@ -50,50 +48,33 @@ type ActionPointsSystem struct {
 
 //go:align 64
 type InterruptionRules struct {
-	InterruptionEnabled bool    `json:"interruption_enabled" db:"interruption_enabled"`
-	InterruptionChance  float64 `json:"interruption_chance" db:"interruption_chance"`
-}
-
-//go:align 64
-type CooldownSystem struct {
-	GlobalCooldownMs int `json:"global_cooldown_ms" db:"global_cooldown_ms"`
-	CooldownReduction float64 `json:"cooldown_reduction" db:"cooldown_reduction"`
-}
-
-//go:align 64
-type TargetingRules struct {
-	MaxTargets       int  `json:"max_targets" db:"max_targets"`
-	AreaOfEffect     bool `json:"area_of_effect" db:"area_of_effect"`
-	LineOfSight       bool `json:"line_of_sight" db:"line_of_sight"`
+	AllowInterruptions   bool `json:"allow_interruptions" db:"allow_interruptions"`
+	InterruptionPenalty  int  `json:"interruption_penalty" db:"interruption_penalty"`
 }
 
 //go:align 64
 type BalanceParameters struct {
 	DifficultyScaling DifficultyScaling `json:"difficulty_scaling" db:"difficulty_scaling"`
-	ClassBalance      ClassBalance      `json:"class_balance" db:"class_balance"`
-	LevelScaling      LevelScaling      `json:"level_scaling" db:"level_scaling"`
+	PlayerAdvantages  PlayerAdvantages  `json:"player_advantages" db:"player_advantages"`
+	NPCMModifiers     NPCMModifiers     `json:"npc_modifiers" db:"npc_modifiers"`
 }
 
 //go:align 64
 type DifficultyScaling struct {
-	EasyMultiplier   float64 `json:"easy_multiplier" db:"easy_multiplier"`
-	NormalMultiplier float64 `json:"normal_multiplier" db:"normal_multiplier"`
-	HardMultiplier   float64 `json:"hard_multiplier" db:"hard_multiplier"`
+	ScalingFactor           float32 `json:"scaling_factor" db:"scaling_factor"`
+	LevelDifferenceModifier float32 `json:"level_difference_modifier" db:"level_difference_modifier"`
 }
 
 //go:align 64
-type ClassBalance struct {
-	DPSBalance     float64 `json:"dps_balance" db:"dps_balance"`
-	TankBalance    float64 `json:"tank_balance" db:"tank_balance"`
-	HealerBalance  float64 `json:"healer_balance" db:"healer_balance"`
-	SupportBalance float64 `json:"support_balance" db:"support_balance"`
+type PlayerAdvantages struct {
+	FirstStrikeBonus    float32 `json:"first_strike_bonus" db:"first_strike_bonus"`
+	PositionalAdvantage float32 `json:"positional_advantage" db:"positional_advantage"`
 }
 
 //go:align 64
-type LevelScaling struct {
-	MinLevel int     `json:"min_level" db:"min_level"`
-	MaxLevel int     `json:"max_level" db:"max_level"`
-	ScalingFactor float64 `json:"scaling_factor" db:"scaling_factor"`
+type NPCMModifiers struct {
+	EliteMultiplier float32 `json:"elite_multiplier" db:"elite_multiplier"`
+	BossMultiplier  float32 `json:"boss_multiplier" db:"boss_multiplier"`
 }
 
 //go:align 64

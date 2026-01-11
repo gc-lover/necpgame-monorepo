@@ -132,6 +132,106 @@ mcp_github_add_issue_comment({
 *   `server/service.go`: Business Logic
 *   `server/repository.go`: DB Access
 
+## 🔧 Code Generation Standards (КРИТИЧНО!)
+
+### OpenAPI Spec Generation
+**STRICT RULES - violations cause compilation failures:**
+
+1. **Domain Separation:** Use `proto/openapi/example-domain/main.yaml` template
+2. **Struct Alignment:** Order fields Large→Small (30-50% memory savings)
+3. **Inheritance:** Use `$ref` to common schemas, NO field duplication
+4. **Performance Hints:** Add backend optimization notes in comments
+
+### ogen Generation (REQUIRED)
+```bash
+# 1. Generate from bundled spec
+python scripts/openapi/bundle-openapi-spec.py proto/openapi/{domain}/main.yaml > services/{service}-go/openapi-bundled.yaml
+
+# 2. Generate API code (ALWAYS use this)
+ogen --package api --target pkg/api --config ogen.yml openapi-bundled.yaml
+
+# 3. Fix imports (CRITICAL!)
+sed -i 's|services/.*-go/|necpgame/services/\{service\}-go/|g' pkg/api/*.go
+```
+
+### Import Path Standards (КРИТИЧНО!)
+**ALL imports MUST use full module paths:**
+
+```go
+// [OK] CORRECT - Full module path
+import (
+    "necpgame/services/guild-service-go/internal/service"
+    "necpgame/services/guild-service-go/pkg/api"
+)
+
+// [ERROR] WRONG - Relative imports cause issues
+import (
+    "guild-service-go/internal/service"  // BROKEN!
+    "../pkg/api"                         // BROKEN!
+)
+```
+
+**Why:** Relative imports break when moving files, cause confusion, and fail in different environments.
+
+### Interface/Implementation Sync (КРИТИЧНО!)
+**Repository Interface MUST match Implementation:**
+
+```go
+// repository.go - Interface
+type Repository interface {
+    GetGuild(ctx context.Context, id uuid.UUID) (*api.Guild, error)
+    // NO methods with missing implementations!
+}
+
+// repository.go - Implementation
+func (r *PostgresRepository) GetGuild(ctx context.Context, id uuid.UUID) (*api.Guild, error) {
+    // Implementation exists
+}
+```
+
+**PROHIBITED:** Methods in interface without implementation = compilation failure!
+
+### Type Prefix Consistency (КРИТИЧНО!)
+**api. vs no prefix - BE CONSISTENT:**
+
+```go
+// [OK] CORRECT - Interface uses api. prefix
+type Repository interface {
+    GetGuild(ctx context.Context, id uuid.UUID) (*api.Guild, error)
+}
+
+// [OK] CORRECT - Implementation matches
+func (r *PostgresRepository) GetGuild(ctx context.Context, id uuid.UUID) (*api.Guild, error)
+```
+
+**PROHIBITED:** Mixed prefixes cause undefined type errors!
+
+### Generation Workflow (MANDATORY)
+```bash
+# 1. Update OpenAPI spec
+edit proto/openapi/{domain}/main.yaml
+
+# 2. Bundle external refs
+python scripts/openapi/bundle-openapi-spec.py proto/openapi/{domain}/main.yaml > temp.yaml
+
+# 3. Generate (ALWAYS use config)
+ogen --config ogen.yml --package api --target pkg/api temp.yaml
+
+# 4. Fix imports (automate this!)
+find pkg/api -name "*.go" -exec sed -i 's|services/.*-go/|necpgame/services/{service}-go/|g' {} \;
+
+# 5. Clean temp files
+rm temp.yaml
+```
+
+### Avoiding Import Issues (CHECKLIST)
+- [ ] **Full module paths only:** `necpgame/services/...`
+- [ ] **No relative imports:** `../pkg/api` forbidden
+- [ ] **Interface matches implementation:** Same method signatures
+- [ ] **Consistent type prefixes:** All `api.` or none
+- [ ] **Generated code cleaned:** Imports fixed after ogen
+- [ ] **Test compilation:** `go build .` after generation
+
 ## 📜 Content Import (Quests/NPCs)
 **Labels:** `canon`, `lore`, `quest`, `npc`
 

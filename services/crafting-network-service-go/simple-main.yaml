@@ -1,0 +1,253 @@
+openapi: 3.0.3
+info:
+  title: Crafting Network Service API - Enterprise-Grade Real-Time Crafting
+  description: '**Enterprise-Grade Real-Time Crafting Network API for NECPGAME**'
+  version: 1.0.0
+servers:
+- url: https://api.necpgame.com/v1/crafting-network
+  description: Production server
+- url: http://localhost:8080/api/v1/crafting-network
+  description: Local development server
+security:
+- BearerAuth: []
+tags:
+- name: Real-Time Crafting
+  description: WebSocket-based real-time crafting operations
+- name: UDP Synchronization
+  description: High-frequency UDP crafting state synchronization
+- name: Health Monitoring
+  description: System health and performance monitoring
+paths:
+  /health:
+    get:
+      summary: Crafting network service health check
+      operationId: craftingNetworkServiceHealthCheck
+      tags:
+      - Health Monitoring
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+                  timestamp:
+                    type: string
+                    format: date-time
+        "503":
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "unhealthy"
+                  timestamp:
+                    type: string
+                    format: date-time
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Internal server error"
+                  code:
+                    type: integer
+                    example: 500
+  /ws/crafting/{session_id}:
+    get:
+      summary: WebSocket connection for real-time crafting session
+      operationId: craftingSessionWebSocket
+      tags:
+      - Real-Time Crafting
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Crafting session identifier
+      - name: player_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player identifier for authorization
+      responses:
+        '101':
+          description: WebSocket connection established for crafting session
+        '400':
+          description: Invalid session or player parameters
+        '403':
+          description: Forbidden - player not authorized for this session
+        '404':
+          description: Crafting session not found
+  /ws/queue/{player_id}:
+    get:
+      summary: WebSocket connection for crafting queue monitoring
+      operationId: craftingQueueWebSocket
+      tags:
+      - Real-Time Crafting
+      parameters:
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player identifier
+      responses:
+        '101':
+          description: WebSocket connection established for queue monitoring
+        '403':
+          description: Forbidden - invalid player authorization
+  /udp/sessions/{session_id}/connect:
+    post:
+      summary: Establish UDP connection for crafting session
+      operationId: udpCraftingSessionConnect
+      tags:
+      - UDP Synchronization
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Crafting session identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - player_id
+              - client_version
+              properties:
+                player_id:
+                  type: string
+                  format: uuid
+                client_version:
+                  type: string
+                  pattern: '^\d+\.\d+\.\d+$'
+      responses:
+        '200':
+          description: UDP connection parameters established
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - session_token
+                - server_endpoint
+                properties:
+                  session_token:
+                    type: string
+                    description: UDP session authentication token
+                  server_endpoint:
+                    type: string
+                    description: UDP server endpoint (host:port)
+        '400':
+          description: Invalid connection parameters
+        '403':
+          description: Forbidden - session access denied
+        '404':
+          description: Crafting session not found
+  /udp/sessions/{session_id}/progress:
+    post:
+      summary: UDP endpoint for crafting progress synchronization
+      operationId: udpCraftingProgressSync
+      tags:
+      - UDP Synchronization
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Crafting session identifier
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              type: object
+              properties:
+                session_id:
+                  type: string
+                  format: uuid
+                progress_percentage:
+                  type: integer
+                  minimum: 0
+                  maximum: 100
+      responses:
+        '200':
+          description: Progress update accepted
+        '400':
+          description: Invalid progress data
+        '403':
+          description: Session access denied
+        '404':
+          description: Session not found
+  /udp/sessions/{session_id}/materials:
+    post:
+      summary: UDP endpoint for material availability synchronization
+      operationId: udpMaterialAvailabilitySync
+      tags:
+      - UDP Synchronization
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Crafting session identifier
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              type: object
+              properties:
+                material_id:
+                  type: string
+                  format: uuid
+                change_type:
+                  type: string
+                  enum:
+                  - added
+                  - removed
+                  - quantity_changed
+                new_quantity:
+                  type: integer
+                  minimum: 0
+      responses:
+        '200':
+          description: Material update processed
+        '400':
+          description: Invalid material data
+        '403':
+          description: Session access denied
+        '404':
+          description: Session not found
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

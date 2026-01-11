@@ -1,0 +1,109 @@
+# Common Error Responses - SOLID/DRY Foundation
+# These error responses are inherited by all services
+# Issue: #openapi-refactor
+
+components:
+  responses:
+
+    # 400 Bad Request - validation errors
+    BadRequest:
+      description: Bad request - validation failed or malformed data
+      headers:
+        Content-Type:
+          schema:
+            type: string
+            example: application/json
+      content:
+        application/json:
+          schema:
+            $ref: ../schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+
+    # 401 Unauthorized - authentication required
+    Unauthorized:
+      description: Unauthorized - authentication required or invalid token
+      headers:
+        WWW-Authenticate:
+          schema:
+            type: string
+            example: Bearer realm="NECPGAME API"
+      content:
+        application/json:
+          schema:
+            $ref: ../schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+
+    # 403 Forbidden - insufficient permissions
+    Forbidden:
+      description: Forbidden - insufficient permissions for this operation
+      content:
+        application/json:
+          schema:
+            $ref: ../schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+
+    # 404 Not Found - resource not found
+    NotFound:
+      description: Not found - requested resource does not exist
+      content:
+        application/json:
+          schema:
+            $ref: ../schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+
+    # 409 Conflict - version mismatch or concurrent modification
+    Conflict:
+      description: Conflict - resource has been modified by another request
+
+    # 422 Unprocessable Entity - business logic validation
+    UnprocessableEntity:
+      description: Unprocessable entity - business logic validation failed
+      content:
+        application/json:
+          schema:
+            $ref: ../schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+
+    # 429 Too Many Requests - rate limiting
+    TooManyRequests:
+      description: Too many requests - rate limit exceeded
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+            example: 60
+            description: Seconds to wait before retrying
+        X-RateLimit-Limit:
+          schema:
+            type: integer
+            description: Maximum requests per time window
+        X-RateLimit-Remaining:
+          schema:
+            type: integer
+            description: Remaining requests in current window
+        X-RateLimit-Reset:
+          schema:
+            type: string
+            format: date-time
+            description: Time when rate limit resets
+      content:
+        application/json:
+          schema:
+            $ref: ../schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+
+    # 500 Internal Server Error - unexpected errors
+    InternalServerError:
+      description: Internal server error - unexpected system error occurred
+      content:
+        application/json:
+          schema:
+            $ref: ../schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse
+
+    # 503 Service Unavailable - maintenance or overload
+    ServiceUnavailable:
+      description: Service unavailable - system is under maintenance or overloaded
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+            example: 300
+            description: Seconds until service is available again
+      content:
+        application/json:
+          schema:
+            $ref: ../schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse

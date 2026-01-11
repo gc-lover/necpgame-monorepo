@@ -1,0 +1,111 @@
+# Common Success Responses - SOLID/DRY Foundation
+# These success responses are inherited by all services
+# Issue: #openapi-refactor
+
+components:
+  responses:
+
+    # 200 OK - standard success response
+    OK:
+      description: Operation completed successfully
+      headers:
+        Content-Type:
+          schema:
+            type: string
+            example: application/json
+        ETag:
+          schema:
+            type: string
+            description: Entity version for optimistic locking
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - success
+              - message
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Operation completed successfully"
+              data:
+                type: object
+                description: Response data payload
+
+    # 201 Created - resource creation success
+    Created:
+      description: Resource created successfully
+      headers:
+        Content-Type:
+          schema:
+            type: string
+            example: application/json
+        Location:
+          schema:
+            type: string
+            description: URL of the created resource
+        ETag:
+          schema:
+            type: string
+            description: Entity version for optimistic locking
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - success
+              - message
+              - id
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Resource created successfully"
+              id:
+                type: string
+                format: uuid
+                description: ID of the created resource
+                example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+              data:
+                type: object
+                description: Created resource data
+
+    # 204 No Content - successful operation with no response body
+    NoContent:
+      description: Operation completed successfully - no content to return
+      headers:
+        Content-Length:
+          schema:
+            type: string
+            example: "0"
+
+    # Batch health check success response
+    HealthBatchSuccess:
+      description: Batch health check completed successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - overall_status
+              - timestamp
+              - results
+            properties:
+              overall_status:
+                type: string
+                enum: [healthy, degraded, critical]
+                example: healthy
+              timestamp:
+                type: string
+                format: date-time
+                example: "2024-01-15T10:30:00Z"
+              results:
+                type: object
+                additionalProperties:
+                  $ref: ../schemas/health.yaml#/HealthResponse
+                description: Health status for each requested service

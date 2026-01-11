@@ -11,34 +11,28 @@ import (
 
 //go:align 64
 type Guild struct {
-	ID             uuid.UUID `json:"id" db:"id"`
-	Version        int       `json:"version" db:"version"`
-	GuildName      string    `json:"guild_name" db:"guild_name"`
-	GuildTag       string    `json:"guild_tag" db:"guild_tag"`
-	Description    string    `json:"description,omitempty" db:"description"`
-	LeaderID       uuid.UUID `json:"leader_id" db:"leader_id"`
-	Faction        string    `json:"faction,omitempty" db:"faction"`
-	Level          int       `json:"level" db:"level"`
-	Experience     int64     `json:"experience" db:"experience"`
-	MaxMembers     int       `json:"max_members" db:"max_members"`
-	CurrentMembers int       `json:"current_members" db:"current_members"`
-	Reputation     int       `json:"reputation" db:"reputation"`
-	IsRecruiting   bool      `json:"is_recruiting" db:"is_recruiting"`
-	CreatedAt      time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt      time.Time `json:"updated_at" db:"updated_at"`
+	ID          uuid.UUID `json:"id" db:"id"`
+	Name        string    `json:"name" db:"name"`
+	Description string    `json:"description,omitempty" db:"description"`
+	LeaderID    uuid.UUID `json:"leader_id" db:"leader_id"`
+	MemberCount int       `json:"member_count" db:"member_count"`
+	MaxMembers  int       `json:"max_members" db:"max_members"`
+	Level       int       `json:"level" db:"level"`
+	Experience  int64     `json:"experience" db:"experience"`
+	Reputation  int       `json:"reputation" db:"reputation"`
+	CreatedAt   time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
 }
 
 //go:align 64
 type GuildMember struct {
-	ID                 uuid.UUID              `json:"id" db:"id"`
-	GuildID            uuid.UUID              `json:"guild_id" db:"guild_id"`
-	PlayerID           uuid.UUID              `json:"player_id" db:"player_id"`
-	Role               string                 `json:"role" db:"role"`
-	JoinedAt           time.Time              `json:"joined_at" db:"joined_at"`
-	LastActive         time.Time              `json:"last_active" db:"last_active"`
-	ContributionPoints int                    `json:"contribution_points" db:"contribution_points"`
-	Permissions        GuildMemberPermissions `json:"permissions" db:"permissions"`
-	Version            int                    `json:"version" db:"version"`
+	UserId       uuid.UUID `json:"user_id" db:"user_id"`
+	GuildId      uuid.UUID `json:"guild_id" db:"guild_id"`
+	Username     string    `json:"username,omitempty" db:"username"`
+	Role         string    `json:"role" db:"role"`
+	JoinedAt     time.Time `json:"joined_at" db:"joined_at"`
+	LastActive   time.Time `json:"last_active" db:"last_active"`
+	Contribution int       `json:"contribution" db:"contribution"`
 }
 
 //go:align 64

@@ -1,0 +1,128 @@
+openapi: 3.0.3
+info:
+  title: Faction Service API
+  version: 1.0.0
+servers:
+- url: http://localhost:8080/api/v1/faction
+paths:
+  /health:
+    get:
+      operationId: factionServiceHealthCheck
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        "503":
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+  /factions:
+    get:
+      operationId: listFactions
+      responses:
+        '200':
+          description: Factions retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionListResponse'
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+      - status
+      - timestamp
+      properties:
+        status:
+          type: string
+          enum:
+          - healthy
+          - unhealthy
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        details:
+          $ref: '#/components/schemas/HealthDetails'
+    HealthDetails:
+      type: object
+      properties:
+        totalFactions:
+          type: integer
+        activeFactions:
+          type: integer
+        totalDiplomacy:
+          type: integer
+        activeDiplomacy:
+          type: integer
+    ErrorResponse:
+      type: object
+      required:
+      - error
+      - message
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+    FactionListResponse:
+      type: object
+      required:
+      - factions
+      - pagination
+      properties:
+        factions:
+          type: array
+          items:
+            $ref: '#/components/schemas/FactionSummary'
+        pagination:
+          type: object
+          required:
+          - page
+          - limit
+          - total_count
+          - total_pages
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total_count:
+              type: integer
+            total_pages:
+              type: integer
+    FactionSummary:
+      type: object
+      required:
+      - faction_id
+      - name
+      properties:
+        faction_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 50
+        reputation:
+          type: integer
+          minimum: -1000
+          maximum: 1000
+        influence:
+          type: integer
+          minimum: 0
+        member_count:
+          type: integer
+          minimum: 0
+        description:
+          type: string
+          maxLength: 200
+        created_at:
+          type: string
+          format: date-time

@@ -14,13 +14,15 @@ from dataclasses import dataclass
 
 # Add scripts directory to Python path for imports
 scripts_dir = Path(__file__).parent.parent
+project_root = scripts_dir.parent
 sys.path.insert(0, str(scripts_dir))
+sys.path.insert(0, str(project_root))
 
-from core.command_runner import CommandRunner
-from core.config import ConfigManager
-from core.file_manager import FileManager
-from core.logger import Logger
-from openapi.openapi_analyzer import OpenAPIAnalyzer, OpenAPIAnalysis
+from scripts.core.command_runner import CommandRunner
+from scripts.core.config import ConfigManager
+from scripts.core.file_manager import FileManager
+from scripts.core.logger import Logger
+from scripts.tools.openapi.openapi_analyzer import OpenAPIAnalyzer, OpenAPIAnalysis
 
 
 @dataclass

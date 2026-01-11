@@ -39,11 +39,11 @@ type Config struct {
 
 // Service defines the service interface
 type Service interface {
-	GetCombatRules(ctx context.Context) (*models.CombatSystemRules, error)
-	UpdateCombatRules(ctx context.Context, req *api.UpdateCombatSystemRulesRequest) (*models.CombatSystemRules, error)
+	GetCombatRules(ctx context.Context) (*api.CombatSystemRules, error)
+	UpdateCombatRules(ctx context.Context, req *api.UpdateCombatSystemRulesRequest) (*api.CombatSystemRules, error)
 	CalculateDamage(ctx context.Context, req *api.DamageCalculationRequest) (*api.DamageCalculationResponse, error)
-	GetBalanceConfig(ctx context.Context) (*models.CombatBalanceConfig, error)
-	UpdateBalanceConfig(ctx context.Context, req *api.UpdateCombatBalanceConfigRequest) (*models.CombatBalanceConfig, error)
+	GetBalanceConfig(ctx context.Context) (*api.CombatBalanceConfig, error)
+	UpdateBalanceConfig(ctx context.Context, req *api.UpdateCombatBalanceConfigRequest) (*api.CombatBalanceConfig, error)
 	ListAbilities(ctx context.Context, params api.CombatSystemServiceListAbilitiesParams) (*api.AbilityConfigurationsResponse, error)
 	HealthCheck(ctx context.Context) error
 }
@@ -185,15 +185,7 @@ func (h *CombatHandler) CombatSystemServiceHealthCheck(ctx context.Context) (api
 
 // CombatSystemServiceGetRules implements rules retrieval with caching
 func (h *CombatHandler) CombatSystemServiceGetRules(ctx context.Context) (*api.CombatSystemRules, error) {
-	// TODO: Implement proper conversion from service models to API types
-	return &api.CombatSystemRules{
-		Version:           1,
-		DamageRules:       api.DamageRules{},
-		CombatMechanics:   api.CombatMechanics{},
-		BalanceParameters: api.BalanceParameters{},
-		CreatedAt:         api.NewOptDateTime(time.Now()),
-		UpdatedAt:         api.NewOptDateTime(time.Now()),
-	}, nil
+	return h.service.GetCombatRules(ctx)
 }
 
 // CombatSystemServiceUpdateRules implements rules update with optimistic locking
@@ -218,7 +210,7 @@ func (h *CombatHandler) CombatSystemServiceCalculateDamage(ctx context.Context, 
 func (h *CombatHandler) CombatSystemServiceGetBalance(ctx context.Context) (*api.CombatBalanceConfig, error) {
 	// TODO: Implement proper conversion from service models to API types
 	return &api.CombatBalanceConfig{
-		Version: "1.0.0",
+		Version: 1,
 		CreatedAt: api.NewOptDateTime(time.Now()),
 		UpdatedAt: api.NewOptDateTime(time.Now()),
 	}, nil
@@ -293,93 +285,3 @@ var (
 	ErrInvalidRequest  = fmt.Errorf("invalid request")
 	ErrNotFound        = fmt.Errorf("not found")
 )
-
-// Conversion functions from models to API types
-
-func convertDamageRulesToAPI(rules models.DamageRules) api.DamageRules {
-	return api.DamageRules{
-		BaseDamageMultiplier:     rules.BaseDamageMultiplier,
-		CriticalHitMultiplier:    rules.CriticalHitMultiplier,
-		ArmorReductionFactor:     rules.ArmorReductionFactor,
-		EnvironmentalModifiers:   convertEnvironmentalModifiersToAPI(rules.EnvironmentalModifiers),
-	}
-}
-
-func convertEnvironmentalModifiersToAPI(modifiers models.EnvironmentalModifiers) api.EnvironmentalModifiers {
-	return api.EnvironmentalModifiers{
-		WeatherMultiplier:   modifiers.WeatherMultiplier,
-		TerrainMultiplier:   modifiers.TerrainMultiplier,
-		TimeOfDayMultiplier: modifiers.TimeOfDayMultiplier,
-	}
-}
-
-func convertCombatMechanicsToAPI(mechanics models.CombatMechanics) api.CombatMechanics {
-	return api.CombatMechanics{
-		MaxConcurrentCombats:    mechanics.MaxConcurrentCombats,
-		DefaultCooldownMs:       mechanics.DefaultCooldownMs,
-		DefaultCastTimeMs:       mechanics.DefaultCastTimeMs,
-		InterruptionRules:       convertInterruptionRulesToAPI(mechanics.InterruptionRules),
-		ActionPointsSystem:      convertActionPointsSystemToAPI(mechanics.ActionPointsSystem),
-	}
-}
-
-func convertInterruptionRulesToAPI(rules models.InterruptionRules) api.InterruptionRules {
-	return api.InterruptionRules{
-		InterruptionChance:      rules.InterruptionChance,
-		InterruptionDurationMs:  rules.InterruptionDurationMs,
-		CrowdControlImmunity:    rules.CrowdControlImmunity,
-	}
-}
-
-func convertActionPointsSystemToAPI(system models.ActionPointsSystem) api.ActionPointsSystem {
-	return api.ActionPointsSystem{
-		MaxActionPoints:     system.MaxActionPoints,
-		RegenerationRate:    system.RegenerationRate,
-		ActionPointCost:     system.ActionPointCost,
-	}
-}
-
-func convertBalanceParametersToAPI(params models.BalanceParameters) api.BalanceParameters {
-	return api.BalanceParameters{
-		DynamicDifficultyEnabled: params.DynamicDifficultyEnabled,
-		DifficultyScalingFactor:  params.DifficultyScalingFactor,
-		PlayerSkillAdjustment:    params.PlayerSkillAdjustment,
-		BalancedForGroupSize:     params.BalancedForGroupSize,
-		GlobalMultipliers:       convertGlobalMultipliersToAPI(params.GlobalMultipliers),
-		CharacterBalance:         convertCharacterBalanceToAPI(params.CharacterBalance),
-		EnvironmentalBalance:     convertEnvironmentalBalanceToAPI(params.EnvironmentalBalance),
-		LevelScaling:             convertLevelScalingToAPI(params.LevelScaling),
-	}
-}
-
-func convertGlobalMultipliersToAPI(multipliers models.GlobalMultipliers) api.GlobalMultipliers {
-	return api.GlobalMultipliers{
-		DamageMultiplier:    multipliers.DamageMultiplier,
-		HealthMultiplier:    multipliers.HealthMultiplier,
-		SpeedMultiplier:     multipliers.SpeedMultiplier,
-		ExperienceMultiplier: multipliers.ExperienceMultiplier,
-	}
-}
-
-func convertCharacterBalanceToAPI(balance models.CharacterBalance) api.CharacterBalance {
-	return api.CharacterBalance{
-		ClassMultipliers:  balance.ClassMultipliers,
-		StatWeights:        balance.StatWeights,
-	}
-}
-
-func convertEnvironmentalBalanceToAPI(balance models.EnvironmentalBalance) api.EnvironmentalBalance {
-	return api.EnvironmentalBalance{
-		TerrainModifiers:   balance.TerrainModifiers,
-		TimeOfDayEffects:   balance.TimeOfDayEffects,
-		WeatherEffects:     balance.WeatherEffects,
-	}
-}
-
-func convertLevelScalingToAPI(scaling models.LevelScaling) api.LevelScaling {
-	return api.LevelScaling{
-		LevelMultiplier:     scaling.LevelMultiplier,
-		MaxLevel:            scaling.MaxLevel,
-		ExperienceCurve:     scaling.ExperienceCurve,
-	}
-}

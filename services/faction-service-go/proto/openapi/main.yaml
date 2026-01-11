@@ -98,13 +98,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/health.yaml#/components/schemas/HealthResponse'
+                $ref: '#/components/schemas/HealthResponse'
         "503":
           description: Service is unhealthy
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/health.yaml#/components/schemas/HealthResponse'
+                $ref: '#/components/schemas/HealthResponse'
         "429":
           $ref: '../common/responses/error.yaml#/components/responses/TooManyRequests'
         default:
@@ -963,28 +963,124 @@ paths:
 components:
   responses:
     HealthBatchSuccess:
-      $ref: '../common/responses/success.yaml#/components/responses/HealthBatchSuccess'
+      description: Batch health check successful
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - services
+            properties:
+              services:
+                type: object
+                additionalProperties:
+                  $ref: '#/components/schemas/HealthResponse'
     OK:
-      $ref: '../common/responses/success.yaml#/components/responses/OK'
+      description: Success
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - message
+            properties:
+              message:
+                type: string
     Created:
-      $ref: '../common/responses/success.yaml#/components/responses/Created'
+      description: Resource created
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - message
+            properties:
+              message:
+                type: string
     BadRequest:
-      $ref: '../common/responses/error.yaml#/components/responses/BadRequest'
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
     Unauthorized:
-      $ref: '../common/responses/error.yaml#/components/responses/Unauthorized'
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
     Forbidden:
-      $ref: '../common/responses/error.yaml#/components/responses/Forbidden'
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
     NotFound:
-      $ref: '../common/responses/error.yaml#/components/responses/NotFound'
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
     Conflict:
-      $ref: '../common/responses/error.yaml#/components/responses/Conflict'
+      description: Conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
     InternalServerError:
-      $ref: '../common/responses/error.yaml#/components/responses/InternalServerError'
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
     HealthOK:
-      $ref: '../common/responses/success.yaml#/components/responses/HealthOK'
+      description: Health check OK
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/HealthResponse'
   schemas:
     HealthResponse:
-      $ref: '../common/schemas/health.yaml#/components/schemas/HealthResponse'
+      type: object
+      required:
+      - status
+      - timestamp
+      properties:
+        status:
+          type: string
+          enum:
+          - healthy
+          - unhealthy
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        details:
+          $ref: '#/components/schemas/HealthDetails'
+    HealthDetails:
+      type: object
+      properties:
+        totalFactions:
+          type: integer
+        activeFactions:
+          type: integer
+        totalDiplomacy:
+          type: integer
+        activeDiplomacy:
+          type: integer
+    ErrorResponse:
+      type: object
+      required:
+      - error
+      - message
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
     FactionListResponse:
       type: object
       required:

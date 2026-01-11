@@ -3,7 +3,6 @@ package repository
 
 import (
 	"context"
-	"database/sql/driver"
 	"encoding/json"
 	"fmt"
 	"time"

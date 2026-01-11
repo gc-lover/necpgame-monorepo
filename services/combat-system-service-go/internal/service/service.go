@@ -36,8 +36,8 @@ type Service struct {
 	repo         repository.Repository
 	logger       *zap.Logger
 	config       Config
-	rulesCache   *models.CombatSystemRules
-	balanceCache *models.CombatBalanceConfig
+	rulesCache   *api.CombatSystemRules
+	balanceCache *api.CombatBalanceConfig
 	cacheMutex   sync.RWMutex
 	semaphore    chan struct{}
 	redis        *redis.Client
@@ -119,7 +119,7 @@ func NewService(repo repository.Repository, logger *zap.Logger, config Config, r
 }
 
 //go:align 64
-func (s *Service) GetCombatRules(ctx context.Context) (*models.CombatSystemRules, error) {
+func (s *Service) GetCombatRules(ctx context.Context) (*api.CombatSystemRules, error) {
 	// Try memory cache first
 	s.cacheMutex.RLock()
 	if s.rulesCache != nil {
@@ -174,7 +174,7 @@ func (s *Service) GetCombatRules(ctx context.Context) (*models.CombatSystemRules
 }
 
 //go:align 64
-func (s *Service) UpdateCombatRules(ctx context.Context, req *api.UpdateCombatSystemRulesRequest) (*models.CombatSystemRules, error) {
+func (s *Service) UpdateCombatRules(ctx context.Context, req *api.UpdateCombatSystemRulesRequest) (*api.CombatSystemRules, error) {
 	// Get current rules
 	rules, err := s.repo.GetCombatSystemRules(ctx)
 	if err != nil {
