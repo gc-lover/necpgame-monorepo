@@ -1,27 +1,27 @@
-# Enterprise-Grade OpenAPI Template - SOLID/DRY Domain Inheritance
-# AI Behavior Engine Service - Decision making and behavior trees for AI enemies
+# AI Behavior Engine Service OpenAPI Specification
+# Decision making and behavior trees for AI enemies in Night City MMOFPS RPG
 # Issue: #2300
 
 openapi: 3.0.3
 info:
   title: AI Behavior Engine Service API
   description: |
-    **AI Behavior Engine Service** - Advanced artificial intelligence behavior systems for NECPGAME MMOFPS RPG.
+    **Enterprise-grade API for AI Behavior Engine**
 
     ## Domain Purpose
-    Provides comprehensive AI behavior management including adaptive difficulty scaling, NPC behavior trees,
-    procedural generation, player behavior analytics, dynamic quest generation, and combat AI optimization.
+    Advanced AI decision making system providing behavior trees, utility AI, and adaptive learning for enemy entities.
+    Supports real-time behavior execution with <10ms decision latency for optimal gameplay experience.
 
     ## Performance Targets
-    - P99 Latency: <15ms for AI operations
-    - Memory Footprint: <50MB per zone
-    - Decision Latency: <10ms per AI entity
-    - Concurrent AI Entities: 500+ per zone supported
+    - P99 Latency: <10ms for decision making (critical for real-time AI)
+    - Memory per Zone: <50MB for 500+ concurrent AI entities
+    - Decision Rate: 1000+ decisions per second
+    - Uptime: 99.9% SLA (mission-critical for AI behavior)
 
     ## Domain Inheritance (SOLID/DRY)
     This service inherits from game-entities.yaml providing:
     - Consistent base entity structure (id, timestamps, version) - НЕ ДУБЛИРУЕМ!
-    - Game Domain entities through `allOf` pattern
+    - Game-specific business entities through `allOf` pattern
     - Optimistic locking for concurrent operations (version field)
     - Strict typing with validation rules (min/max, patterns, enums)
 
@@ -33,8 +33,8 @@ info:
 
   version: "1.0.0"
   contact:
-    name: NECPGAME AI API Team
-    email: ai@necpgame.com
+    name: NECPGAME API Team
+    email: api@necpgame.com
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
@@ -51,29 +51,22 @@ security:
   - BearerAuth: []
 
 tags:
-  - name: Behavior Trees
-    description: Hierarchical task execution and behavior management
-  - name: Utility AI
-    description: Dynamic decision making systems
+  - name: AI Behavior Engine
+    description: Core AI decision making and behavior tree operations
+  - name: Behavior Patterns
+    description: Behavior tree management and pattern execution
   - name: Learning Systems
-    description: Pattern recognition and adaptive learning
-  - name: Coordination Logic
-    description: Squad/group behavior coordination
-  - name: Adaptive Difficulty
-    description: Dynamic difficulty scaling based on player performance
-  - name: Performance Monitoring
-    description: AI behavior performance metrics and optimization
+    description: AI adaptation and learning mechanics
   - name: Health Monitoring
     description: Service health and performance monitoring
   - name: Administration
     description: Administrative operations
 
 paths:
-
   # Health Check Endpoints - Required for all services
   /health:
     get:
-      operationId: aiBehaviorEngineHealthCheck
+      operationId: {serviceName}HealthCheck
       summary: Basic health check
       description: Returns service health status
       tags: [Health Monitoring]
@@ -93,9 +86,9 @@ paths:
 
   /health/detailed:
     get:
-      operationId: aiBehaviorEngineDetailedHealthCheck
-      summary: Detailed health check with AI metrics
-      description: Returns comprehensive health status including AI behavior performance metrics
+      operationId: {serviceName}DetailedHealthCheck
+      summary: Detailed health check with metrics
+      description: Returns comprehensive health status including performance metrics
       tags: [Health Monitoring]
       responses:
         '200':
@@ -111,1474 +104,144 @@ paths:
               schema:
                 $ref: '../common/responses/error.yaml#/components/responses/ServiceUnavailable'
 
-  # Behavior Tree Management
-  /behavior-trees:
+  /health/batch:
     get:
-      operationId: listBehaviorTrees
-      summary: List available behavior trees
-      description: |
-        Retrieve paginated list of available behavior trees with filtering options.
-
-        **Performance Notes:**
-        - Cached tree definitions (5 minute TTL)
-        - Memory-optimized tree storage
-        - P99 latency target: <10ms
-      tags: [Behavior Trees]
-      parameters:
-        - name: enemy_type
-          in: query
-          schema:
-            type: string
-            enum: [mercenary_boss, cyberpsychic_elite, corporate_squad, common_enemy]
-          description: Filter by enemy type
-        - name: difficulty_level
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 10
-          description: Filter by difficulty level
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-          description: Number of results to return
+      operationId: {serviceName}BatchHealthCheck
+      summary: Batch health check for multiple services
+      description: Checks health of this service and its dependencies
+      tags: [Health Monitoring]
       responses:
         '200':
-          description: Behavior trees retrieved successfully
+          description: Batch health results
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '../common/responses/success.yaml#/PaginatedResponse'
-                  - type: object
-                    properties:
-                      data:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/BehaviorTree'
-        '400':
-          $ref: '#/components/responses/BadRequest'
+                $ref: '../common/schemas/health.yaml#/components/schemas/HealthResponse'
 
-    post:
-      operationId: createBehaviorTree
-      summary: Create new behavior tree
-      description: |
-        Create a new behavior tree definition for AI enemies.
+  # WebSocket Health Check - Required for real-time services (опционально)
+  # /health/ws:
+  #   get:
+  #     operationId: {serviceName}WebSocketHealthCheck
+  #     summary: WebSocket connection health check
+  #     description: Tests WebSocket connectivity and real-time messaging
+  #     tags: [Health Monitoring]
+  #     responses:
+  #       '200':
+  #         description: WebSocket connection healthy
+  #         content:
+  #           application/json:
+  #             schema:
+  #               $ref: '../common/schemas/health.yaml#/components/schemas/HealthResponse'
 
-        **Performance Notes:**
-        - Tree compilation and optimization during creation
-        - Memory usage validation before storage
-        - P99 latency target: <50ms
-      tags: [Behavior Trees, Administration]
-      security:
-        - BearerAuth: []
-        - AdminAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/BehaviorTreeCreateRequest'
-      responses:
-        '201':
-          description: Behavior tree created successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BehaviorTree'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+  # Example Core Business Endpoint - Замените на реальные endpoints
+  # /{resource}s:
+  #   get:
+  #     operationId: list{Resource}s
+  #     summary: List {resources} with filtering and pagination
+  #     description: |
+  #       Retrieve a paginated list of {resources} with advanced filtering options.
 
-  /behavior-trees/{tree_id}:
-    get:
-      operationId: getBehaviorTree
-      summary: Get behavior tree definition
-      description: |
-        Retrieve detailed behavior tree definition including all nodes and connections.
-
-        **Performance Notes:**
-        - Cached tree retrieval
-        - Memory-efficient serialization
-        - P99 latency target: <15ms
-      tags: [Behavior Trees]
-      parameters:
-        - name: tree_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Behavior tree identifier
-      responses:
-        '200':
-          description: Behavior tree retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BehaviorTree'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    put:
-      operationId: updateBehaviorTree
-      summary: Update behavior tree
-      description: |
-        Update existing behavior tree definition with optimistic locking.
-
-        **Performance Notes:**
-        - Tree recompilation and validation
-        - Affected AI entities notified of changes
-        - P99 latency target: <75ms
-      tags: [Behavior Trees, Administration]
-      security:
-        - BearerAuth: []
-        - AdminAuth: []
-      parameters:
-        - name: tree_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Behavior tree identifier
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/BehaviorTreeUpdateRequest'
-      responses:
-        '200':
-          description: Behavior tree updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BehaviorTree'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          $ref: '#/components/responses/Conflict'
-
-  # AI Decision Making
-  /ai-decisions/{enemy_id}/evaluate:
-    post:
-      operationId: evaluateAiDecision
-      summary: Evaluate AI decision for enemy
-      description: |
-        Evaluate current situation and make optimal decision for AI enemy using utility AI system.
-
-        **Performance Notes:**
-        - Real-time decision evaluation (<10ms target)
-        - Cached utility calculations
-        - Memory-pooled decision contexts
-        - P99 latency target: <15ms
-      tags: [Utility AI]
-      parameters:
-        - name: enemy_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: AI enemy identifier
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AiDecisionContext'
-      responses:
-        '200':
-          description: AI decision evaluated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AiDecision'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /ai-decisions/batch:
-    post:
-      operationId: batchEvaluateDecisions
-      summary: Batch evaluate AI decisions
-      description: |
-        Evaluate decisions for multiple AI enemies in batch for performance optimization.
-
-        **Performance Notes:**
-        - Vectorized decision evaluation
-        - Shared context optimization
-        - Up to 100 enemies per batch
-        - P99 latency target: <25ms per enemy
-      tags: [Utility AI, Performance Monitoring]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/BatchDecisionRequest'
-      responses:
-        '200':
-          description: Batch decisions evaluated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BatchDecisionResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
-
-  # Learning Systems
-  /learning/patterns/{enemy_id}/update:
-    post:
-      operationId: updateLearningPattern
-      summary: Update AI learning pattern
-      description: |
-        Update adaptive learning pattern for AI enemy based on observed behavior.
-
-        **Performance Notes:**
-        - Incremental learning updates
-        - Pattern recognition optimization
-        - Memory-bounded learning storage
-        - P99 latency target: <20ms
-      tags: [Learning Systems]
-      parameters:
-        - name: enemy_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: AI enemy identifier
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/LearningUpdateRequest'
-      responses:
-        '200':
-          description: Learning pattern updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LearningPattern'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /learning/patterns/{enemy_id}/predict:
-    post:
-      operationId: predictPlayerBehavior
-      summary: Predict player behavior pattern
-      description: |
-        Predict player behavior based on learned patterns and current context.
-
-        **Performance Notes:**
-        - Cached prediction models
-        - Real-time pattern matching
-        - Confidence scoring
-        - P99 latency target: <12ms
-      tags: [Learning Systems]
-      parameters:
-        - name: enemy_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: AI enemy identifier
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PredictionContext'
-      responses:
-        '200':
-          description: Player behavior predicted successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BehaviorPrediction'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  # Coordination Logic
-  /coordination/squads/{squad_id}/behavior:
-    post:
-      operationId: coordinateSquadBehavior
-      summary: Coordinate squad behavior
-      description: |
-        Coordinate behavior for entire AI squad based on group dynamics and objectives.
-
-        **Performance Notes:**
-        - Distributed coordination algorithms
-        - Communication network optimization
-        - Squad size up to 20 enemies
-        - P99 latency target: <30ms
-      tags: [Coordination Logic]
-      parameters:
-        - name: squad_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: AI squad identifier
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SquadBehaviorRequest'
-      responses:
-        '200':
-          description: Squad behavior coordinated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SquadBehaviorResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /coordination/swarm/{swarm_id}/optimize:
-    post:
-      operationId: optimizeSwarmBehavior
-      summary: Optimize swarm behavior
-      description: |
-        Optimize collective behavior for large AI swarms using emergent algorithms.
-
-        **Performance Notes:**
-        - Scalable swarm algorithms
-        - Emergent behavior optimization
-        - Swarm size up to 100+ enemies
-        - P99 latency target: <50ms
-      tags: [Coordination Logic, Performance Monitoring]
-      parameters:
-        - name: swarm_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: AI swarm identifier
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SwarmOptimizationRequest'
-      responses:
-        '200':
-          description: Swarm behavior optimized successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SwarmOptimizationResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  # Adaptive Difficulty
-  /adaptive-difficulty/{player_id}/adjust:
-    post:
-      operationId: adjustAdaptiveDifficulty
-      summary: Adjust adaptive difficulty for player
-      description: |
-        Adjust game difficulty based on player performance analysis and behavior patterns.
-
-        **Performance Notes:**
-        - Real-time performance analysis
-        - Dynamic difficulty scaling
-        - Player behavior tracking
-        - P99 latency target: <25ms
-      tags: [Adaptive Difficulty]
-      parameters:
-        - name: player_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Player identifier
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DifficultyAdjustmentRequest'
-      responses:
-        '200':
-          description: Difficulty adjusted successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DifficultyAdjustmentResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /adaptive-difficulty/global/balance:
-    post:
-      operationId: balanceGlobalDifficulty
-      summary: Balance global game difficulty
-      description: |
-        Balance overall game difficulty across all players and zones based on aggregated metrics.
-
-        **Performance Notes:**
-        - Global metrics aggregation
-        - Cross-zone difficulty balancing
-        - Background processing (async)
-        - Processing time target: <5 seconds
-      tags: [Adaptive Difficulty, Administration]
-      security:
-        - BearerAuth: []
-        - AdminAuth: []
-      responses:
-        '202':
-          description: Global difficulty balancing initiated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GlobalDifficultyBalanceResponse'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-
-  # Performance Monitoring
-  /metrics/behavior-performance:
-    get:
-      operationId: getBehaviorPerformanceMetrics
-      summary: Get AI behavior performance metrics
-      description: |
-        Retrieve comprehensive AI behavior performance metrics across all systems.
-
-        **Performance Notes:**
-        - Aggregated metrics collection
-        - Historical data analysis (90 days)
-        - Real-time performance monitoring
-        - P99 latency target: <30ms
-      tags: [Performance Monitoring]
-      parameters:
-        - name: start_time
-          in: query
-          schema:
-            type: string
-            format: date-time
-          description: Metrics collection start time
-        - name: end_time
-          in: query
-          schema:
-            type: string
-            format: date-time
-          description: Metrics collection end time
-        - name: zone_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Filter by specific zone
-      responses:
-        '200':
-          description: Behavior performance metrics retrieved
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BehaviorPerformanceMetrics'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-  # Administration
-  /admin/behavior-trees/reset:
-    post:
-      operationId: resetBehaviorTrees
-      summary: Reset behavior trees (ADMIN)
-      description: |
-        Administrative operation to reset all behavior trees to default state.
-
-        **WARNING:** This affects all active AI behavior systems.
-        **Requires:** Admin privileges
-      tags: [Administration]
-      security:
-        - BearerAuth: []
-        - AdminAuth: []
-      responses:
-        '200':
-          description: Behavior trees reset successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdminOperationResponse'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+  #       **Performance Notes:**
+  #       - Uses database indexes for efficient filtering
+  #       - Implements cursor-based pagination for large datasets
+  #       - Response cached for 30 seconds
+  #     tags: [{ServiceDomain}]
+  #     parameters:
+  #       - name: limit
+  #         in: query
+  #         schema:
+  #           type: integer
+  #           minimum: 1
+  #           maximum: 100
+  #           default: 20
+  #         description: Number of items to return
+  #       - name: cursor
+  #         in: query
+  #         schema:
+  #           type: string
+  #         description: Pagination cursor
+  #     responses:
+  #       '200':
+  #         description: List of {resources}
+  #         content:
+  #           application/json:
+  #             schema:
+  #               $ref: '#/components/schemas/{Resource}ListResponse'
+  #       '400':
+  #         $ref: '../common/responses/error.yaml#/components/responses/BadRequest'
+  #       '401':
+  #         $ref: '../common/responses/error.yaml#/components/responses/Unauthorized'
 
 components:
-  schemas:
-
-    # Behavior Tree Entities
-    BehaviorTree:
-      allOf:
-        - $ref: '../common/schemas/game-entities.yaml#/components/schemas/GameEntity'
-        - type: object
-          required:
-            - tree_name
-            - enemy_type
-            - root_node
-            - difficulty_level
-          properties:
-            tree_name:
-              type: string
-              minLength: 1
-              maxLength: 100
-              description: Human-readable behavior tree name
-              example: "Elite Mercenary Combat Tree"
-            enemy_type:
-              type: string
-              enum: [mercenary_boss, cyberpsychic_elite, corporate_squad, common_enemy]
-              description: AI enemy type this tree applies to
-              example: mercenary_boss
-            root_node:
-              $ref: '#/components/schemas/BehaviorNode'
-            difficulty_level:
-              type: integer
-              minimum: 1
-              maximum: 10
-              description: Difficulty level this tree represents
-              example: 8
-            metadata:
-              $ref: '#/components/schemas/BehaviorTreeMetadata'
-
-    BehaviorTreeMetadata:
-      type: object
-      properties:
-        author:
-          type: string
-          description: Tree author/creator
-          example: "AI Behavior Team"
-        version:
-          type: string
-          pattern: '^\d+\.\d+\.\d+$'
-          description: Semantic version of the tree
-          example: "2.1.0"
-        tags:
-          type: array
-          items:
-            type: string
-          description: Tree classification tags
-          example: ["combat", "elite", "adaptive"]
-        performance_score:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 1
-          description: Performance score (0-1)
-          example: 0.95
-
-    BehaviorNode:
-      type: object
-      required: [node_type, node_id]
-      properties:
-        node_id:
-          type: string
-          format: uuid
-          description: Unique node identifier
-          example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
-        node_type:
-          type: string
-          enum: [sequence, selector, decorator, action, condition]
-          description: Behavior tree node type
-          example: sequence
-        children:
-          type: array
-          items:
-            $ref: '#/components/schemas/BehaviorNode'
-          description: Child nodes
-        parameters:
-          type: object
-          additionalProperties: true
-          description: Node-specific parameters
-          example:
-            priority: 8
-            timeout_ms: 5000
-
-    BehaviorTreeCreateRequest:
-      type: object
-      required: [tree_name, enemy_type, root_node, difficulty_level]
-      properties:
-        tree_name:
-          type: string
-          minLength: 1
-          maxLength: 100
-          description: Behavior tree name
-          example: "New Elite Combat Tree"
-        enemy_type:
-          type: string
-          enum: [mercenary_boss, cyberpsychic_elite, corporate_squad, common_enemy]
-          description: Target enemy type
-          example: mercenary_boss
-        root_node:
-          $ref: '#/components/schemas/BehaviorNode'
-        difficulty_level:
-          type: integer
-          minimum: 1
-          maximum: 10
-          description: Difficulty level
-          example: 7
-        metadata:
-          $ref: '#/components/schemas/BehaviorTreeMetadata'
-
-    BehaviorTreeUpdateRequest:
-      type: object
-      required: [version]
-      properties:
-        version:
-          type: integer
-          minimum: 1
-          description: Current version for optimistic locking
-          example: 1
-        tree_name:
-          type: string
-          minLength: 1
-          maxLength: 100
-          description: Updated tree name
-        root_node:
-          $ref: '#/components/schemas/BehaviorNode'
-        difficulty_level:
-          type: integer
-          minimum: 1
-          maximum: 10
-          description: Updated difficulty level
-        metadata:
-          $ref: '#/components/schemas/BehaviorTreeMetadata'
-
-    # AI Decision Making
-    AiDecisionContext:
-      type: object
-      required: [current_state, environment_state, available_actions]
-      properties:
-        current_state:
-          $ref: '#/components/schemas/AiEntityState'
-        environment_state:
-          $ref: '#/components/schemas/EnvironmentState'
-        available_actions:
-          type: array
-          items:
-            $ref: '#/components/schemas/AiAction'
-          description: Available actions for decision making
-        player_behavior_patterns:
-          type: array
-          items:
-            $ref: '#/components/schemas/PlayerBehaviorPattern'
-          description: Observed player behavior patterns
-
-    AiEntityState:
-      type: object
-      required: [health_percent, position, current_behavior]
-      properties:
-        health_percent:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 1
-          description: Current health as percentage
-          example: 0.75
-        position:
-          $ref: '../common/schemas/game-entities.yaml#/components/schemas/Vector3'
-        current_behavior:
-          type: string
-          enum: [idle, patrol, combat, flee, hunt, guard]
-          description: Current AI behavior
-          example: combat
-        threat_level:
-          type: integer
-          minimum: 0
-          maximum: 10
-          description: Perceived threat level
-          example: 7
-
-    EnvironmentState:
-      type: object
-      required: [zone_id, nearby_entities]
-      properties:
-        zone_id:
-          type: string
-          format: uuid
-          description: Current zone identifier
-          example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
-        nearby_entities:
-          type: array
-          items:
-            $ref: '#/components/schemas/NearbyEntity'
-          description: Entities within detection range
-        environmental_factors:
-          type: object
-          additionalProperties:
-            type: number
-            format: float
-          description: Environmental modifiers
-          example:
-            cover_available: 0.8
-            visibility: 0.6
-            noise_level: 0.3
-
-    NearbyEntity:
-      type: object
-      required: [entity_id, entity_type, distance, threat_level]
-      properties:
-        entity_id:
-          type: string
-          format: uuid
-          description: Entity identifier
-          example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
-        entity_type:
-          type: string
-          enum: [player, ai_enemy, npc, interactive_object]
-          description: Type of nearby entity
-          example: player
-        distance:
-          type: number
-          format: float
-          minimum: 0
-          description: Distance to entity in game units
-          example: 25.5
-        threat_level:
-          type: integer
-          minimum: 0
-          maximum: 10
-          description: Threat assessment level
-          example: 8
-
-    AiAction:
-      type: object
-      required: [action_type, utility_score]
-      properties:
-        action_type:
-          type: string
-          enum: [attack, defend, flee, pursue, patrol, use_ability, call_reinforcements]
-          description: Type of action
-          example: attack
-        utility_score:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 1
-          description: Utility score for this action
-          example: 0.85
-        parameters:
-          type: object
-          additionalProperties: true
-          description: Action-specific parameters
-          example:
-            target_id: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
-            ability_id: "attack_basic"
-
-    PlayerBehaviorPattern:
-      type: object
-      required: [pattern_type, confidence_score, observed_frequency]
-      properties:
-        pattern_type:
-          type: string
-          enum: [aggressive, defensive, stealthy, reckless, methodical, adaptive]
-          description: Identified player behavior pattern
-          example: aggressive
-        confidence_score:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 1
-          description: Confidence in pattern identification
-          example: 0.92
-        observed_frequency:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 1
-          description: How frequently this pattern is observed
-          example: 0.75
-        last_observed:
-          type: string
-          format: date-time
-          description: When pattern was last observed
-          example: "2024-01-15T14:20:00Z"
-
-    AiDecision:
-      type: object
-      required: [selected_action, decision_confidence, reasoning]
-      properties:
-        selected_action:
-          $ref: '#/components/schemas/AiAction'
-        decision_confidence:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 1
-          description: Confidence in the decision
-          example: 0.88
-        reasoning:
-          type: array
-          items:
-            type: string
-          description: Decision reasoning factors
-          example: ["High threat level", "Player in range", "Health above threshold"]
-        execution_context:
-          type: object
-          additionalProperties: true
-          description: Context for action execution
-          example:
-            immediate_execution: true
-            coordination_required: false
-
-    BatchDecisionRequest:
-      type: object
-      required: [enemy_decisions]
-      properties:
-        enemy_decisions:
-          type: array
-          items:
-            type: object
-            required: [enemy_id, context]
-            properties:
-              enemy_id:
-                type: string
-                format: uuid
-                description: AI enemy identifier
-                example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
-              context:
-                $ref: '#/components/schemas/AiDecisionContext'
-          minItems: 1
-          maxItems: 100
-          description: Batch of enemy decision contexts
-
-    BatchDecisionResponse:
-      type: object
-      required: [decisions, processing_stats]
-      properties:
-        decisions:
-          type: array
-          items:
-            type: object
-            required: [enemy_id, decision]
-            properties:
-              enemy_id:
-                type: string
-                format: uuid
-                description: AI enemy identifier
-              decision:
-                $ref: '#/components/schemas/AiDecision'
-          description: Batch of AI decisions
-        processing_stats:
-          $ref: '#/components/schemas/BatchProcessingStats'
-
-    BatchProcessingStats:
-      type: object
-      required: [total_processed, average_latency_ms, max_latency_ms]
-      properties:
-        total_processed:
-          type: integer
-          minimum: 0
-          description: Total decisions processed
-          example: 50
-        average_latency_ms:
-          type: number
-          format: float
-          minimum: 0
-          description: Average processing latency
-          example: 12.5
-        max_latency_ms:
-          type: number
-          format: float
-          minimum: 0
-          description: Maximum processing latency
-          example: 25.0
-        success_rate:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 1
-          description: Success rate of decision processing
-          example: 0.98
-
-    # Learning Systems
-    LearningUpdateRequest:
-      type: object
-      required: [observation_type, observed_data]
-      properties:
-        observation_type:
-          type: string
-          enum: [combat_outcome, player_behavior, environmental_interaction, ability_usage]
-          description: Type of observation to learn from
-          example: combat_outcome
-        observed_data:
-          type: object
-          additionalProperties: true
-          description: Observation-specific data
-          example:
-            outcome: "victory"
-            duration_seconds: 45
-            player_actions: ["use_cover", "flank_attack"]
-        learning_weight:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 1
-          default: 1.0
-          description: Weight of this observation in learning
-          example: 0.8
-
-    LearningPattern:
-      type: object
-      required: [pattern_id, pattern_type, confidence_score, learned_behaviors]
-      properties:
-        pattern_id:
-          type: string
-          format: uuid
-          description: Unique pattern identifier
-          example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
-        pattern_type:
-          type: string
-          enum: [combat_tactics, movement_patterns, ability_usage, environmental_exploitation]
-          description: Type of learned pattern
-          example: combat_tactics
-        confidence_score:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 1
-          description: Confidence in pattern accuracy
-          example: 0.87
-        learned_behaviors:
-          type: array
-          items:
-            type: string
-          description: Specific behaviors learned from pattern
-          example: ["flanking_attacks", "cover_usage", "ability_timing"]
-        last_updated:
-          type: string
-          format: date-time
-          description: Last pattern update timestamp
-          example: "2024-01-15T14:20:00Z"
-
-    PredictionContext:
-      type: object
-      required: [current_situation, historical_data]
-      properties:
-        current_situation:
-          $ref: '#/components/schemas/EnvironmentState'
-        historical_data:
-          type: array
-          items:
-            $ref: '#/components/schemas/PlayerBehaviorPattern'
-          description: Historical player behavior data
-        prediction_horizon_seconds:
-          type: integer
-          minimum: 1
-          maximum: 300
-          default: 30
-          description: How far ahead to predict (seconds)
-          example: 30
-
-    BehaviorPrediction:
-      type: object
-      required: [predicted_actions, confidence_scores, reasoning]
-      properties:
-        predicted_actions:
-          type: array
-          items:
-            type: object
-            required: [action, probability, time_offset_seconds]
-            properties:
-              action:
-                type: string
-                enum: [move_forward, take_cover, use_ability, retreat, attack]
-                description: Predicted player action
-                example: take_cover
-              probability:
-                type: number
-                format: float
-                minimum: 0
-                maximum: 1
-                description: Prediction probability
-                example: 0.75
-              time_offset_seconds:
-                type: number
-                format: float
-                minimum: 0
-                description: Time offset for prediction
-                example: 5.2
-          description: Predicted player actions with timing
-        confidence_scores:
-          type: object
-          additionalProperties:
-            type: number
-            format: float
-            minimum: 0
-            maximum: 1
-          description: Confidence scores by prediction type
-          example:
-            overall: 0.82
-            timing: 0.71
-            action_type: 0.89
-        reasoning:
-          type: array
-          items:
-            type: string
-          description: Reasoning behind predictions
-          example: ["Historical cover usage pattern", "Current threat level", "Distance to objectives"]
-
-    # Coordination Logic
-    SquadBehaviorRequest:
-      type: object
-      required: [squad_members, objective, current_situation]
-      properties:
-        squad_members:
-          type: array
-          items:
-            type: object
-            required: [enemy_id, role, position]
-            properties:
-              enemy_id:
-                type: string
-                format: uuid
-                description: AI enemy identifier
-              role:
-                type: string
-                enum: [leader, scout, fighter, support, medic]
-                description: Role in squad
-              position:
-                $ref: '../common/schemas/game-entities.yaml#/components/schemas/Vector3'
-          minItems: 2
-          maxItems: 20
-          description: Squad member information
-        objective:
-          type: string
-          enum: [defend_position, attack_target, patrol_area, escort_ally, capture_objective]
-          description: Squad objective
-          example: attack_target
-        current_situation:
-          $ref: '#/components/schemas/EnvironmentState'
-
-    SquadBehaviorResponse:
-      type: object
-      required: [coordinated_actions, communication_plan]
-      properties:
-        coordinated_actions:
-          type: array
-          items:
-            type: object
-            required: [enemy_id, assigned_action, coordination_context]
-            properties:
-              enemy_id:
-                type: string
-                format: uuid
-                description: AI enemy identifier
-              assigned_action:
-                $ref: '#/components/schemas/AiAction'
-              coordination_context:
-                type: object
-                additionalProperties: true
-                description: Squad coordination context
-                example:
-                  formation_position: "flank_left"
-                  support_role: "covering_fire"
-          description: Coordinated actions for squad members
-        communication_plan:
-          type: object
-          additionalProperties:
-            type: string
-          description: Squad communication signals and timing
-          example:
-            signal_attack: "5_seconds"
-            signal_retreat: "on_leader_command"
-
-    SwarmOptimizationRequest:
-      type: object
-      required: [swarm_members, optimization_goal, environmental_constraints]
-      properties:
-        swarm_members:
-          type: array
-          items:
-            type: string
-            format: uuid
-          minItems: 10
-          maxItems: 500
-          description: AI enemy IDs in swarm
-        optimization_goal:
-          type: string
-          enum: [maximize_damage, minimize_casualties, optimize_positioning, maximize_coverage]
-          description: Swarm optimization objective
-          example: optimize_positioning
-        environmental_constraints:
-          $ref: '#/components/schemas/EnvironmentState'
-
-    SwarmOptimizationResponse:
-      type: object
-      required: [optimized_positions, emergent_behaviors, performance_metrics]
-      properties:
-        optimized_positions:
-          type: object
-          additionalProperties:
-            $ref: '../common/schemas/game-entities.yaml#/components/schemas/Vector3'
-          description: Optimized positions for swarm members
-        emergent_behaviors:
-          type: array
-          items:
-            type: string
-          description: Emergent swarm behaviors identified
-          example: ["flocking_pattern", "predator_avoidance", "resource_sharing"]
-        performance_metrics:
-          type: object
-          properties:
-            optimization_score:
-              type: number
-              format: float
-              minimum: 0
-              maximum: 1
-              description: Optimization effectiveness score
-              example: 0.91
-            convergence_time_ms:
-              type: integer
-              minimum: 0
-              description: Time to reach optimal configuration
-              example: 250
-            stability_score:
-              type: number
-              format: float
-              minimum: 0
-              maximum: 1
-              description: Configuration stability score
-              example: 0.87
-
-    # Adaptive Difficulty
-    DifficultyAdjustmentRequest:
-      type: object
-      required: [performance_metrics, current_difficulty]
-      properties:
-        performance_metrics:
-          $ref: '#/components/schemas/PlayerPerformanceMetrics'
-        current_difficulty:
-          type: object
-          required: [overall_level, enemy_scaling, resource_availability]
-          properties:
-            overall_level:
-              type: integer
-              minimum: 1
-              maximum: 10
-              description: Current overall difficulty level
-              example: 5
-            enemy_scaling:
-              type: number
-              format: float
-              minimum: 0.5
-              maximum: 2.0
-              description: Enemy strength multiplier
-              example: 1.2
-            resource_availability:
-              type: number
-              format: float
-              minimum: 0.5
-              maximum: 2.0
-              description: Resource availability multiplier
-              example: 0.8
-        adjustment_reason:
-          type: string
-          enum: [player_struggling, player_excelling, session_length, player_feedback]
-          description: Reason for difficulty adjustment
-          example: player_struggling
-
-    PlayerPerformanceMetrics:
-      type: object
-      required: [combat_effectiveness, survival_time, objective_completion]
-      properties:
-        combat_effectiveness:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 1
-          description: Combat effectiveness score
-          example: 0.75
-        survival_time:
-          type: integer
-          minimum: 0
-          description: Survival time in seconds
-          example: 1800
-        objective_completion:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 1
-          description: Objective completion rate
-          example: 0.85
-        damage_dealt:
-          type: integer
-          minimum: 0
-          description: Total damage dealt
-          example: 15420
-        damage_taken:
-          type: integer
-          minimum: 0
-          description: Total damage taken
-          example: 8900
-
-    DifficultyAdjustmentResponse:
-      type: object
-      required: [new_difficulty, adjustment_factors, effective_time]
-      properties:
-        new_difficulty:
-          type: object
-          required: [overall_level, enemy_scaling, resource_availability]
-          properties:
-            overall_level:
-              type: integer
-              minimum: 1
-              maximum: 10
-              description: New overall difficulty level
-              example: 6
-            enemy_scaling:
-              type: number
-              format: float
-              minimum: 0.5
-              maximum: 2.0
-              description: New enemy strength multiplier
-              example: 1.1
-            resource_availability:
-              type: number
-              format: float
-              minimum: 0.5
-              maximum: 2.0
-              description: New resource availability multiplier
-              example: 0.9
-        adjustment_factors:
-          type: object
-          additionalProperties:
-            type: number
-            format: float
-          description: Factors contributing to adjustment
-          example:
-            combat_performance: 0.3
-            survival_time: 0.2
-            objective_completion: 0.5
-        effective_time:
-          type: string
-          format: date-time
-          description: When adjustment takes effect
-          example: "2024-01-15T14:25:00Z"
-
-    GlobalDifficultyBalanceResponse:
-      type: object
-      required: [operation_id, affected_players, estimated_completion]
-      properties:
-        operation_id:
-          type: string
-          format: uuid
-          description: Operation identifier
-          example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
-        affected_players:
-          type: integer
-          minimum: 0
-          description: Number of players affected
-          example: 15420
-        estimated_completion:
-          type: string
-          format: date-time
-          description: Estimated completion time
-          example: "2024-01-15T14:30:00Z"
-        balancing_algorithm:
-          type: string
-          enum: [percentile_based, cluster_analysis, reinforcement_learning]
-          description: Balancing algorithm used
-          example: percentile_based
-
-    # Performance Monitoring
-    BehaviorPerformanceMetrics:
-      type: object
-      required: [time_range, decision_metrics, learning_metrics, coordination_metrics]
-      properties:
-        time_range:
-          type: object
-          required: [start_time, end_time]
-          properties:
-            start_time:
-              type: string
-              format: date-time
-              description: Metrics collection start time
-            end_time:
-              type: string
-              format: date-time
-              description: Metrics collection end time
-        decision_metrics:
-          $ref: '#/components/schemas/DecisionPerformanceMetrics'
-        learning_metrics:
-          $ref: '#/components/schemas/LearningPerformanceMetrics'
-        coordination_metrics:
-          $ref: '#/components/schemas/CoordinationPerformanceMetrics'
-
-    DecisionPerformanceMetrics:
-      type: object
-      required: [total_decisions, average_latency_ms, success_rate]
-      properties:
-        total_decisions:
-          type: integer
-          minimum: 0
-          description: Total decisions made
-          example: 50000
-        average_latency_ms:
-          type: number
-          format: float
-          minimum: 0
-          description: Average decision latency
-          example: 12.5
-        success_rate:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 1
-          description: Decision success rate
-          example: 0.94
-        decision_distribution:
-          type: object
-          additionalProperties:
-            type: integer
-            minimum: 0
-          description: Distribution by decision type
-          example:
-            attack: 15000
-            defend: 12000
-            flee: 8000
-            patrol: 15000
-
-    LearningPerformanceMetrics:
-      type: object
-      required: [patterns_learned, prediction_accuracy, adaptation_rate]
-      properties:
-        patterns_learned:
-          type: integer
-          minimum: 0
-          description: Total patterns learned
-          example: 250
-        prediction_accuracy:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 1
-          description: Average prediction accuracy
-          example: 0.78
-        adaptation_rate:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 1
-          description: Rate of successful adaptation
-          example: 0.65
-
-    CoordinationPerformanceMetrics:
-      type: object
-      required: [squad_coordination_score, swarm_efficiency, communication_overhead]
-      properties:
-        squad_coordination_score:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 1
-          description: Average squad coordination effectiveness
-          example: 0.82
-        swarm_efficiency:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 1
-          description: Swarm behavior efficiency
-          example: 0.75
-        communication_overhead:
-          type: number
-          format: float
-          minimum: 0
-          description: Communication overhead percentage
-          example: 0.05
-
-    # Administration
-    AdminOperationResponse:
-      type: object
-      required: [operation, status, affected_entities_count]
-      properties:
-        operation:
-          type: string
-          description: Admin operation performed
-          example: "reset_behavior_trees"
-        status:
-          type: string
-          enum: [success, partial_success, failed]
-          description: Operation result status
-          example: success
-        affected_entities_count:
-          type: integer
-          minimum: 0
-          description: Number of entities affected by operation
-          example: 5000
-        execution_time_ms:
-          type: integer
-          minimum: 0
-          description: Operation execution time in milliseconds
-          example: 2500
-
-  # Standard Responses
   responses:
+    # Стандартные ответы - используйте $ref на common/responses
+    OK:
+      $ref: '../common/responses/success.yaml#/components/responses/OK'
+    Created:
+      $ref: '../common/responses/success.yaml#/components/responses/Created'
     BadRequest:
-      description: Bad request - invalid input parameters
-      content:
-        application/json:
-          schema:
-            $ref: '../common/responses/error.yaml#/components/responses/BadRequest'
-    Conflict:
-      description: Conflict - resource state conflict
-      content:
-        application/json:
-          schema:
-            $ref: '../common/responses/error.yaml#/components/responses/Conflict'
-    Forbidden:
-      description: Forbidden - insufficient permissions
-      content:
-        application/json:
-          schema:
-            $ref: '../common/responses/error.yaml#/components/responses/Forbidden'
+      $ref: '../common/responses/error.yaml#/components/responses/BadRequest'
+    Unauthorized:
+      $ref: '../common/responses/error.yaml#/components/responses/Unauthorized'
     NotFound:
-      description: Not found - resource does not exist
-      content:
-        application/json:
-          schema:
-            $ref: '../common/responses/error.yaml#/components/responses/NotFound'
-    TooManyRequests:
-      description: Too many requests - rate limit exceeded
-      content:
-        application/json:
-          schema:
-            $ref: '../common/responses/error.yaml#/components/responses/TooManyRequests'
+      $ref: '../common/responses/error.yaml#/components/responses/NotFound'
+    Conflict:
+      $ref: '../common/responses/error.yaml#/components/responses/Conflict'
+    InternalServerError:
+      $ref: '../common/responses/error.yaml#/components/responses/InternalServerError'
 
-  # Security Schemes
+  schemas:
+    # Domain entities - ОБЯЗАТЕЛЬНО используйте allOf для наследования (SOLID/DRY)
+    # ПРИМЕР 1: Game Domain Entity
+    # {Resource}:
+    #   description: Service-specific entity inheriting from domain base
+    #   allOf:
+    #     - $ref: '../common/schemas/game-entities.yaml#/components/schemas/CharacterEntity'
+    #     - type: object
+    #       required: [unique_field]
+    #       properties:
+    #         # PERFORMANCE: Struct Alignment - порядок полей large → small (30-50% memory savings)
+    #         # OGEN сохраняет порядок полей из OpenAPI спецификации
+    #         # Проверка ПОСЛЕ генерации: fieldalignment ./pkg/api/...
+    #         unique_field: {type: string, minLength: 1, maxLength: 100}
+    #         # ТОЛЬКО уникальные поля сервиса - базовые поля (id, timestamps, version) наследуются!
+    #
+    # ПРИМЕР 2: Economy Domain Entity
+    # {Resource}:
+    #   description: Economic entity with transaction capabilities
+    #   allOf:
+    #     - $ref: '../common/schemas/economy-entities.yaml#/components/schemas/WalletEntity'
+    #     - type: object
+    #       properties:
+    #         service_specific_field: {type: integer, minimum: 0}
+    #
+    # ПРИМЕР 3: Social Domain Entity
+    # {Resource}:
+    #   description: Social entity with communication features
+    #   allOf:
+    #     - $ref: '../common/schemas/social-entities.yaml#/components/schemas/UserProfileEntity'
+    #     - type: object
+    #       properties:
+    #         custom_social_field: {type: string}
+    #
+    # ПРИМЕР 4: Infrastructure Domain Entity
+    # {Resource}:
+    #   description: Infrastructure entity with audit capabilities
+    #   allOf:
+    #     - $ref: '../common/schemas/infrastructure-entities.yaml#/components/schemas/AuditLogEntity'
+    #     - type: object
+    #       properties:
+    #         infrastructure_specific_field: {type: boolean}
+
   securitySchemes:
     BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: JWT Bearer token authentication
-    AdminAuth:
-      type: apiKey
-      in: header
-      name: X-Admin-Token
-      description: Administrative access token
+      $ref: '../common/security/security.yaml#/components/securitySchemes/BearerAuth'
+
+# Domain inheritance documentation (SOLID/DRY)
+x-domain-inheritance:
+  inherits-from: "common/schemas/{domain}-entities.yaml"
+  additional-schemas: "Service-specific extensions only"
+  no-duplication: "All common fields (id, timestamps, version) inherited, not redefined"
+  pattern: "allOf with $ref to domain entities + service-specific properties only"
+
+# Issue: #{issue_number}
