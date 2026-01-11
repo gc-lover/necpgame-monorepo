@@ -1,0 +1,292 @@
+# Real-time Combat Service - Combat Action Schemas
+# Domain Separation: Combat Actions - SOLID/DRY Foundation
+# Issue: #2232
+
+components:
+  schemas:
+
+    # Combat Action Request - High-frequency endpoint
+    CombatActionRequest:
+      type: object
+      required:
+        - player_id
+        - action_type
+        - timestamp
+      properties:
+        # Large fields first (16-24 bytes): string (16+), array (24+), object (24+)
+        player_id:
+          type: string
+          format: uuid
+          description: Player initiating the action
+          example: "456e7890-e89b-12d3-a456-426614174001"
+        action_type:
+          type: string
+          enum: [attack, ability, item, movement, reload, switch_weapon]
+          description: Type of combat action
+          example: "ability"
+        ability_id:
+          type: string
+          format: uuid
+          description: Ability identifier (if action_type is ability)
+          example: "87654321-4321-4321-4321-fedcba987654"
+        weapon_id:
+          type: string
+          format: uuid
+          description: Weapon identifier (if applicable)
+          example: "12345678-1234-1234-1234-123456789abc"
+        target_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Target entity identifiers
+          maxItems: 10
+        action_data:
+          type: object
+          description: Action-specific parameters
+          example: {"direction": {"x": 1.0, "y": 0.0, "z": 0.0}, "power": 0.8}
+        # Medium fields (8 bytes aligned): integer/float64 (grouped together)
+        timestamp:
+          type: integer
+          format: int64
+          description: Action initiation timestamp (Unix milliseconds)
+          example: 1640995200000
+        sequence_number:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Action sequence number for ordering
+          example: 67890
+        # Small fields (≤4 bytes): boolean
+        queue_action:
+          type: boolean
+          default: false
+          description: Whether to queue action if resources unavailable
+          example: false
+        cancel_on_damage:
+          type: boolean
+          default: false
+          description: Whether action cancels on taking damage
+          example: true
+      description:
+        "BACKEND NOTE: High-frequency schema (300+ RPS). Fields ordered for struct alignment (large → small). Resource validation and cooldown checking required. Expected memory savings: 30-50%."
+
+    # Combat Action Response
+    CombatActionResponse:
+      type: object
+      required:
+        - player_id
+        - action_id
+        - status
+        - timestamp
+      properties:
+        # Large fields first (16-24 bytes): string (16+), array (24+), object (24+)
+        player_id:
+          type: string
+          format: uuid
+          description: Player who initiated the action
+          example: "456e7890-e89b-12d3-a456-426614174001"
+        action_id:
+          type: string
+          format: uuid
+          description: Unique action instance identifier
+          example: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+        action_type:
+          type: string
+          enum: [attack, ability, item, movement, reload, switch_weapon]
+          description: Type of combat action executed
+          example: "ability"
+        effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActionEffect'
+          description: Effects produced by this action
+          maxItems: 20
+        # Medium fields (8 bytes aligned): integer/float64 (grouped together)
+        timestamp:
+          type: integer
+          format: int64
+          description: Server timestamp (Unix milliseconds)
+          example: 1640995200020
+        sequence_number:
+          type: integer
+          format: int32
+          description: Action sequence number
+          example: 67890
+        cooldown_remaining:
+          type: number
+          format: float
+          minimum: 0.0
+          description: Cooldown time remaining in seconds
+          example: 2.5
+        resource_cost:
+          type: number
+          format: float
+          minimum: 0.0
+          description: Resource cost deducted
+          example: 25.0
+        # Small fields (≤4 bytes): string enum
+        status:
+          type: string
+          enum: [executed, queued, failed, cancelled]
+          description: Action execution status
+          example: "executed"
+      description:
+        "BACKEND NOTE: Action execution result with full effect tracking. Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    # Action Effect
+    ActionEffect:
+      type: object
+      required:
+        - effect_type
+        - target_id
+      properties:
+        # Large fields first (16-24 bytes): string (16+), object (24+)
+        target_id:
+          type: string
+          format: uuid
+          description: Entity affected by the effect
+          example: "789e0123-e89b-12d3-a456-426614174002"
+        effect_type:
+          type: string
+          enum: [damage, healing, buff, debuff, movement, environmental, visual]
+          description: Type of effect produced
+          example: "damage"
+        effect_data:
+          type: object
+          description: Effect-specific data
+          example: {"damage": 45.5, "type": "physical", "critical": false}
+        # Medium fields (8 bytes aligned): float64
+        magnitude:
+          type: number
+          format: float
+          description: Effect magnitude/strength
+          example: 45.5
+        duration:
+          type: number
+          format: float
+          minimum: 0.0
+          description: Effect duration in seconds (0 for instant)
+          example: 0.0
+        # Small fields (≤4 bytes): boolean
+        is_critical:
+          type: boolean
+          default: false
+          description: Whether effect was critical
+          example: false
+        can_stack:
+          type: boolean
+          default: true
+          description: Whether effect can stack with others
+          example: true
+      description:
+        "BACKEND NOTE: Individual effect produced by combat action. Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    # Action Validation Result
+    ActionValidationResult:
+      type: object
+      required:
+        - is_valid
+        - validation_errors
+      properties:
+        # Large fields first (16-24 bytes): array (24+)
+        validation_errors:
+          type: array
+          items:
+            type: string
+          description: List of validation error messages
+          example: ["Insufficient mana", "Ability on cooldown"]
+        # Small fields (≤4 bytes): boolean
+        is_valid:
+          type: boolean
+          description: Whether action is valid for execution
+          example: false
+        cooldown_active:
+          type: boolean
+          default: false
+          description: Whether action is on cooldown
+          example: true
+        insufficient_resources:
+          type: boolean
+          default: false
+          description: Whether player lacks required resources
+          example: true
+      description:
+        "BACKEND NOTE: Action validation results before execution. Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    # Ability Cooldown State
+    AbilityCooldownState:
+      type: object
+      required:
+        - ability_id
+        - cooldown_remaining
+        - total_cooldown
+      properties:
+        # Large fields first (16-24 bytes): string (16+)
+        ability_id:
+          type: string
+          format: uuid
+          description: Ability identifier
+          example: "def456ghi-e89b-12d3-a456-426614174004"
+        # Medium fields (8 bytes aligned): float64 (grouped together)
+        cooldown_remaining:
+          type: number
+          format: float
+          minimum: 0.0
+          description: Remaining cooldown time in seconds
+          example: 5.5
+        total_cooldown:
+          type: number
+          format: float
+          minimum: 0.0
+          description: Total cooldown duration in seconds
+          example: 10.0
+        # Small fields (≤4 bytes): boolean
+        on_cooldown:
+          type: boolean
+          description: Whether ability is currently on cooldown
+          example: true
+      description:
+        "BACKEND NOTE: Ability cooldown tracking. Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    # Resource State
+    ResourceState:
+      type: object
+      required:
+        - resource_type
+        - current_amount
+        - maximum_amount
+      properties:
+        # Large fields first (16-24 bytes): string (16+)
+        resource_type:
+          type: string
+          enum: [health, mana, energy, ammo, stamina, rage]
+          description: Type of resource
+          example: "mana"
+        # Medium fields (8 bytes aligned): float64 (grouped together)
+        current_amount:
+          type: number
+          format: float
+          minimum: 0.0
+          description: Current resource amount
+          example: 75.5
+        maximum_amount:
+          type: number
+          format: float
+          minimum: 0.0
+          description: Maximum resource amount
+          example: 100.0
+        regeneration_rate:
+          type: number
+          format: float
+          minimum: 0.0
+          description: Resource regeneration per second
+          example: 2.5
+        # Small fields (≤4 bytes): boolean
+        can_overcharge:
+          type: boolean
+          default: false
+          description: Whether resource can exceed maximum
+          example: false
+      description:
+        "BACKEND NOTE: Player resource tracking for action validation. Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."

@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 
@@ -300,12 +299,6 @@ func (h *Handlers) getSystemHealth(w http.ResponseWriter, r *http.Request) {
 	h.respondJSON(w, http.StatusOK, health)
 }
 
-// GetActiveRecoveryProcesses получает активные процессы восстановления
-func (h *Handlers) GetActiveRecoveryProcesses(ctx context.Context, characterID string) ([]*models.ReputationRecovery, error) {
-	// This method should be in the service layer
-	// For now, return empty slice
-	return []*models.ReputationRecovery{}, nil
-}
 
 // Helper methods
 

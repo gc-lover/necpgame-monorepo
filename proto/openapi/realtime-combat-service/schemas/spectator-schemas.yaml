@@ -1,0 +1,78 @@
+# Real-time Combat Service - Spectator Schemas
+# Domain Separation: Spectator Mode - SOLID/DRY Foundation
+# Issue: #2232
+
+components:
+  schemas:
+
+    SpectateRequest:
+      type: object
+      properties:
+        camera_mode:
+          type: string
+          enum: [free, follow_player, overview, cinematic]
+          default: free
+        follow_target:
+          type: string
+          format: uuid
+        quality_preference:
+          type: string
+          enum: [low, medium, high, ultra]
+          default: high
+      description: "BACKEND NOTE: Spectator session initialization. Fields ordered for struct alignment."
+
+    SpectateResponse:
+      type: object
+      required:
+        - spectator_session
+        - websocket_url
+      properties:
+        spectator_session:
+          $ref: '#/components/schemas/SpectatorSession'
+        websocket_url:
+          type: string
+        auth_token:
+          type: string
+      description: "BACKEND NOTE: Spectator session creation response."
+
+    SpectatorSession:
+      type: object
+      required:
+        - session_id
+        - spectator_id
+        - camera_mode
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        spectator_id:
+          type: string
+          format: uuid
+        camera_mode:
+          type: string
+          enum: [free, follow_player, overview, cinematic]
+        follow_target:
+          type: string
+          format: uuid
+        quality_settings:
+          $ref: '#/components/schemas/QualitySettings'
+      description: "BACKEND NOTE: Active spectator session state."
+
+    QualitySettings:
+      type: object
+      properties:
+        resolution:
+          type: string
+          enum: [720p, 1080p, 1440p, 4k]
+          default: "1080p"
+        bitrate:
+          type: integer
+          minimum: 1000
+          maximum: 10000
+          default: 5000
+        frame_rate:
+          type: integer
+          minimum: 30
+          maximum: 120
+          default: 60
+      description: "BACKEND NOTE: Spectator stream quality settings."

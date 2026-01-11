@@ -1,0 +1,136 @@
+# Real-time Combat Service - Tournament Schemas
+# Domain Separation: Tournament Management - SOLID/DRY Foundation
+# Issue: #2232
+
+components:
+  schemas:
+
+    TournamentSessionsResponse:
+      type: object
+      required:
+        - tournament_id
+        - sessions
+      properties:
+        tournament_id:
+          type: string
+          format: uuid
+        sessions:
+          type: array
+          items:
+            $ref: '#/components/schemas/TournamentSession'
+        total_sessions:
+          type: integer
+          minimum: 0
+      description: "BACKEND NOTE: Tournament combat sessions with bracket info."
+
+    TournamentLeaderboardResponse:
+      type: object
+      required:
+        - tournament_id
+        - leaderboard
+      properties:
+        tournament_id:
+          type: string
+          format: uuid
+        leaderboard:
+          type: array
+          items:
+            $ref: './leaderboard-schemas.yaml#/components/schemas/LeaderboardEntry'
+        last_updated:
+          type: string
+          format: date-time
+      description: "BACKEND NOTE: Real-time tournament leaderboard."
+
+    TournamentSpectateRequest:
+      type: object
+      properties:
+        preferred_match:
+          type: string
+          format: uuid
+        camera_mode:
+          type: string
+          enum: [free, follow_player, overview, cinematic, tournament_overview]
+          default: tournament_overview
+        follow_player:
+          type: string
+          format: uuid
+        quality_preference:
+          type: string
+          enum: [low, medium, high, ultra]
+          default: high
+      description: "BACKEND NOTE: Tournament spectator initialization."
+
+    TournamentSpectateResponse:
+      type: object
+      required:
+        - spectator_session
+        - tournament_info
+      properties:
+        spectator_session:
+          $ref: './spectator-schemas.yaml#/components/schemas/SpectateResponse'
+        tournament_info:
+          $ref: '#/components/schemas/TournamentInfo'
+        available_matches:
+          type: array
+          items:
+            $ref: '#/components/schemas/MatchInfo'
+      description: "BACKEND NOTE: Tournament spectator session response."
+
+    TournamentSession:
+      allOf:
+        - $ref: './session-schemas.yaml#/components/schemas/CombatSession'
+        - type: object
+          properties:
+            bracket_round:
+              type: string
+              example: "quarterfinals"
+            tournament_id:
+              type: string
+              format: uuid
+      description: "BACKEND NOTE: Combat session within tournament context."
+
+    TournamentInfo:
+      type: object
+      required:
+        - current_round
+        - active_matches
+        - total_matches
+      properties:
+        current_round:
+          type: string
+          example: "quarterfinals"
+        active_matches:
+          type: integer
+          minimum: 0
+        total_matches:
+          type: integer
+          minimum: 0
+        next_match_start:
+          type: string
+          format: date-time
+      description: "BACKEND NOTE: Current tournament state information."
+
+    MatchInfo:
+      type: object
+      required:
+        - match_id
+        - participants
+        - status
+      properties:
+        match_id:
+          type: string
+          format: uuid
+        bracket_position:
+          type: string
+        participants:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+        status:
+          type: string
+          enum: [waiting, in_progress, completed]
+        spectator_count:
+          type: integer
+          minimum: 0
+      description: "BACKEND NOTE: Individual tournament match information."

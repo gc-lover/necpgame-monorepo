@@ -1,0 +1,50 @@
+# Real-time Combat Service - Replay Schemas
+# Domain Separation: Combat Replay - SOLID/DRY Foundation
+# Issue: #2232
+
+components:
+  schemas:
+
+    CombatReplayResponse:
+      type: object
+      required:
+        - session_id
+        - events
+        - duration_seconds
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReplayEvent'
+        duration_seconds:
+          type: integer
+          minimum: 0
+        start_time:
+          type: integer
+          format: int64
+        end_time:
+          type: integer
+          format: int64
+      description: "BACKEND NOTE: Event-sourced combat replay data."
+
+    ReplayEvent:
+      type: object
+      required:
+        - event_type
+        - timestamp
+        - event_data
+      properties:
+        event_type:
+          type: string
+          enum: [damage, action, movement, state_change]
+        timestamp:
+          type: integer
+          format: int64
+        event_data:
+          type: object
+        sequence_number:
+          type: integer
+      description: "BACKEND NOTE: Individual replay event with full state."

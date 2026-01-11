@@ -123,11 +123,20 @@ func (h *Handler) CombatServiceGetWeaponAnalytics(ctx context.Context, params ap
 }
 
 // CombatServiceHealthCheck performs health check
-func (h *Handler) CombatServiceHealthCheck(ctx context.Context) (api.CombatServiceHealthCheckRes, error) {
+func (h *Handler) CombatServiceHealthCheck(ctx context.Context, params api.CombatServiceHealthCheckParams) (api.CombatServiceHealthCheckRes, error) {
 	return &api.CombatServiceHealthCheckOKHeaders{}, nil
 }
 
 // CombatServiceHealthWebSocket provides health WebSocket
-func (h *Handler) CombatServiceHealthWebSocket(ctx context.Context) (api.CombatServiceHealthWebSocketRes, error) {
+func (h *Handler) CombatServiceHealthWebSocket(ctx context.Context, params api.CombatServiceHealthWebSocketParams) (api.CombatServiceHealthWebSocketRes, error) {
 	return &api.CombatServiceHealthWebSocketOK{}, nil
+}
+
+// NewError creates error response
+func (h *Handler) NewError(ctx context.Context, err error) *api.ErrRespStatusCode {
+	r := new(api.ErrRespStatusCode)
+	r.StatusCode = 500
+	r.Response.Code = 500
+	r.Response.Message = err.Error()
+	return r
 }

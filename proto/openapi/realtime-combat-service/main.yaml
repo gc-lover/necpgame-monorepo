@@ -1,0 +1,985 @@
+openapi: 3.0.3
+info:
+  title: Real-time Combat Service API - Enterprise-Grade Real-time Combat Engine
+  description: "**Enterprise-grade API for Real-time Combat Management**
+
+    Complete real-time combat service for NECPGAME MMOFPS RPG. Handles live combat sessions, WebSocket-based real-time updates, position synchronization, damage events, and combat session orchestration with enterprise-grade performance optimizations.
+
+    ## Key Features
+
+    - **Enterprise-grade architecture** with proper domain separation - **Real-time WebSocket support** for 10k+ concurrent connections - **Backend optimization hints** for struct alignment and memory savings - **Event-driven microservice** with Kafka integration - **Anti-cheat validation** and lag compensation algorithms
+
+    ## Domain Purpose
+
+    Manages real-time combat components including session lifecycle, live player synchronization, damage calculations, combat analytics, and spectator systems.
+
+    ## Performance Targets
+
+    - WebSocket connections: 10k+ concurrent, <50MB memory per 1000 connections
+    - Position updates: 1000+ updates/sec, P99 <10ms latency
+    - Damage events: 2000+ events/sec, <5ms processing time
+    - Combat sessions: 500+ active sessions, <20ms state sync
+    - Event throughput: 5000+ events/sec via Kafka
+    - Cache hit rate: >98% (Redis for active combat states)
+
+    "
+  version: 1.0.0
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  contact:
+    name: NECPGAME Real-time Combat API Support
+    url: https://necpgame.com/support
+    email: api@realtime.necpgame.com
+
+servers:
+  - url: http://localhost:8086/api/v1/specialized-domain/combat/realtime
+    description: Real-time Combat Service Development Server
+  - url: https://realtime.necpgame.com/api/v1
+    description: Real-time Combat Service Production Server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Combat Sessions
+    description: Combat session management and lifecycle
+  - name: Tournament
+    description: Tournament match management and brackets
+  - name: Leaderboard
+    description: Real-time leaderboard and ranking systems
+  - name: Spectator
+    description: Spectator mode and viewing capabilities
+  - name: Analytics
+    description: Combat analytics and performance metrics
+  - name: WebSocket
+    description: Real-time WebSocket communication endpoints
+  - name: Real-time Updates
+    description: WebSocket-based real-time combat updates
+  - name: Position Sync
+    description: Player position synchronization and validation
+  - name: Combat Events
+    description: Combat event streaming and notifications
+  - name: Statistics
+    description: Combat performance statistics and analytics
+  - name: System
+    description: Health checks and system operations
+
+paths:
+  /health:
+    get:
+      summary: Real-time combat service health check
+      operationId: realtimeCombatHealth
+      tags:
+        - System
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/health.yaml#/components/schemas/HealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/health.yaml#/components/schemas/HealthResponse'
+        '429':
+          $ref: '../common/responses/error.yaml#/components/responses/TooManyRequests'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/infrastructure-entities.yaml#/components/schemas/ErrorResponse'
+
+  # Combat session endpoints
+  /sessions:
+    post:
+      summary: Create new combat session
+      description: "**Create new real-time combat session**
+
+        Creates a new real-time combat session with WebSocket support and enterprise-grade performance optimizations.
+
+        **BACKEND NOTE:** Initializes Redis cache, Kafka topics, WebSocket room with connection pooling.
+        Session supports 2-50 players with configurable rules and anti-cheat validation.
+
+        "
+      operationId: createCombatSession
+      tags:
+        - Combat Sessions
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSessionRequest'
+      responses:
+        '201':
+          description: Combat session created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatSession'
+        '400':
+          description: Invalid session parameters
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/components/responses/BadRequest'
+        '429':
+          description: Session creation rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/components/responses/TooManyRequests'
+
+  /sessions/{session_id}:
+    get:
+      summary: Get combat session details
+      description: Retrieves current state and metadata of a combat session with cached performance optimizations.
+      operationId: getCombatSession
+      tags:
+        - Combat Sessions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session unique identifier
+      responses:
+        '200':
+          description: Session details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatSession'
+        '404':
+          description: Combat session not found
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/components/responses/NotFound'
+
+    put:
+      summary: Update combat session
+      description: "**Update combat session parameters**
+
+        Updates combat session parameters with optimistic locking and real-time notification.
+
+        **BACKEND NOTE:** Validates session state before update, triggers cache invalidation and WebSocket broadcasts.
+
+        "
+      operationId: updateCombatSession
+      tags:
+        - Combat Sessions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSessionRequest'
+      responses:
+        '200':
+          description: Session updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatSession'
+        '400':
+          description: Invalid update parameters
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/components/responses/BadRequest'
+        '409':
+          description: Conflict - version mismatch
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/components/responses/Conflict'
+
+    delete:
+      summary: End combat session
+      description: "**Terminate combat session**
+
+        Terminates a combat session and cleans up resources with enterprise-grade cleanup procedures.
+
+        **BACKEND NOTE:** Closes all WebSocket connections, archives session data to event store, publishes final statistics.
+
+        "
+      operationId: endCombatSession
+      tags:
+        - Combat Sessions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session unique identifier
+      responses:
+        '204':
+          description: Session ended successfully (No Content)
+        '403':
+          description: Not authorized to end session
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/components/responses/Forbidden'
+        '404':
+          description: Combat session not found
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/components/responses/NotFound'
+
+  /sessions/{session_id}/join:
+    post:
+      summary: Join combat session
+      description: "**Join active combat session**
+
+        Allows a player to join an active combat session with real-time synchronization.
+
+        **BACKEND NOTE:** Validates player eligibility, assigns to team, establishes WebSocket connection with lag compensation.
+
+        "
+      operationId: joinCombatSession
+      tags:
+        - Combat Sessions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinSessionRequest'
+      responses:
+        '200':
+          description: Successfully joined session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JoinSessionResponse'
+        '400':
+          description: Invalid join request or session full
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/components/responses/BadRequest'
+        '429':
+          description: Session join rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/components/responses/TooManyRequests'
+
+  /sessions/{session_id}/leave:
+    post:
+      summary: Leave combat session
+      description: Allows a player to leave an active combat session with proper cleanup.
+      operationId: leaveCombatSession
+      tags:
+        - Combat Sessions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session unique identifier
+      responses:
+        '200':
+          description: Successfully left session
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/success.yaml#/components/responses/OK'
+
+  /sessions/{session_id}/spectate:
+    post:
+      summary: Spectate combat session
+      description: "**Spectate active combat session**
+
+        Allows a player to spectate an active combat session with advanced viewing options.
+
+        **BACKEND NOTE:** Grants read-only access to session events with multiple camera modes and spectator analytics.
+
+        "
+      operationId: spectateCombatSession
+      tags:
+        - Combat Sessions
+        - Spectator
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpectateRequest'
+      responses:
+        '200':
+          description: Successfully joined as spectator
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpectateResponse'
+        '429':
+          description: Too many spectators for session
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/components/responses/TooManyRequests'
+
+  # WebSocket endpoint for real-time updates
+  /ws/sessions/{session_id}:
+    get:
+      summary: WebSocket connection for real-time combat updates
+      description: "**WebSocket real-time combat connection**
+
+        Establishes WebSocket connection for real-time combat updates with enterprise-grade performance.
+
+        **BACKEND NOTE:** Long-lived connection (10k+ concurrent) with message compression, heartbeat validation, and connection pooling.
+
+        "
+      operationId: combatWebSocket
+      tags:
+        - Real-time Updates
+        - WebSocket
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session unique identifier
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+          description: JWT authentication token
+        - name: client_version
+          in: query
+          schema:
+            type: string
+            default: "1.0.0"
+          description: Client application version
+      responses:
+        '101':
+          description: WebSocket connection established
+          headers:
+            Sec-WebSocket-Accept:
+              schema:
+                type: string
+              description: WebSocket handshake confirmation
+        '429':
+          description: Connection rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/components/responses/TooManyRequests'
+
+  # Spectator WebSocket endpoint
+  /ws/sessions/{session_id}/spectate:
+    get:
+      summary: WebSocket connection for spectator updates
+      description: "**Spectator WebSocket connection**
+
+        Establishes WebSocket connection for spectator real-time updates with camera controls.
+
+        **BACKEND NOTE:** Read-only connection with lower priority than player connections.
+
+        "
+      operationId: spectatorWebSocket
+      tags:
+        - Real-time Updates
+        - Spectator
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session unique identifier
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+          description: JWT authentication token
+        - name: camera_mode
+          in: query
+          schema:
+            type: string
+            enum: [free, follow_player, overview, cinematic]
+            default: free
+          description: Initial spectator camera mode
+        - name: follow_target
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Player ID to follow (if camera_mode is follow_player)
+      responses:
+        '101':
+          description: Spectator WebSocket connection established
+          headers:
+            Sec-WebSocket-Accept:
+              schema:
+                type: string
+              description: WebSocket handshake confirmation
+
+  # Position synchronization
+  /sessions/{session_id}/positions:
+    post:
+      summary: Update player position
+      description: "**Update player position**
+
+        Updates player position for anti-cheat validation and real-time synchronization.
+
+        **BACKEND NOTE:** High-frequency endpoint (1000+ RPS) with physics validation and lag compensation.
+
+        "
+      operationId: updatePlayerPosition
+      tags:
+        - Position Sync
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PositionUpdateRequest'
+      responses:
+        '200':
+          description: Position updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PositionUpdateResponse'
+        '429':
+          description: Position update rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/components/responses/TooManyRequests'
+
+  # Combat statistics
+  /sessions/{session_id}/stats:
+    get:
+      summary: Get combat session statistics
+      description: Retrieves real-time statistics for a combat session with performance optimizations.
+      operationId: getSessionStats
+      tags:
+        - Statistics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session unique identifier
+      responses:
+        '200':
+          description: Statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatStatsResponse'
+
+  # Damage events - CRITICAL for real-time combat
+  /sessions/{session_id}/damage:
+    post:
+      summary: Apply damage to target
+      description: "**Apply combat damage**
+
+        Applies damage from attacker to target with validation and real-time effects.
+
+        **BACKEND NOTE:** High-frequency endpoint (500+ RPS) critical for combat balance and anti-cheat validation.
+
+        "
+      operationId: applyDamage
+      tags:
+        - Combat Events
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DamageRequest'
+      responses:
+        '200':
+          description: Damage applied successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DamageResponse'
+        '429':
+          description: Damage application rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/components/responses/TooManyRequests'
+
+  # Combat actions (abilities, attacks)
+  /sessions/{session_id}/actions:
+    post:
+      summary: Execute combat action
+      description: "**Execute combat action**
+
+        Executes a combat action with cooldown validation and real-time synchronization.
+
+        **BACKEND NOTE:** High-frequency endpoint (300+ RPS) supporting combo systems and ability synergies.
+
+        "
+      operationId: executeCombatAction
+      tags:
+        - Combat Events
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CombatActionRequest'
+      responses:
+        '200':
+          description: Action executed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatActionResponse'
+        '429':
+          description: Action execution rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/components/responses/TooManyRequests'
+
+  # Combat replay
+  /sessions/{session_id}/replay:
+    get:
+      summary: Get combat session replay data
+      description: "**Combat session replay**
+
+        Retrieves replay data for combat session analysis with event sourcing.
+
+        **BACKEND NOTE:** Event-sourced replay system for tournament analysis and anti-cheat review.
+
+        "
+      operationId: getCombatReplay
+      tags:
+        - Combat Events
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session unique identifier
+        - name: start_time
+          in: query
+          schema:
+            type: integer
+            description: Start timestamp for replay (Unix milliseconds)
+        - name: end_time
+          in: query
+          schema:
+            type: integer
+            description: End timestamp for replay (Unix milliseconds)
+        - name: speed
+          in: query
+          schema:
+            type: number
+            format: float
+            minimum: 0.1
+            maximum: 10.0
+            default: 1.0
+            description: Replay speed multiplier
+      responses:
+        '200':
+          description: Replay data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatReplayResponse'
+
+  # Tournament Management
+  /tournaments/{tournament_id}/sessions:
+    get:
+      summary: Get tournament combat sessions
+      description: "**Tournament combat sessions**
+
+        Retrieves all combat sessions for a specific tournament with bracket information.
+
+        **BACKEND NOTE:** Used for tournament brackets, scheduling, and spectator navigation.
+
+        "
+      operationId: getTournamentSessions
+      tags:
+        - Tournament
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tournament_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Tournament identifier
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [scheduled, in_progress, completed, cancelled]
+          description: Filter by session status
+        - name: bracket_round
+          in: query
+          schema:
+            type: string
+            description: Filter by bracket round (e.g., "quarterfinal", "semifinal")
+      responses:
+        '200':
+          description: Tournament sessions retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentSessionsResponse'
+
+  /tournaments/{tournament_id}/leaderboard:
+    get:
+      summary: Get tournament leaderboard
+      description: "**Tournament leaderboard**
+
+        Retrieves current tournament leaderboard with real-time updates across all matches.
+
+        **BACKEND NOTE:** Aggregates scores across all tournament matches with performance optimizations.
+
+        "
+      operationId: getTournamentLeaderboard
+      tags:
+        - Tournament
+        - Leaderboard
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tournament_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Tournament identifier
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Maximum number of entries to return
+        - name: include_stats
+          in: query
+          schema:
+            type: boolean
+            default: true
+          description: Include detailed statistics
+      responses:
+        '200':
+          description: Tournament leaderboard retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentLeaderboardResponse'
+
+  # Real-time Leaderboard
+  /sessions/{session_id}/leaderboard:
+    get:
+      summary: Get session leaderboard
+      description: "**Session real-time leaderboard**
+
+        Retrieves real-time leaderboard for a combat session with performance optimizations.
+
+        **BACKEND NOTE:** Returns current rankings optimized for frequent polling.
+
+        "
+      operationId: getSessionLeaderboard
+      tags:
+        - Leaderboard
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session identifier
+        - name: include_spectators
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Include spectator statistics
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [score, kills, accuracy, rank]
+            default: score
+          description: Sort leaderboard by this metric
+      responses:
+        '200':
+          description: Session leaderboard retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionLeaderboardResponse'
+
+  # Tournament Spectator Mode
+  /tournaments/{tournament_id}/spectate:
+    post:
+      summary: Join tournament as spectator
+      description: "**Tournament spectator mode**
+
+        Join a tournament match as a spectator with advanced viewing options and real-time updates.
+
+        **BACKEND NOTE:** Creates spectator session with tournament-specific features and camera controls.
+
+        "
+      operationId: joinTournamentSpectator
+      tags:
+        - Tournament
+        - Spectator
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tournament_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Tournament identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TournamentSpectateRequest'
+      responses:
+        '200':
+          description: Spectator session created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentSpectateResponse'
+        '429':
+          description: Tournament spectator limit reached
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/components/responses/TooManyRequests'
+
+  # Advanced Combat Analytics
+  /analytics/combat/{session_id}:
+    get:
+      summary: Get combat analytics for session
+      description: "**Combat analytics**
+
+        Retrieves detailed combat analytics and statistics for performance analysis and balance testing.
+
+        **BACKEND NOTE:** Aggregates real-time data for analytics with resource-intensive heatmaps.
+
+        "
+      operationId: getCombatAnalytics
+      tags:
+        - Analytics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session identifier
+        - name: include_heatmaps
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Include position heatmaps (resource intensive)
+        - name: include_player_paths
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Include player movement paths
+        - name: time_range
+          in: query
+          schema:
+            type: string
+            enum: [full_session, last_5_minutes, last_1_minute]
+            default: full_session
+          description: Time range for analytics
+      responses:
+        '200':
+          description: Combat analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatAnalyticsResponse'
+
+components:
+  schemas:
+    # Domain Separation - Session Management Schemas
+    CombatSession:
+      $ref: './schemas/session-schemas.yaml#/components/schemas/CombatSession'
+    CreateSessionRequest:
+      $ref: './schemas/session-schemas.yaml#/components/schemas/CreateSessionRequest'
+    UpdateSessionRequest:
+      $ref: './schemas/session-schemas.yaml#/components/schemas/UpdateSessionRequest'
+    JoinSessionRequest:
+      $ref: './schemas/session-schemas.yaml#/components/schemas/JoinSessionRequest'
+    JoinSessionResponse:
+      $ref: './schemas/session-schemas.yaml#/components/schemas/JoinSessionResponse'
+
+    # Domain Separation - Position Synchronization Schemas
+    PositionUpdateRequest:
+      $ref: './schemas/position-schemas.yaml#/components/schemas/PositionUpdateRequest'
+    PositionUpdateResponse:
+      $ref: './schemas/position-schemas.yaml#/components/schemas/PositionUpdateResponse'
+
+    # Domain Separation - Damage Calculation Schemas
+    DamageRequest:
+      $ref: './schemas/damage-schemas.yaml#/components/schemas/DamageRequest'
+    DamageResponse:
+      $ref: './schemas/damage-schemas.yaml#/components/schemas/DamageResponse'
+
+    # Domain Separation - Combat Action Schemas
+    CombatActionRequest:
+      $ref: './schemas/action-schemas.yaml#/components/schemas/CombatActionRequest'
+    CombatActionResponse:
+      $ref: './schemas/action-schemas.yaml#/components/schemas/CombatActionResponse'
+
+    # Domain Separation - Spectator Schemas
+    SpectateRequest:
+      $ref: './schemas/spectator-schemas.yaml#/components/schemas/SpectateRequest'
+    SpectateResponse:
+      $ref: './schemas/spectator-schemas.yaml#/components/schemas/SpectateResponse'
+
+    # Domain Separation - Statistics Schemas
+    CombatStatsResponse:
+      $ref: './schemas/stats-schemas.yaml#/components/schemas/CombatStatsResponse'
+
+    # Domain Separation - Replay Schemas
+    CombatReplayResponse:
+      $ref: './schemas/replay-schemas.yaml#/components/schemas/CombatReplayResponse'
+
+    # Domain Separation - Tournament Schemas
+    TournamentSessionsResponse:
+      $ref: './schemas/tournament-schemas.yaml#/components/schemas/TournamentSessionsResponse'
+    TournamentLeaderboardResponse:
+      $ref: './schemas/tournament-schemas.yaml#/components/schemas/TournamentLeaderboardResponse'
+    TournamentSpectateRequest:
+      $ref: './schemas/tournament-schemas.yaml#/components/schemas/TournamentSpectateRequest'
+    TournamentSpectateResponse:
+      $ref: './schemas/tournament-schemas.yaml#/components/schemas/TournamentSpectateResponse'
+
+    # Domain Separation - Leaderboard Schemas
+    SessionLeaderboardResponse:
+      $ref: './schemas/leaderboard-schemas.yaml#/components/schemas/SessionLeaderboardResponse'
+
+    # Domain Separation - Analytics Schemas
+    CombatAnalyticsResponse:
+      $ref: './schemas/analytics-schemas.yaml#/components/schemas/CombatAnalyticsResponse'
+
+  securitySchemes:
+    BearerAuth:
+      $ref: '../common/security/security.yaml#/components/securitySchemes/BearerAuth'

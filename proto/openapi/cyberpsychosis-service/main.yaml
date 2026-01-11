@@ -1,0 +1,677 @@
+openapi: 3.0.3
+info:
+  title: Cyberpsychosis Combat States API
+  description: '**Enterprise-grade API for Cyberpsychosis Combat States management**
+  
+  Provides comprehensive management of cyberpsychosis states in MMOFPS combat system.
+  Supports real-time state transitions, health monitoring, and performance optimization.
+  
+  **Performance:** P99 <50ms for state transitions, <20ms for health checks
+  **Reliability:** 99.9% uptime with automatic failover
+  **Security:** JWT authentication, rate limiting, input validation'
+  version: 1.0.0
+  contact:
+    name: NECPGAME Team
+    email: team@necpgame.com
+
+servers:
+  - url: https://api.necpgame.com/cyberpsychosis/v1
+    description: Production server
+  - url: https://staging-api.necpgame.com/cyberpsychosis/v1
+    description: Staging server
+  - url: http://localhost:8080/api/v1
+    description: Local development
+
+security:
+  - BearerAuth: []
+
+paths:
+  /cyberpsychosis/states:
+    post:
+      summary: Create Cyberpsychosis State
+      description: '**Create a new cyberpsychosis state for a player**
+      
+      Triggers the specified cyberpsychosis state with appropriate parameters
+      and creates audit trail for state transitions.
+      
+      **Performance:** <30ms average response time'
+      operationId: createCyberpsychosisState
+      tags:
+        - Cyberpsychosis States
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - player_id
+                - state_type
+                - trigger_reason
+              properties:
+                player_id:
+                  type: string
+                  format: uuid
+                  description: Player UUID
+                  example: "550e8400-e29b-41d4-a716-446655440000"
+                state_type:
+                  type: integer
+                  format: int32
+                  enum: [1, 2, 3, 4, 5]
+                  description: |
+                    1=Berserk, 2=Adrenal Overload, 3=Neural Overload, 4=System Shock, 5=Cyberpsychosis
+                  example: 1
+                trigger_reason:
+                  type: string
+                  minLength: 1
+                  maxLength: 256
+                  description: Reason for state trigger
+                  example: "combat_damage_threshold_exceeded"
+      responses:
+        '201':
+          description: Cyberpsychosis state created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CyberpsychosisState'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /cyberpsychosis/states/{player_id}:
+    get:
+      summary: Get Player Cyberpsychosis State
+      description: '**Retrieve active cyberpsychosis state for a player**
+      
+      Returns the current active state with full parameters and combat session info.
+      
+      **Performance:** <15ms average response time'
+      operationId: getPlayerCyberpsychosisState
+      tags:
+        - Cyberpsychosis States
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Player UUID
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Player cyberpsychosis state retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CyberpsychosisState'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /cyberpsychosis/states/{state_id}:
+    put:
+      summary: Update Cyberpsychosis State
+      description: '**Update existing cyberpsychosis state parameters**
+      
+      Allows modification of severity level and active status.
+      
+      **Performance:** <25ms average response time'
+      operationId: updateCyberpsychosisState
+      tags:
+        - Cyberpsychosis States
+      parameters:
+        - name: state_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: State UUID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                severity_level:
+                  type: integer
+                  format: int32
+                  minimum: 1
+                  maximum: 10
+                  description: New severity level
+                  example: 3
+                is_active:
+                  type: boolean
+                  description: State active status
+                  example: true
+      responses:
+        '200':
+          description: Cyberpsychosis state updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CyberpsychosisState'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /cyberpsychosis/states/{state_id}/deactivate:
+    post:
+      summary: Deactivate Cyberpsychosis State
+      description: '**Deactivate a cyberpsychosis state**
+      
+      Safely deactivates the state and creates transition record.
+      
+      **Performance:** <20ms average response time'
+      operationId: deactivateCyberpsychosisState
+      tags:
+        - Cyberpsychosis States
+      parameters:
+        - name: state_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: State UUID
+      responses:
+        '200':
+          description: Cyberpsychosis state deactivated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "deactivated"
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /cyberpsychosis/triggers/berserk:
+    post:
+      summary: Trigger Berserk State
+      description: '**Trigger berserk cyberpsychosis state**
+      
+      Activates berserk mode with increased damage and speed but reduced control.
+      
+      **Performance:** <35ms average response time'
+      operationId: triggerBerserk
+      tags:
+        - State Triggers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - player_id
+              properties:
+                player_id:
+                  type: string
+                  format: uuid
+                  description: Player UUID
+                reason:
+                  type: string
+                  maxLength: 256
+                  description: Trigger reason
+                  example: "critical_damage_received"
+      responses:
+        '201':
+          description: Berserk state triggered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CyberpsychosisState'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /cyberpsychosis/triggers/adrenal-overload:
+    post:
+      summary: Trigger Adrenal Overload State
+      description: '**Trigger adrenal overload cyberpsychosis state**
+      
+      Activates extreme speed boost with health drain and reduced accuracy.
+      
+      **Performance:** <35ms average response time'
+      operationId: triggerAdrenalOverload
+      tags:
+        - State Triggers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - player_id
+              properties:
+                player_id:
+                  type: string
+                  format: uuid
+                  description: Player UUID
+                reason:
+                  type: string
+                  maxLength: 256
+                  description: Trigger reason
+                  example: "near_death_experience"
+      responses:
+        '201':
+          description: Adrenal overload state triggered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CyberpsychosisState'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /cyberpsychosis/triggers/neural-overload:
+    post:
+      summary: Trigger Neural Overload State
+      description: '**Trigger neural overload cyberpsychosis state**
+      
+      Activates enhanced accuracy and reflexes with neural instability.
+      
+      **Performance:** <35ms average response time'
+      operationId: triggerNeuralOverload
+      tags:
+        - State Triggers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - player_id
+              properties:
+                player_id:
+                  type: string
+                  format: uuid
+                  description: Player UUID
+                reason:
+                  type: string
+                  maxLength: 256
+                  description: Trigger reason
+                  example: "combat_stress_peak"
+      responses:
+        '201':
+          description: Neural overload state triggered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CyberpsychosisState'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /health:
+    get:
+      summary: Service Health Check
+      description: '**Basic service health check**
+      
+      Returns service health status and basic metrics.
+      
+      **Performance:** <5ms average response time'
+      operationId: healthCheck
+      tags:
+        - Health Monitoring
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, timestamp, service, version]
+                properties:
+                  status:
+                    type: string
+                    enum: [healthy, degraded, unhealthy]
+                    example: healthy
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2024-01-11T12:00:00Z"
+                  service:
+                    type: string
+                    example: cyberpsychosis-service
+                  version:
+                    type: string
+                    example: "1.0.0"
+                  uptime_seconds:
+                    type: integer
+                    format: int64
+                    description: Service uptime in seconds
+                    example: 3600
+
+  /system/health:
+    get:
+      summary: Get System Health
+      description: '**Retrieve detailed system health information**
+      
+      Provides comprehensive health metrics including active states,
+      performance statistics, and system stability indicators.
+      
+      **Performance:** <15ms for health aggregation'
+      operationId: getSystemHealth
+      tags:
+        - Health Monitoring
+      responses:
+        '200':
+          description: System health information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemHealth'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    CyberpsychosisState:
+      type: object
+      required: [state_id, player_id, state_type, severity_level, is_active, is_controllable, can_be_cured]
+      properties:
+        # Large fields first (16-24 bytes): string (16+), pointers (8)
+        state_id:
+          type: string
+          format: uuid
+          description: Unique state identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        player_id:
+          type: string
+          format: uuid
+          description: Player identifier
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        combat_session:
+          $ref: '#/components/schemas/CombatSession'
+        state_history:
+          type: array
+          items:
+            $ref: '#/components/schemas/StateTransition'
+          description: History of state transitions
+
+        # Medium fields (8 bytes): float64
+        damage_multiplier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 5.0
+          description: Damage multiplier
+          example: 2.5
+        speed_multiplier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 5.0
+          description: Movement speed multiplier
+          example: 1.8
+        accuracy_multiplier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 3.0
+          description: Accuracy multiplier
+          example: 1.2
+        health_drain_rate:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 50.0
+          description: Health drain rate (HP per second)
+          example: 15.0
+        neural_overload_level:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Neural overload level (0.0-1.0)
+          example: 0.3
+        system_instability:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: System instability level (0.0-1.0)
+          example: 0.2
+
+        # Small fields (≤4 bytes): int32, bool
+        state_type:
+          type: integer
+          format: int32
+          enum: [0, 1, 2, 3, 4, 5]
+          description: |
+            0=Normal, 1=Berserk, 2=Adrenal Overload, 3=Neural Overload, 4=System Shock, 5=Cyberpsychosis
+          example: 1
+        severity_level:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 10
+          description: State severity level
+          example: 2
+        is_active:
+          type: boolean
+          description: Whether the state is currently active
+          example: true
+        is_controllable:
+          type: boolean
+          description: Whether the player can control actions in this state
+          example: true
+        can_be_cured:
+          type: boolean
+          description: Whether the state can be cured
+          example: true
+
+    CombatSession:
+      type: object
+      required: [session_id, player_id, start_time, is_active]
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: Combat session identifier
+        player_id:
+          type: string
+          format: uuid
+          description: Player identifier
+        start_time:
+          type: string
+          format: date-time
+          description: Session start time
+        end_time:
+          type: string
+          format: date-time
+          description: Session end time (null if active)
+        kills:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Number of kills in session
+          example: 5
+        deaths:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Number of deaths in session
+          example: 2
+        damage_dealt:
+          type: number
+          format: float
+          minimum: 0.0
+          description: Total damage dealt
+          example: 1250.5
+        damage_taken:
+          type: number
+          format: float
+          minimum: 0.0
+          description: Total damage taken
+          example: 850.2
+        is_active:
+          type: boolean
+          description: Whether the session is currently active
+
+    StateTransition:
+      type: object
+      required: [transition_id, from_state, to_state, transition_time, trigger_reason, severity_change]
+      properties:
+        transition_id:
+          type: string
+          format: uuid
+          description: Transition identifier
+        from_state:
+          type: integer
+          format: int32
+          enum: [0, 1, 2, 3, 4, 5]
+          description: Previous state type
+        to_state:
+          type: integer
+          format: int32
+          enum: [0, 1, 2, 3, 4, 5]
+          description: New state type
+        transition_time:
+          type: string
+          format: date-time
+          description: Transition timestamp
+        trigger_reason:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: Reason for the transition
+        severity_change:
+          type: integer
+          format: int32
+          description: Change in severity level
+          example: 1
+
+    SystemHealth:
+      type: object
+      required: [total_states, active_states, inactive_states, average_severity, last_health_check]
+      properties:
+        total_states:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Total number of cyberpsychosis states
+          example: 150
+        active_states:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Number of active states
+          example: 45
+        inactive_states:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Number of inactive states
+          example: 105
+        average_severity:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 10.0
+          description: Average severity across all states
+          example: 2.5
+        last_health_check:
+          type: string
+          format: date-time
+          description: Timestamp of last health check
+        response_time:
+          type: integer
+          format: int64
+          description: Health check response time in milliseconds
+          example: 10
+        error_rate:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Error rate (0.0-1.0)
+          example: 0.001
+
+  responses:
+    BadRequest:
+      description: Bad Request - Invalid input parameters
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [error, details, code]
+            properties:
+              error:
+                type: string
+                example: "Invalid request body"
+              details:
+                type: string
+                example: "player_id is required"
+              code:
+                type: integer
+                example: 400
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [error, details, code]
+            properties:
+              error:
+                type: string
+                example: "Resource not found"
+              details:
+                type: string
+                example: "Cyberpsychosis state not found"
+              code:
+                type: integer
+                example: 404
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [error, details, code]
+            properties:
+              error:
+                type: string
+                example: "Internal server error"
+              details:
+                type: string
+                example: "Database connection failed"
+              code:
+                type: integer
+                example: 500
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token for API authentication
+
+tags:
+  - name: Cyberpsychosis States
+    description: Core cyberpsychosis state management operations
+  - name: State Triggers
+    description: Operations to trigger specific cyberpsychosis states
+  - name: Health Monitoring
+    description: System health and monitoring endpoints

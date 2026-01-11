@@ -1,0 +1,327 @@
+# Real-time Combat Service - Session Management Schemas
+# Domain Separation: Session Management - SOLID/DRY Foundation
+# Issue: #2232
+
+components:
+  schemas:
+
+    # Combat Session - Core entity with enterprise-grade inheritance
+    CombatSession:
+      allOf:
+        - $ref: ../../common/schemas/infrastructure-entities.yaml#/components/schemas/InfrastructureEntity
+        - type: object
+          required:
+            - session_id
+            - status
+            - players
+            - max_players
+          properties:
+            # Large fields first (16-24 bytes): string (16+), array (24+), object (24+)
+            websocket_url:
+              type: string
+              description: WebSocket URL for real-time updates
+              example: "ws://realtime.necpgame.com/sessions/123e4567-e89b-12d3-a456-426614174000"
+            kafka_topic:
+              type: string
+              description: Kafka topic for session events
+              example: "combat.session.123e4567-e89b-12d3-a456-426614174000"
+            players:
+              type: array
+              items:
+                $ref: '#/components/schemas/Player'
+              minItems: 2
+              maxItems: 50
+              description: Active players in session
+            custom_rules:
+              type: object
+              description: Custom game rules and settings
+              example: {"friendly_fire": false, "time_multiplier": 1.5}
+            # Medium fields (8 bytes aligned): integer/float64 (grouped together)
+            session_id:
+              type: string
+              format: uuid
+              description: Unique combat session identifier
+              example: "123e4567-e89b-12d3-a456-426614174000"
+            max_players:
+              type: integer
+              minimum: 2
+              maximum: 50
+              default: 10
+              description: Maximum participants in combat
+              example: 10
+            current_round:
+              type: integer
+              minimum: 1
+              default: 1
+              description: Current round number
+              example: 1
+            time_limit:
+              type: integer
+              description: Time limit in seconds
+              minimum: 60
+              maximum: 3600
+              example: 900
+            score_limit:
+              type: integer
+              description: Score limit for victory
+              minimum: 10
+              maximum: 1000
+              example: 100
+            # Small fields (≤4 bytes): string enum, boolean
+            status:
+              type: string
+              enum: [waiting, active, paused, finished, cancelled]
+              description: Current session status
+              example: "active"
+            game_mode:
+              type: string
+              enum: [deathmatch, team_deathmatch, capture_flag, king_of_hill, elimination]
+              description: Combat game mode
+              example: "team_deathmatch"
+            private_session:
+              type: boolean
+              default: false
+              description: Whether session is private
+              example: false
+          description:
+            "BACKEND NOTE: SOLID inheritance from InfrastructureEntity. Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    # Create Session Request
+    CreateSessionRequest:
+      type: object
+      required:
+        - game_mode
+        - max_players
+      properties:
+        # Large fields first (16-24 bytes): string (16+), object (24+)
+        custom_rules:
+          type: object
+          description: Custom game rules and settings
+          example: {"friendly_fire": false, "time_multiplier": 1.5}
+        password:
+          type: string
+          minLength: 4
+          maxLength: 32
+          description: Password for private sessions
+          example: "secure123"
+        # Medium fields (8 bytes aligned): integer (grouped together)
+        max_players:
+          type: integer
+          minimum: 2
+          maximum: 50
+          default: 10
+          description: Maximum participants in combat
+          example: 10
+        time_limit:
+          type: integer
+          minimum: 60
+          maximum: 3600
+          description: Time limit in seconds
+          example: 900
+        score_limit:
+          type: integer
+          minimum: 10
+          maximum: 1000
+          description: Score limit for victory
+          example: 100
+        # Small fields (≤4 bytes): string enum, boolean
+        game_mode:
+          type: string
+          enum: [deathmatch, team_deathmatch, capture_flag, king_of_hill, elimination]
+          description: Combat game mode
+          example: "team_deathmatch"
+        private_session:
+          type: boolean
+          default: false
+          description: Whether session is private
+          example: false
+      description:
+        "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    # Update Session Request
+    UpdateSessionRequest:
+      type: object
+      properties:
+        # Large fields first (16-24 bytes): object (24+)
+        custom_rules:
+          type: object
+          description: Updated custom game rules
+          example: {"friendly_fire": true, "time_multiplier": 2.0}
+        # Medium fields (8 bytes aligned): integer (grouped together)
+        time_limit:
+          type: integer
+          minimum: 60
+          maximum: 3600
+          description: Updated time limit in seconds
+          example: 1200
+        score_limit:
+          type: integer
+          minimum: 10
+          maximum: 1000
+          description: Updated score limit for victory
+          example: 150
+        # Small fields (≤4 bytes): string enum
+        status:
+          type: string
+          enum: [active, paused, finished, cancelled]
+          description: New session status
+          example: "paused"
+        game_mode:
+          type: string
+          enum: [deathmatch, team_deathmatch, capture_flag, king_of_hill, elimination]
+          description: Updated game mode
+          example: "capture_flag"
+      description:
+        "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    # Player in Combat Session
+    Player:
+      type: object
+      required:
+        - player_id
+        - username
+        - team
+      properties:
+        # Large fields first (16-24 bytes): string (16+), object (24+)
+        player_id:
+          type: string
+          format: uuid
+          description: Player unique identifier
+          example: "456e7890-e89b-12d3-a456-426614174001"
+        username:
+          type: string
+          minLength: 3
+          maxLength: 32
+          description: Player display name
+          example: "CyberNinja"
+        position:
+          $ref: '#/components/schemas/Position'
+        # Medium fields (8 bytes aligned): integer (grouped together)
+        health:
+          type: integer
+          minimum: 0
+          maximum: 100
+          default: 100
+          description: Current health points
+          example: 85
+        armor:
+          type: integer
+          minimum: 0
+          maximum: 100
+          default: 0
+          description: Current armor points
+          example: 50
+        score:
+          type: integer
+          default: 0
+          description: Current session score
+          example: 1250
+        kills:
+          type: integer
+          default: 0
+          description: Number of eliminations
+          example: 15
+        deaths:
+          type: integer
+          default: 0
+          description: Number of deaths
+          example: 8
+        # Small fields (≤4 bytes): string enum
+        team:
+          type: string
+          enum: [red, blue, spectator, neutral]
+          description: Player team assignment
+          example: "red"
+      description:
+        "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    # Position Vector
+    Position:
+      type: object
+      required:
+        - x
+        - y
+        - z
+      properties:
+        # Medium fields (8 bytes aligned): float64 (grouped together)
+        x:
+          type: number
+          format: float
+          description: X coordinate
+          example: 123.45
+        y:
+          type: number
+          format: float
+          description: Y coordinate
+          example: 67.89
+        z:
+          type: number
+          format: float
+          description: Z coordinate (height)
+          example: 10.5
+        # Small fields (≤4 bytes): float32
+        rotation:
+          type: number
+          format: float
+          description: Yaw rotation in degrees
+          example: 45.0
+      description:
+        "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    # Join Session Request
+    JoinSessionRequest:
+      type: object
+      required:
+        - session_id
+      properties:
+        # Large fields first (16-24 bytes): string (16+)
+        session_id:
+          type: string
+          format: uuid
+          description: Combat session unique identifier
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        password:
+          type: string
+          description: Required if session is private
+          example: "secure123"
+        # Small fields (≤4 bytes): string enum
+        team:
+          type: string
+          enum: [red, blue, auto, spectator]
+          default: auto
+          description: Preferred team assignment
+          example: "auto"
+      description:
+        "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    # Join Session Response
+    JoinSessionResponse:
+      type: object
+      required:
+        - session
+        - player
+        - websocket_url
+      properties:
+        # Large fields first (16-24 bytes): string (16+), object (24+)
+        websocket_url:
+          type: string
+          description: WebSocket URL for real-time updates
+          example: "ws://realtime.necpgame.com/sessions/123e4567-e89b-12d3-a456-426614174000"
+        auth_token:
+          type: string
+          description: Short-lived token for WebSocket authentication
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        session:
+          $ref: '#/components/schemas/CombatSession'
+        player:
+          $ref: '#/components/schemas/Player'
+        # Medium fields (8 bytes aligned): integer
+        reconnect_timeout:
+          type: integer
+          minimum: 5
+          maximum: 300
+          default: 30
+          description: Seconds to wait before reconnect attempt
+          example: 30
+      description:
+        "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."

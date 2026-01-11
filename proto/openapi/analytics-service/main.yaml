@@ -1,1014 +1,993 @@
 openapi: 3.0.3
 info:
-  title: Analytics Service API - Enterprise-Grade Domain Service
-  description: '**Enterprise-Grade Analytics & Monitoring API for NECPGAME**
+  title: Analytics Service API
+  description: '**Enterprise-grade Analytics API for Player Behavior Analysis, Retention Metrics, and A/B Testing**
 
-    This API provides comprehensive analytics, metrics, and monitoring capabilities
-    for all game systems in the Night City universe, enabling data-driven insights
-    and performance optimization through SOLID/DRY domain separation.
+  Provides comprehensive analytics platform for MMOFPS RPG with real-time behavior analysis,
+  retention tracking, A/B testing framework, and automated reporting.
 
-    ## Key Features
-
-    - **Real-time Analytics**: Live metrics and performance data with <25ms P99 latency
-    - **Combat Analytics**: Battle statistics, effectiveness tracking, AI behavior patterns
-    - **Economy Analytics**: Market trends, portfolio analysis, stock protection systems
-    - **Player Behavior**: Usage patterns, engagement metrics, anti-cheat monitoring
-    - **System Monitoring**: Infrastructure health, performance metrics, alerting
-    - **Anti-cheat Monitoring**: Fraud detection, suspicious behavior identification
-
-    ## Domain Purpose
-
-    The Analytics domain provides comprehensive monitoring and analytics for all NECPGAME
-    systems, enabling data-driven decisions and continuous improvement through
-    enterprise-grade observability and performance optimization.
-
-    ## Performance Targets
-
-    - P99 Latency: <25ms for analytics queries
-    - Memory: <20KB per active analytics session
-    - Concurrent users: 50,000+ simultaneous analytics operations
-    - Data processing: <10ms response time
-
-    ## SOLID/DRY Architecture
-
-    This service follows domain separation principles:
-    - **Infrastructure Domain**: System monitoring, health checks, metrics collection
-    - **Economy Domain**: Stock analytics, market protection, trading metrics
-    - **Game Domain**: Combat analytics, player behavior, performance tracking
-
-    '
+  **Performance:** P99 <50ms for behavior analysis, <100ms for report generation
+  **Reliability:** 99.95% uptime with automated data processing
+  **Scale:** Processes 10M+ player events daily'
   version: 1.0.0
   contact:
-    name: NECPGAME API Support
-    email: api@necpgame.com
-  license:
-    name: MIT
+    name: NECPGAME Analytics Team
+    email: analytics@necpgame.com
+
 servers:
-- url: https://api.necpgame.com/v1/analytics
-  description: Production server
-- url: https://staging-api.necpgame.com/v1/analytics
-  description: Staging server
-- url: http://localhost:8080/api/v1/analytics
-  description: Local development server
-tags:
-- name: Combat Analytics
-  description: Battle and combat performance metrics
-- name: Economy Analytics
-  description: Market trends, stock protection, and economic indicators
-- name: Player Analytics
-  description: Player behavior and engagement metrics
-- name: System Monitoring
-  description: Infrastructure and system health monitoring
-- name: Anti-Cheat
-  description: Fraud detection and prevention monitoring
-- name: Health Monitoring
-  description: System health and performance monitoring
-- name: Stock Protection
-  description: Market integrity and protection systems
-- name: Stock Analytics
-  description: Stock market analysis and tools
+  - url: https://api.necpgame.com/analytics/v1
+    description: Production server
+  - url: https://staging-api.necpgame.com/analytics/v1
+    description: Staging server
+  - url: http://localhost:8081/api/v1
+    description: Local development
+
 security:
-- BearerAuth: []
+  - BearerAuth: []
+
 paths:
+  /analytics/behavior/{player_id}:
+    get:
+      summary: Get Player Behavior
+      description: '**Retrieve comprehensive player behavior analysis**
+
+      Returns detailed behavior metrics including engagement score, retention probability,
+      session patterns, and churn risk assessment.
+
+      **Performance:** <25ms average response time'
+      operationId: getPlayerBehavior
+      tags:
+        - Player Behavior
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Player UUID
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Player behavior analysis retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerBehavior'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /analytics/behavior/{player_id}/analyze:
+    post:
+      summary: Analyze Player Behavior
+      description: '**Perform real-time behavior analysis for a player**
+
+      Triggers immediate analysis of player behavior patterns, session data,
+      and generates updated engagement metrics.
+
+      **Performance:** <50ms analysis time'
+      operationId: analyzePlayerBehavior
+      tags:
+        - Player Behavior
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Player UUID
+      responses:
+        '200':
+          description: Player behavior analyzed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerBehavior'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /analytics/retention:
+    get:
+      summary: Get Retention Metrics
+      description: '**Retrieve cohort-based retention analytics**
+
+      Returns detailed retention metrics including Day 1, Day 7, Day 30 retention rates,
+      cohort analysis, and retention insights.
+
+      **Performance:** <75ms for 90-day analysis'
+      operationId: getRetentionMetrics
+      tags:
+        - Retention Analytics
+      parameters:
+        - name: days
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 365
+            default: 90
+          description: Number of days to analyze
+          example: 90
+      responses:
+        '200':
+          description: Retention metrics retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RetentionMetrics'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /analytics/ab-tests:
+    post:
+      summary: Create A/B Test
+      description: '**Create a new A/B test with multiple variants**
+
+      Sets up statistical testing framework with configurable variants,
+      sample sizes, and success metrics.
+
+      **Performance:** <30ms setup time'
+      operationId: createABTest
+      tags:
+        - A/B Testing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - description
+                - variants
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+                  description: Test name
+                  example: "UI Button Color Test"
+                description:
+                  type: string
+                  minLength: 1
+                  maxLength: 500
+                  description: Test description
+                  example: "Testing different button colors for conversion optimization"
+                variants:
+                  type: array
+                  minItems: 2
+                  maxItems: 10
+                  items:
+                    type: string
+                    minLength: 1
+                    maxLength: 50
+                  description: Test variant names
+                  example: ["control", "blue_button", "green_button"]
+      responses:
+        '201':
+          description: A/B test created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ABTest'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /analytics/ab-tests/{test_id}/assign/{player_id}:
+    post:
+      summary: Assign A/B Test Variant
+      description: '**Assign a test variant to a player**
+
+      Uses statistical sampling to assign player to appropriate test variant
+      based on weights and current distribution.
+
+      **Performance:** <10ms assignment time'
+      operationId: assignABTestVariant
+      tags:
+        - A/B Testing
+      parameters:
+        - name: test_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: A/B test UUID
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Player UUID
+      responses:
+        '200':
+          description: Test variant assigned
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [test_id, player_id, variant, assigned_at]
+                properties:
+                  test_id:
+                    type: string
+                    format: uuid
+                    example: "550e8400-e29b-41d4-a716-446655440001"
+                  player_id:
+                    type: string
+                    format: uuid
+                    example: "550e8400-e29b-41d4-a716-446655440000"
+                  variant:
+                    type: string
+                    example: "blue_button"
+                  assigned_at:
+                    type: string
+                    format: date-time
+                    example: "2024-01-11T12:00:00Z"
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /analytics/reports:
+    post:
+      summary: Generate Analytics Report
+      description: '**Generate comprehensive analytics report**
+
+      Creates automated reports with charts, metrics, and AI-powered insights
+      for specified date ranges and report types.
+
+      **Performance:** <200ms for standard reports'
+      operationId: generateAnalyticsReport
+      tags:
+        - Analytics Reports
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - report_type
+              properties:
+                report_type:
+                  type: string
+                  enum: [retention, behavior, ab_test, performance]
+                  description: Type of report to generate
+                  example: "retention"
+                start_date:
+                  type: string
+                  format: date
+                  description: Report start date (YYYY-MM-DD)
+                  example: "2024-01-01"
+                end_date:
+                  type: string
+                  format: date
+                  description: Report end date (YYYY-MM-DD)
+                  example: "2024-01-11"
+      responses:
+        '201':
+          description: Report generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsReport'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /analytics/reports/{report_id}:
+    get:
+      summary: Get Analytics Report
+      description: '**Retrieve generated analytics report**
+
+      Returns complete report with metrics, charts, and insights.
+
+      **Performance:** <15ms retrieval time'
+      operationId: getAnalyticsReport
+      tags:
+        - Analytics Reports
+      parameters:
+        - name: report_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Report UUID
+      responses:
+        '200':
+          description: Report retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsReport'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   /health:
     get:
-      summary: Analytics Service Health Check
-      description: '**Enterprise-grade health check endpoint**
+      summary: Service Health Check
+      description: '**Basic service health check with endpoint overview**
 
-        Provides real-time health status of the analytics service.
+      Returns service health status and available endpoints.
 
-        Critical for service discovery, load balancing, and monitoring.
-
-        **Performance:** <1ms response time, cached for 30 seconds
-
-        '
-      operationId: analyticsServiceHealthCheck
+      **Performance:** <5ms response time'
+      operationId: healthCheck
       tags:
-      - Health Monitoring
-      parameters:
-      - name: Accept-Encoding
-        in: header
-        schema:
-          type: string
-          enum:
-          - gzip
-          - deflate
-          - br
-      responses:
-        '200':
-          description: Service is healthy
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                example: max-age=30, s-maxage=60
-            ETag:
-              schema:
-                type: string
-                example: '"health-v1.0"'
-            Content-Encoding:
-              schema:
-                type: string
-                enum:
-                - gzip
-                - deflate
-                - br
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HealthResponse'
-        '503':
-          description: Service is unhealthy
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HealthResponse'
-        '429':
-          description: Too many requests - rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
-  /analytics/combat/overview:
-    get:
-      summary: Get combat analytics overview
-      operationId: getCombatAnalyticsOverview
-      description: 'Retrieve comprehensive combat analytics overview with metrics
-        and trends.
-
-        **Performance:** Optimized for dashboard queries, <5ms response time.'
-      tags:
-      - Combat Analytics
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: period
-        in: query
-        schema:
-          type: string
-          enum:
-          - hour
-          - day
-          - week
-          - month
-          default: day
-        description: Time period for analytics
-      - name: game_mode
-        in: query
-        schema:
-          type: string
-          enum:
-          - solo
-          - team
-          - ranked
-          - casual
-        description: Filter by game mode
-      responses:
-        '200':
-          description: Combat analytics overview
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CombatAnalyticsOverview'
-        '400':
-          $ref: ../common/responses/error.yaml#/BadRequest
-        '401':
-          $ref: ../common/responses/error.yaml#/Unauthorized
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
-  /analytics/economy/market:
-    get:
-      summary: Get economy market analytics
-      operationId: getEconomyMarketAnalytics
-      description: 'Retrieve market trends, price movements, and economic indicators.
-
-        **AI Integration:** Uses predictive analytics for market forecasting.'
-      tags:
-      - Economy Analytics
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: asset_type
-        in: query
-        schema:
-          type: string
-          enum:
-          - currency
-          - item
-          - stock
-          - real_estate
-        description: Type of economic asset
-      - name: timeframe
-        in: query
-        schema:
-          type: string
-          enum:
-          - short
-          - medium
-          - long
-          default: medium
-        description: Analysis timeframe
-      responses:
-        '200':
-          description: Market analytics data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MarketAnalyticsResponse'
-        '400':
-          $ref: ../common/responses/error.yaml#/BadRequest
-        '401':
-          $ref: ../common/responses/error.yaml#/Unauthorized
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
-  /analytics/players/behavior:
-    get:
-      summary: Get player behavior analytics
-      operationId: getPlayerBehaviorAnalytics
-      description: 'Analyze player behavior patterns, engagement metrics, and retention
-        data.
-
-        **Privacy:** Aggregated and anonymized data only.'
-      tags:
-      - Player Analytics
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: segment
-        in: query
-        schema:
-          type: string
-          enum:
-          - new_players
-          - veterans
-          - casual
-          - hardcore
-        description: Player segment to analyze
-      - name: metric
-        in: query
-        schema:
-          type: string
-          enum:
-          - engagement
-          - retention
-          - progression
-          - spending
-          default: engagement
-        description: Behavior metric to analyze
-      responses:
-        '200':
-          description: Player behavior analytics
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PlayerBehaviorAnalytics'
-        '400':
-          $ref: ../common/responses/error.yaml#/BadRequest
-        '401':
-          $ref: ../common/responses/error.yaml#/Unauthorized
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
-  /analytics/system/performance:
-    get:
-      summary: Get system performance metrics
-      operationId: getSystemPerformanceMetrics
-      description: 'Monitor system performance, latency, and resource utilization.
-
-        **Real-time:** Live metrics with sub-second updates.'
-      tags:
-      - System Monitoring
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: component
-        in: query
-        schema:
-          type: string
-          enum:
-          - api
-          - database
-          - cache
-          - networking
-        description: System component to monitor
-      responses:
-        '200':
-          description: System performance metrics
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SystemPerformanceMetrics'
-        '400':
-          $ref: ../common/responses/error.yaml#/BadRequest
-        '401':
-          $ref: ../common/responses/error.yaml#/Unauthorized
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
-  /analytics/economy/health:
-    get:
-      summary: Economy analytics service health check
-      description: '**Enterprise-grade health check endpoint**
-
-        Provides real-time health status of the economy analytics microservice.
-
-        Critical for service discovery, load balancing, and monitoring.
-
-        '
-      operationId: economyAnalyticsHealthCheck
-      tags:
-        - Economy Analytics
-      security: []
+        - Health Monitoring
       responses:
         '200':
           description: Service is healthy
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/health.yaml#/HealthResponse'
-        '429':
-          $ref: '../common/responses/error.yaml#/TooManyRequests'
-        '503':
-          $ref: '../common/responses/error.yaml#/InternalServerError'
-  /analytics/economy/market/trends:
-    get:
-      summary: Get market trends analysis
-      description: 'Analyzes current market trends including price movements, volume changes,
-        and market sentiment across all economic sectors.
+                type: object
+                required: [status, timestamp, service, version, endpoints]
+                properties:
+                  status:
+                    type: string
+                    enum: [healthy, degraded, unhealthy]
+                    example: healthy
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2024-01-11T12:00:00Z"
+                  service:
+                    type: string
+                    example: analytics-service
+                  version:
+                    type: string
+                    example: "1.0.0"
+                  endpoints:
+                    type: array
+                    items:
+                      type: string
+                    example: ["/api/v1/analytics/behavior/{player_id}", "/api/v1/analytics/retention"]
 
-        '
-      operationId: getMarketTrends
-      tags:
-        - Economy Analytics
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: sector
-          in: query
-          schema:
-            type: string
-            enum: [technology, real_estate, commodities, services, all]
-            default: all
-          description: Economic sector to analyze
-        - name: timeframe
-          in: query
-          schema:
-            type: string
-            enum: [1h, 4h, 24h, 7d, 30d]
-            default: 24h
-          description: Analysis timeframe
-        - name: include_predictions
-          in: query
-          schema:
-            type: boolean
-            default: false
-          description: Include AI-powered market predictions
-      responses:
-        '200':
-          description: Market trends analysis
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MarketTrendsAnalysis'
-        '400':
-          $ref: '../common/responses/error.yaml#/BadRequest'
-        '401':
-          $ref: '../common/responses/error.yaml#/Unauthorized'
-  /analytics/economy/trade/volume:
+  /system/health:
     get:
-      summary: Get trade volume statistics
-      description: 'Provides detailed trade volume statistics and analysis for economic
-        transactions across all game markets.
+      summary: Get System Health
+      description: '**Retrieve detailed system health metrics**
 
-        '
-      operationId: getTradeVolumeStatistics
-      tags:
-        - Economy Analytics
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: asset_type
-          in: query
-          schema:
-            type: string
-            enum: [currency, item, stock, real_estate, service]
-          description: Type of traded asset
-        - name: period
-          in: query
-          schema:
-            type: string
-            enum: [hour, day, week, month]
-            default: day
-          description: Time period for statistics
-      responses:
-        '200':
-          description: Trade volume statistics
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TradeVolumeStatistics'
-        '400':
-          $ref: '../common/responses/error.yaml#/BadRequest'
-        '401':
-          $ref: '../common/responses/error.yaml#/Unauthorized'
-  /analytics/stock/protection/market-integrity:
-    get:
-      summary: Monitor market integrity
-      description: '**Comprehensive market integrity monitoring**
+      Provides comprehensive health information including event processing,
+      error rates, and system performance indicators.
 
-        Analyzes market state to detect potential integrity threats.
-        Includes trade pattern analysis, manipulation detection, and risk assessment.
+      **Performance:** <20ms health aggregation'
+      operationId: getSystemHealth
+      tags:
+        - Health Monitoring
+      responses:
+        '200':
+          description: System health information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemHealth'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
-        **AI Integration:** Uses advanced algorithms for anomaly detection.'
-      operationId: monitorMarketIntegrity
-      tags:
-        - Stock Protection
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: time_window
-          in: query
-          schema:
-            type: string
-            enum: [1h, 4h, 24h, 7d]
-            default: 24h
-          description: Analysis time window
-        - name: risk_threshold
-          in: query
-          schema:
-            type: number
-            minimum: 0
-            maximum: 1
-            default: 0.7
-          description: Risk threshold for alerts (0-1)
-        - name: include_historical
-          in: query
-          schema:
-            type: boolean
-            default: false
-          description: Include historical data
-      responses:
-        '200':
-          description: Market integrity status
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MarketIntegrityStatus'
-        '400':
-          $ref: '../common/responses/error.yaml#/BadRequest'
-        '401':
-          $ref: '../common/responses/error.yaml#/Unauthorized'
-  /analytics/stock/fundamental/{symbol}:
-    get:
-      summary: Get fundamental analysis for a stock
-      operationId: getFundamentalAnalysis
-      tags:
-        - Stock Analytics
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: symbol
-          in: path
-          required: true
-          schema:
-            type: string
-            example: "AAPL"
-          description: Stock symbol
-      responses:
-        '200':
-          description: Fundamental analysis data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FundamentalAnalysis'
-        '400':
-          $ref: '../common/responses/error.yaml#/BadRequest'
-        '401':
-          $ref: '../common/responses/error.yaml#/Unauthorized'
-        '404':
-          $ref: '../common/responses/error.yaml#/NotFound'
-  /analytics/stock/technical/{symbol}:
-    get:
-      summary: Get comprehensive technical analysis
-      operationId: getTechnicalAnalysis
-      tags:
-        - Stock Analytics
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: symbol
-          in: path
-          required: true
-          schema:
-            type: string
-            example: "AAPL"
-          description: Stock symbol
-        - name: timeframe
-          in: query
-          schema:
-            type: string
-            enum: [1d, 1w, 1M, 3M, 6M, 1y]
-            default: "1M"
-          description: Analysis timeframe
-      responses:
-        '200':
-          description: Technical analysis report
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TechnicalAnalysis'
-        '400':
-          $ref: '../common/responses/error.yaml#/BadRequest'
-        '401':
-          $ref: '../common/responses/error.yaml#/Unauthorized'
-        '404':
-          $ref: '../common/responses/error.yaml#/NotFound'
 components:
-  responses:
-    OK:
-      $ref: ../common/responses/success.yaml#/OK
-    Created:
-      $ref: ../common/responses/success.yaml#/Created
-    Updated:
-      $ref: ../common/responses/success.yaml#/Updated
-    Deleted:
-      $ref: ../common/responses/success.yaml#/Deleted
-    BadRequest:
-      $ref: ../common/responses/error.yaml#/BadRequest
-    Unauthorized:
-      $ref: ../common/responses/error.yaml#/Unauthorized
-    NotFound:
-      $ref: ../common/responses/error.yaml#/NotFound
-    TooManyRequests:
-      $ref: ../common/responses/error.yaml#/TooManyRequests
   schemas:
-    HealthResponse:
-      $ref: ../common/schemas/health.yaml#/HealthResponse
-    Error:
-      $ref: ../common/schemas/infrastructure-entities.yaml#/ErrorResponse
-    CombatAnalyticsOverview:
+    PlayerBehavior:
       type: object
+      required: [player_id, total_sessions, level, days_since_first, days_since_last, is_active]
       properties:
-        period:
+        # Large fields first (16-24 bytes): string (16+), pointers (8), slices (24+)
+        player_id:
           type: string
-          description: Analysis period
-        metrics:
-          type: object
-          properties:
-            total_battles:
-              type: integer
-              minimum: 0
-            average_ttk:
-              type: number
-              minimum: 0
-              description: Average Time To Kill in seconds
-            average_dps:
-              type: number
-              minimum: 0
-              description: Average Damage Per Second
-            win_rate:
-              type: number
-              minimum: 0
-              maximum: 1
-              description: Overall win rate
-          description: Key combat metrics
-        trends:
+          format: uuid
+          description: Player identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        session_events:
           type: array
           items:
-            type: object
-            properties:
-              timestamp:
-                type: string
-                format: date-time
-              metric:
-                type: string
-              value:
-                type: number
-            description: Time-series trend data
-      description: 'BACKEND NOTE: Combat analytics with memory-aligned structure.'
-    MarketAnalyticsResponse:
-      type: object
-      properties:
-        asset_type:
-          type: string
-        timeframe:
-          type: string
-        current_price:
+            $ref: '#/components/schemas/PlayerSessionEvent'
+          description: Recent session events
+        game_events:
+          type: array
+          items:
+            $ref: '#/components/schemas/GameEvent'
+          description: Recent game events
+
+        # Medium fields (8 bytes): float64 (grouped together)
+        session_duration:
           type: number
-          minimum: 0
-        price_change_24h:
-          type: number
-          description: 24-hour price change percentage
-        volume_24h:
-          type: number
-          minimum: 0
-          description: 24-hour trading volume
-        market_cap:
-          type: number
-          minimum: 0
-          description: Market capitalization
-        predictions:
-          type: object
-          properties:
-            next_hour:
-              type: number
-              description: AI-predicted price for next hour
-            confidence:
-              type: number
-              minimum: 0
-              maximum: 1
-              description: Prediction confidence score
-          description: AI-driven market predictions
-      description: 'BACKEND NOTE: Market analytics with AI predictions.'
-    PlayerBehaviorAnalytics:
-      type: object
-      properties:
-        segment:
-          type: string
-        metric:
-          type: string
-        total_players:
-          type: integer
-          minimum: 0
-        active_users:
-          type: integer
-          minimum: 0
+          format: float
+          description: Total session duration in hours
+          example: 45.5
         average_session_time:
-          type: integer
-          minimum: 0
-          description: Average session time in minutes
+          type: number
+          format: float
+          description: Average session time in hours
+          example: 2.3
+        play_frequency:
+          type: number
+          format: float
+          description: Play frequency per week
+          example: 4.2
         retention_rate:
           type: number
-          minimum: 0
-          maximum: 1
-          description: Player retention rate
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Retention rate (0.0-1.0)
+          example: 0.85
+        churn_probability:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Churn probability (0.0-1.0)
+          example: 0.12
         engagement_score:
           type: number
-          minimum: 0
-          maximum: 100
-          description: Composite engagement score
-      description: 'BACKEND NOTE: Player behavior metrics for game optimization.'
-    MarketTrendsAnalysis:
-      type: object
-      properties:
-        sector:
-          type: string
-          enum: [technology, real_estate, commodities, services, all]
-        timeframe:
-          type: string
-        trends:
-          type: array
-          items:
-            type: object
-            properties:
-              asset:
-                type: string
-              price_movement:
-                type: number
-                description: Price change percentage
-              volume_change:
-                type: number
-                description: Volume change percentage
-              sentiment:
-                type: string
-                enum: [bullish, bearish, neutral]
-            description: Individual asset trends
-        predictions:
-          type: object
-          properties:
-            confidence_score:
-              type: number
-              minimum: 0
-              maximum: 1
-            predicted_trend:
-              type: string
-              enum: [up, down, sideways]
-            time_horizon:
-              type: string
-          description: AI-powered market predictions
-      description: 'BACKEND NOTE: Market trends analysis with AI predictions.'
-    TradeVolumeStatistics:
-      type: object
-      properties:
-        asset_type:
-          type: string
-          enum: [currency, item, stock, real_estate, service]
-        period:
-          type: string
-          enum: [hour, day, week, month]
-        total_volume:
-          type: number
-          minimum: 0
-          description: Total trading volume
-        transaction_count:
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Engagement score (0.0-1.0)
+          example: 0.78
+
+        # Small fields (≤4 bytes): int32, bool
+        total_sessions:
           type: integer
+          format: int32
           minimum: 0
-        average_transaction_size:
-          type: number
+          description: Total number of sessions
+          example: 156
+        total_play_time:
+          type: integer
+          format: int32
+          description: Total play time in hours
+          example: 234
+        level:
+          type: integer
+          format: int32
+          minimum: 1
+          description: Current player level
+          example: 25
+        days_since_first:
+          type: integer
+          format: int32
           minimum: 0
-        top_traders:
-          type: array
-          items:
-            type: object
-            properties:
-              player_id:
-                type: string
-                format: uuid
-              volume:
-                type: number
-                minimum: 0
-              transaction_count:
-                type: integer
-                minimum: 0
-            description: Top traders by volume
-        hourly_breakdown:
-          type: array
-          items:
-            type: object
-            properties:
-              hour:
-                type: integer
-                minimum: 0
-                maximum: 23
-              volume:
-                type: number
-                minimum: 0
-            description: Volume breakdown by hour
-      description: 'BACKEND NOTE: Trade volume statistics with memory-aligned structure.'
-    MarketIntegrityStatus:
+          description: Days since first session
+          example: 45
+        days_since_last:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Days since last session
+          example: 2
+        is_active:
+          type: boolean
+          description: Whether player is currently active
+          example: true
+        is_churned:
+          type: boolean
+          description: Whether player has churned
+          example: false
+
+    PlayerSessionEvent:
       type: object
+      required: [event_id, event_type, timestamp, duration_minutes]
       properties:
+        event_id:
+          type: string
+          format: uuid
+          description: Event identifier
+        event_type:
+          type: string
+          enum: [session_start, session_end, level_up, achievement]
+          description: Type of session event
         timestamp:
           type: string
           format: date-time
-        overall_integrity_score:
-          type: number
+          description: Event timestamp
+        duration_minutes:
+          type: integer
+          format: int32
           minimum: 0
-          maximum: 1
-          description: Overall market integrity score (0-1)
-        risk_level:
+          description: Session duration in minutes
+        level_start:
+          type: integer
+          format: int32
+          minimum: 1
+          description: Level at session start
+        level_end:
+          type: integer
+          format: int32
+          minimum: 1
+          description: Level at session end
+        xp_start:
+          type: integer
+          format: int32
+          minimum: 0
+          description: XP at session start
+        xp_end:
+          type: integer
+          format: int32
+          minimum: 0
+          description: XP at session end
+
+    GameEvent:
+      type: object
+      required: [event_id, event_type, player_id, timestamp]
+      properties:
+        event_id:
           type: string
-          enum: [low, medium, high, critical]
-        detected_anomalies:
+          format: uuid
+          description: Event identifier
+        event_type:
+          type: string
+          description: Type of game event
+          example: "enemy_defeated"
+        player_id:
+          type: string
+          format: uuid
+          description: Player identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
+        data:
+          type: object
+          additionalProperties: true
+          description: Event-specific data
+          example: {"enemy_type": "boss", "damage_dealt": 1250}
+
+    RetentionMetrics:
+      type: object
+      required: [date_range, cohort_metrics, total_players, active_players]
+      properties:
+        date_range:
+          $ref: '#/components/schemas/DateRange'
+        cohort_metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/CohortMetric'
+          description: Metrics for each cohort
+        overall_retention:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Overall retention rate
+          example: 0.65
+        day1_retention:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Day 1 retention rate
+          example: 0.78
+        day7_retention:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Day 7 retention rate
+          example: 0.65
+        day30_retention:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Day 30 retention rate
+          example: 0.45
+        day90_retention:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Day 90 retention rate
+          example: 0.32
+        total_players:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Total players in analysis
+          example: 10000
+        active_players:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Currently active players
+          example: 6500
+        new_players:
+          type: integer
+          format: int32
+          minimum: 0
+          description: New players in period
+          example: 2500
+        returning_players:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Returning players
+          example: 4000
+
+    CohortMetric:
+      type: object
+      required: [cohort_date, cohort_size, day1_retention, day7_retention, day30_retention, day90_retention]
+      properties:
+        cohort_date:
+          type: string
+          format: date
+          description: Cohort date
+          example: "2024-01-01"
+        cohort_size:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Size of cohort
+          example: 1000
+        day1_retention:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Day 1 retention for cohort
+          example: 0.85
+        day7_retention:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Day 7 retention for cohort
+          example: 0.72
+        day30_retention:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Day 30 retention for cohort
+          example: 0.58
+        day90_retention:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Day 90 retention for cohort
+          example: 0.45
+
+    ABTest:
+      type: object
+      required: [test_id, test_name, variants, confidence_level, status]
+      properties:
+        test_id:
+          type: string
+          format: uuid
+          description: Test identifier
+        test_name:
+          type: string
+          description: Test name
+        description:
+          type: string
+          description: Test description
+        variants:
+          type: array
+          items:
+            $ref: '#/components/schemas/ABTestVariant'
+        target_metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/ABTestMetric'
+        confidence_level:
+          type: number
+          format: float
+          minimum: 0.8
+          maximum: 0.99
+          description: Statistical confidence level
+          example: 0.95
+        statistical_power:
+          type: number
+          format: float
+          minimum: 0.8
+          maximum: 0.99
+          description: Statistical power
+          example: 0.8
+        min_sample_size:
+          type: integer
+          format: int32
+          minimum: 100
+          description: Minimum sample size required
+          example: 1000
+        current_sample_size:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Current sample size
+          example: 2500
+        status:
+          type: integer
+          format: int32
+          enum: [0, 1, 2, 3]
+          description: Test status (0=Draft, 1=Running, 2=Completed, 3=Stopped)
+          example: 1
+        is_active:
+          type: boolean
+          description: Whether test is active
+          example: true
+        start_date:
+          type: string
+          format: date-time
+          description: Test start date
+        end_date:
+          type: string
+          format: date-time
+          description: Test end date (null if ongoing)
+
+    ABTestVariant:
+      type: object
+      required: [variant_id, variant_name, weight, sample_size, conversion]
+      properties:
+        variant_id:
+          type: string
+          format: uuid
+          description: Variant identifier
+        variant_name:
+          type: string
+          description: Variant name
+        weight:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Traffic weight (0.0-1.0)
+          example: 0.33
+        config:
+          type: object
+          additionalProperties: true
+          description: Variant configuration
+        sample_size:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Current sample size for variant
+          example: 833
+        conversion:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Conversion rate
+          example: 0.125
+
+    ABTestMetric:
+      type: object
+      required: [metric_name, metric_type, baseline, improvement, p_value]
+      properties:
+        metric_name:
+          type: string
+          description: Metric name
+          example: "conversion_rate"
+        metric_type:
+          type: string
+          enum: [percentage, count, score]
+          description: Type of metric
+          example: "percentage"
+        baseline:
+          type: number
+          format: float
+          description: Baseline value
+          example: 0.10
+        improvement:
+          type: number
+          format: float
+          description: Improvement over baseline
+          example: 0.025
+        p_value:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Statistical significance p-value
+          example: 0.03
+
+    DateRange:
+      type: object
+      required: [start_date, end_date]
+      properties:
+        start_date:
+          type: string
+          format: date
+          description: Start date
+          example: "2024-01-01"
+        end_date:
+          type: string
+          format: date
+          description: End date
+          example: "2024-01-11"
+
+    AnalyticsReport:
+      type: object
+      required: [report_id, report_type, date_range, generated_at, metrics]
+      properties:
+        report_id:
+          type: string
+          format: uuid
+          description: Report identifier
+        report_type:
+          type: string
+          enum: [retention, behavior, ab_test, performance]
+          description: Type of report
+        date_range:
+          $ref: '#/components/schemas/DateRange'
+        generated_at:
+          type: string
+          format: date-time
+          description: Report generation timestamp
+        metrics:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+          description: Report metrics
+        charts:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChartData'
+          description: Charts for visualization
+        insights:
+          type: array
+          items:
+            type: string
+          description: AI-generated insights
+          example: ["Day 1 retention improved by 5%", "Churn rate decreased in high-level players"]
+
+    ChartData:
+      type: object
+      required: [chart_id, chart_type, title, data]
+      properties:
+        chart_id:
+          type: string
+          description: Chart identifier
+        chart_type:
+          type: string
+          enum: [line, bar, pie, scatter]
+          description: Type of chart
+        title:
+          type: string
+          description: Chart title
+        data:
           type: array
           items:
             type: object
-            properties:
-              type:
-                type: string
-                enum: [manipulation, insider_trading, pump_dump, spoofing]
-              severity:
-                type: string
-                enum: [low, medium, high]
-              confidence:
-                type: number
-                minimum: 0
-                maximum: 1
-              description:
-                type: string
-            description: Detected market anomalies
-        market_health_indicators:
-          type: object
-          properties:
-            volume_anomaly_score:
-              type: number
-              minimum: 0
-              maximum: 1
-            price_volatility_score:
-              type: number
-              minimum: 0
-              maximum: 1
-            order_book_imbalance:
-              type: number
-              minimum: 0
-              maximum: 1
-          description: Market health indicators
-        recommendations:
-          type: array
-          items:
-            type: string
-          description: Automated recommendations for risk mitigation
-      description: 'BACKEND NOTE: Market integrity monitoring with AI-powered anomaly detection.'
-    FundamentalAnalysis:
+            additionalProperties: true
+          description: Chart data points
+
+    SystemHealth:
       type: object
+      required: [total_events, processed_events, failed_events, active_tests, last_health_check]
       properties:
-        symbol:
-          type: string
-          example: "AAPL"
-        company_info:
-          type: object
-          properties:
-            name:
-              type: string
-            sector:
-              type: string
-            industry:
-              type: string
-            market_cap:
-              type: number
-              minimum: 0
-          description: Basic company information
-        financial_ratios:
-          type: object
-          properties:
-            pe_ratio:
-              type: number
-            pb_ratio:
-              type: number
-            debt_to_equity:
-              type: number
-            roe:
-              type: number
-          description: Key financial ratios
-        valuation_metrics:
-          type: object
-          properties:
-            intrinsic_value:
-              type: number
-            fair_value_range:
-              type: object
-              properties:
-                low:
-                  type: number
-                high:
-                  type: number
-          description: Valuation analysis
-        analyst_ratings:
-          type: object
-          properties:
-            average_rating:
-              type: number
-              minimum: 1
-              maximum: 5
-            recommendation:
-              type: string
-              enum: [strong_buy, buy, hold, sell, strong_sell]
-            number_of_analysts:
-              type: integer
-              minimum: 0
-          description: Analyst consensus
-        last_updated:
-          type: string
-          format: date-time
-      description: 'BACKEND NOTE: Fundamental stock analysis with financial metrics.'
-    TechnicalAnalysis:
-      type: object
-      properties:
-        symbol:
-          type: string
-          example: "AAPL"
-        trend_analysis:
-          type: object
-          properties:
-            primary_trend:
-              type: string
-              enum: [bullish, bearish, sideways]
-            secondary_trend:
-              type: string
-              enum: [bullish, bearish, sideways]
-            trend_strength:
-              type: number
-              minimum: 0
-              maximum: 100
-          description: Trend direction and strength analysis
-        momentum_indicators:
-          type: object
-          properties:
-            rsi:
-              type: number
-              minimum: 0
-              maximum: 100
-            macd:
-              type: object
-              properties:
-                value:
-                  type: number
-                signal:
-                  type: number
-                histogram:
-                  type: number
-            stochastic:
-              type: object
-              properties:
-                k:
-                  type: number
-                d:
-                  type: number
-          description: Momentum and oscillator indicators
-        volatility_indicators:
-          type: object
-          properties:
-            bollinger_bands:
-              type: object
-              properties:
-                upper:
-                  type: number
-                middle:
-                  type: number
-                lower:
-                  type: number
-            atr:
-              type: number
-              minimum: 0
-          description: Volatility and range indicators
-        volume_analysis:
-          type: object
-          properties:
-            volume_trend:
-              type: string
-              enum: [increasing, decreasing, stable]
-            obv:
-              type: number
-            volume_price_trend:
-              type: number
-          description: Volume-based analysis
-        support_resistance:
-          type: object
-          properties:
-            support_levels:
-              type: array
-              items:
-                type: number
-            resistance_levels:
-              type: array
-              items:
-                type: number
-          description: Key price levels
-        pattern_recognition:
-          type: array
-          items:
-            type: string
-          example: ["ascending_triangle", "bullish_engulfing"]
-          description: Recognized chart patterns
-      description: 'BACKEND NOTE: Comprehensive technical analysis with indicators and patterns.'
-    SystemPerformanceMetrics:
-      type: object
-      properties:
-        component:
-          type: string
-        uptime_percentage:
-          type: number
+        total_events:
+          type: integer
+          format: int64
           minimum: 0
-          maximum: 100
-        average_response_time:
-          type: number
+          description: Total events processed
+          example: 1000000
+        processed_events:
+          type: integer
+          format: int64
           minimum: 0
+          description: Successfully processed events
+          example: 999500
+        failed_events:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Failed events
+          example: 500
+        active_tests:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Active A/B tests
+          example: 3
+        response_time:
+          type: integer
+          format: int64
           description: Average response time in milliseconds
-        p95_response_time:
-          type: number
-          minimum: 0
-          description: 95th percentile response time
+          example: 15
         error_rate:
           type: number
-          minimum: 0
-          maximum: 1
-          description: Error rate percentage
-        throughput:
-          type: integer
-          minimum: 0
-          description: Requests per second
-        resource_utilization:
-          type: object
-          properties:
-            cpu_percentage:
-              type: number
-              minimum: 0
-              maximum: 100
-            memory_mb:
-              type: integer
-              minimum: 0
-            disk_io:
-              type: number
-              minimum: 0
-          description: Resource usage metrics
-      description: 'BACKEND NOTE: System performance monitoring data.'
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Error rate (0.0-1.0)
+          example: 0.0005
+        last_health_check:
+          type: string
+          format: date-time
+          description: Last health check timestamp
+
+  responses:
+    BadRequest:
+      description: Bad Request - Invalid input parameters
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [error, details, code, timestamp]
+            properties:
+              error:
+                type: string
+                example: "Invalid request body"
+              details:
+                type: string
+                example: "report_type is required"
+              code:
+                type: integer
+                example: 400
+              timestamp:
+                type: string
+                format: date-time
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [error, details, code, timestamp]
+            properties:
+              error:
+                type: string
+                example: "Resource not found"
+              details:
+                type: string
+                example: "Player behavior not found"
+              code:
+                type: integer
+                example: 404
+              timestamp:
+                type: string
+                format: date-time
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [error, details, code, timestamp]
+            properties:
+              error:
+                type: string
+                example: "Internal server error"
+              details:
+                type: string
+                example: "Database connection failed"
+              code:
+                type: integer
+                example: 500
+              timestamp:
+                type: string
+                format: date-time
+
   securitySchemes:
     BearerAuth:
-      $ref: ../common/security/security.yaml#/BearerAuth
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token for API authentication
 
-
+tags:
+  - name: Player Behavior
+    description: Player behavior analysis and engagement metrics
+  - name: Retention Analytics
+    description: Cohort-based retention analysis and insights
+  - name: A/B Testing
+    description: A/B test management and variant assignment
+  - name: Analytics Reports
+    description: Automated report generation and retrieval
+  - name: Health Monitoring
+    description: System health and performance monitoring

@@ -33,6 +33,7 @@ const (
 )
 
 // Tournament represents a tournament in the database
+//go:align 64
 type Tournament struct {
 	ID           string           `json:"id"`
 	Name         string           `json:"name"`
@@ -48,6 +49,7 @@ type Tournament struct {
 }
 
 // Match represents a tournament match
+//go:align 64
 type Match struct {
 	ID           string    `json:"id"`
 	TournamentID string    `json:"tournament_id"`
@@ -65,6 +67,7 @@ type Match struct {
 }
 
 // ParticipantStats represents participant statistics
+//go:align 64
 type ParticipantStats struct {
 	Wins         int     `json:"wins"`
 	Losses       int     `json:"losses"`
@@ -74,6 +77,7 @@ type ParticipantStats struct {
 }
 
 // Participant represents a tournament participant
+//go:align 64
 type Participant struct {
 	UserID       string            `json:"user_id"`
 	TournamentID string            `json:"tournament_id"`

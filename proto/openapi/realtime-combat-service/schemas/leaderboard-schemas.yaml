@@ -1,0 +1,80 @@
+# Real-time Combat Service - Leaderboard Schemas
+# Domain Separation: Leaderboard Management - SOLID/DRY Foundation
+# Issue: #2232
+
+components:
+  schemas:
+
+    SessionLeaderboardResponse:
+      type: object
+      required:
+        - session_id
+        - leaderboard
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        leaderboard:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaderboardEntry'
+        session_stats:
+          $ref: '#/components/schemas/SessionStats'
+        last_updated:
+          type: string
+          format: date-time
+      description: "BACKEND NOTE: Real-time session leaderboard with performance stats."
+
+    LeaderboardEntry:
+      type: object
+      required:
+        - player_id
+        - username
+        - score
+        - rank
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        username:
+          type: string
+          minLength: 3
+          maxLength: 32
+        score:
+          type: integer
+          minimum: 0
+        rank:
+          type: integer
+          minimum: 1
+        kills:
+          type: integer
+          minimum: 0
+        deaths:
+          type: integer
+          minimum: 0
+        accuracy:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+        team:
+          type: string
+          enum: [red, blue, spectator]
+      description: "BACKEND NOTE: Individual leaderboard entry with combat metrics."
+
+    SessionStats:
+      type: object
+      properties:
+        total_players:
+          type: integer
+          minimum: 0
+        average_score:
+          type: number
+          format: float
+        highest_score:
+          type: integer
+          minimum: 0
+        total_kills:
+          type: integer
+          minimum: 0
+      description: "BACKEND NOTE: Aggregate session statistics for leaderboard context."

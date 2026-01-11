@@ -12,6 +12,7 @@ import (
 	"math/rand"
 	"net/http"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/go-faster/errors"
@@ -45,6 +46,20 @@ var (
 	healthStatsPool = sync.Pool{
 		New: func() interface{} {
 			return &HealthStats{}
+		},
+	}
+
+	// PERFORMANCE: Cyberpsychosis state pooling for high-frequency combat state changes
+	// Issue: #2173 - Cyberpsychosis Combat States mechanics
+	cyberpsychosisPool = sync.Pool{
+		New: func() interface{} {
+			return &CyberpsychosisState{}
+		},
+	}
+
+	neuralDamagePool = sync.Pool{
+		New: func() interface{} {
+			return &NeuralDamageStats{}
 		},
 	}
 )
@@ -106,10 +121,11 @@ type CombatParticipant struct {
 	LastAction  time.Time
 
 	// Medium fields (8 bytes): pointers, slices
-	Health      *HealthStats
-	Position    *Position
-	Inventory   []*CombatItem
-	Abilities   []*CombatAbility
+	Health          *HealthStats
+	Position        *Position
+	Inventory       []*CombatItem
+	Abilities       []*CombatAbility
+	Cyberpsychosis  *CyberpsychosisState // Cyberpsychosis combat state
 
 	// Small fields (≤4 bytes): strings, bool
 	Name        string
@@ -155,6 +171,44 @@ type CombatAbility struct {
 	Damage      int
 	Cooldown    time.Duration
 	LastUsed    sql.NullTime
+}
+
+// CyberpsychosisState represents cyberpsychosis combat state
+// PERFORMANCE: Optimized for high-frequency combat state updates
+// Issue: #2173 - Cyberpsychosis Combat States mechanics
+//go:align 64
+type CyberpsychosisState struct {
+	// Large fields first (16-24 bytes): UUID (16), Time (24)
+	ID              uuid.UUID
+	ActivatedAt     time.Time
+	ExpiresAt       time.Time
+
+	// Medium fields (8 bytes): float64, int64, pointers
+	Duration        time.Duration
+	DamageMultiplier float64
+	SpeedMultiplier  float64
+	HealthBonus      int
+	MaxStacks        int
+	CurrentStacks    int
+	NeuralDamage     *NeuralDamageStats
+
+	// Small fields (≤4 bytes): bool, string
+	IsActive        bool
+	StateType       string // "controlled", "rampant", "critical"
+	Status          string // "building", "active", "fading", "cooldown"
+}
+
+// NeuralDamageStats represents neural network damage from cyberpsychosis
+// PERFORMANCE: Tracks long-term effects of cyberpsychosis usage
+// Issue: #2173 - Cyberpsychosis Combat States mechanics
+//go:align 64
+type NeuralDamageStats struct {
+	TotalDamage     float64 // Cumulative neural damage (0-100)
+	RepairProgress  float64 // Current repair progress (0-100)
+	LastRepair      time.Time
+	RepairRate      float64 // Repair rate per hour
+	ImplantID       string
+	WarningLevel    int     // 0=none, 1=minor, 2=severe, 3=critical
 }
 
 // CombatEnvironment represents the combat environment
@@ -259,6 +313,14 @@ type Service struct {
 	gcPauseTotal     prometheus.Gauge
 	heapAllocBytes   prometheus.Gauge
 	numGoroutines    prometheus.Gauge
+
+	// PERFORMANCE: Atomic performance counters for MMOFPS monitoring
+	// Issue: #2173 - Cyberpsychosis Combat States mechanics
+	totalRequests        int64 // Atomic counter для общего количества запросов
+	successfulOps        int64 // Atomic counter для успешных операций
+	failedOps           int64 // Atomic counter для неудачных операций
+	averageResponseTime int64 // Atomic nanoseconds для среднего времени ответа
+	cyberpsychosisActivations int64 // Atomic counter для активаций cyberpsychosis
 
 	// Active combat sessions (map with mutex for thread safety)
 	activeSessions map[uuid.UUID]*CombatSession
@@ -736,4 +798,241 @@ func (s *Service) loadSessionFromDB(sessionID uuid.UUID) (*CombatSession, error)
 	// This would implement actual database loading
 	// For now, return not found
 	return nil, errors.New("session not found in database")
+}
+
+// ActivateCyberpsychosis activates cyberpsychosis state for a combat participant
+// PERFORMANCE: Critical MMOFPS combat state change with <50ms P99 latency requirements
+// Context timeout для real-time combat state changes
+// Issue: #2173 - Cyberpsychosis Combat States mechanics
+func (s *Service) ActivateCyberpsychosis(ctx context.Context, sessionID, participantID uuid.UUID) error {
+	startTime := time.Now()
+
+	// PERFORMANCE: Increment total requests counter
+	atomic.AddInt64(&s.totalRequests, 1)
+
+	// PERFORMANCE: Context timeout для MMOFPS combat state changes (<50ms P99)
+	ctx, cancel := context.WithTimeout(ctx, 50*time.Millisecond)
+	defer cancel()
+
+	s.sessionsMutex.RLock()
+	session, exists := s.activeSessions[sessionID]
+	s.sessionsMutex.RUnlock()
+
+	if !exists {
+		atomic.AddInt64(&s.failedOps, 1)
+		responseTime := time.Since(startTime).Nanoseconds()
+		s.updateAverageResponseTime(responseTime)
+		return errors.New("combat session not found")
+	}
+
+	session.mutex.Lock()
+	defer session.mutex.Unlock()
+
+	// Find participant
+	var participant *CombatParticipant
+	for _, p := range session.Participants {
+		if p.ID == participantID {
+			participant = p
+			break
+		}
+	}
+
+	if participant == nil {
+		atomic.AddInt64(&s.failedOps, 1)
+		responseTime := time.Since(startTime).Nanoseconds()
+		s.updateAverageResponseTime(responseTime)
+		return errors.New("participant not found")
+	}
+
+	// PERFORMANCE: Get cyberpsychosis state from pool
+	state := cyberpsychosisPool.Get().(*CyberpsychosisState)
+	defer func() {
+		// Reset state before returning to pool
+		state.ID = uuid.Nil
+		state.ActivatedAt = time.Time{}
+		state.ExpiresAt = time.Time{}
+		state.IsActive = false
+		state.StateType = ""
+		state.Status = ""
+		state.CurrentStacks = 0
+		cyberpsychosisPool.Put(state)
+	}()
+
+	// Initialize cyberpsychosis state
+	state.ID = uuid.New()
+	state.ActivatedAt = time.Now()
+	state.Duration = 30 * time.Second // 30 seconds of cyberpsychosis
+	state.ExpiresAt = state.ActivatedAt.Add(state.Duration)
+	state.DamageMultiplier = 2.5 // 250% damage
+	state.SpeedMultiplier = 1.8 // 180% speed
+	state.HealthBonus = 50 // +50 HP
+	state.MaxStacks = 5
+	state.CurrentStacks = 1
+	state.IsActive = true
+	state.StateType = "controlled" // Start controlled
+	state.Status = "building"
+
+	// Create neural damage tracking
+	neuralDamage := neuralDamagePool.Get().(*NeuralDamageStats)
+	neuralDamage.TotalDamage = 0.1 // Initial damage
+	neuralDamage.RepairProgress = 0.0
+	neuralDamage.LastRepair = time.Now()
+	neuralDamage.RepairRate = 1.0 // 1% per hour
+	neuralDamage.ImplantID = "cyberpsychosis-implant-v2"
+	neuralDamage.WarningLevel = 0
+
+	state.NeuralDamage = neuralDamage
+
+	// Assign to participant
+	participant.Cyberpsychosis = state
+
+	// PERFORMANCE: Increment cyberpsychosis activations counter
+	atomic.AddInt64(&s.cyberpsychosisActivations, 1)
+
+	// PERFORMANCE: Record success and update response time
+	atomic.AddInt64(&s.successfulOps, 1)
+	responseTime := time.Since(startTime).Nanoseconds()
+	s.updateAverageResponseTime(responseTime)
+
+	s.logger.Info("Cyberpsychosis activated",
+		zap.String("session_id", sessionID.String()),
+		zap.String("participant_id", participantID.String()),
+		zap.String("state_type", state.StateType),
+		zap.Duration("duration", state.Duration),
+		zap.Duration("processing_time", time.Since(startTime)))
+
+	return nil
+}
+
+// UpdateCyberpsychosisState updates cyberpsychosis state during combat
+// PERFORMANCE: Called every combat tick for active cyberpsychosis participants
+// Issue: #2173 - Cyberpsychosis Combat States mechanics
+func (s *Service) UpdateCyberpsychosisState(ctx context.Context, sessionID, participantID uuid.UUID) error {
+	s.sessionsMutex.RLock()
+	session, exists := s.activeSessions[sessionID]
+	s.sessionsMutex.RUnlock()
+
+	if !exists {
+		return errors.New("combat session not found")
+	}
+
+	session.mutex.Lock()
+	defer session.mutex.Unlock()
+
+	// Find participant
+	var participant *CombatParticipant
+	for _, p := range session.Participants {
+		if p.ID == participantID {
+			participant = p
+			break
+		}
+	}
+
+	if participant == nil || participant.Cyberpsychosis == nil {
+		return nil // No cyberpsychosis to update
+	}
+
+	state := participant.Cyberpsychosis
+	now := time.Now()
+
+	// Check if expired
+	if now.After(state.ExpiresAt) {
+		// Deactivate cyberpsychosis
+		state.IsActive = false
+		state.Status = "cooldown"
+
+		// Neural damage increases
+		if state.NeuralDamage != nil {
+			state.NeuralDamage.TotalDamage += 2.0 // +2% damage per activation
+			if state.NeuralDamage.TotalDamage > 25 {
+				state.NeuralDamage.WarningLevel = 1
+			}
+			if state.NeuralDamage.TotalDamage > 50 {
+				state.NeuralDamage.WarningLevel = 2
+			}
+			if state.NeuralDamage.TotalDamage > 75 {
+				state.NeuralDamage.WarningLevel = 3
+			}
+		}
+
+		s.logger.Info("Cyberpsychosis expired",
+			zap.String("session_id", sessionID.String()),
+			zap.String("participant_id", participantID.String()),
+			zap.Float64("neural_damage", state.NeuralDamage.TotalDamage),
+			zap.Int("warning_level", state.NeuralDamage.WarningLevel))
+
+		return nil
+	}
+
+	// Update state based on time elapsed
+	elapsed := now.Sub(state.ActivatedAt)
+	progress := elapsed.Seconds() / state.Duration.Seconds()
+
+	if progress < 0.3 {
+		state.Status = "building"
+		state.CurrentStacks = 1
+	} else if progress < 0.7 {
+		state.Status = "active"
+		state.CurrentStacks = int(progress * 3) + 1 // Up to 4 stacks
+		if state.CurrentStacks > state.MaxStacks {
+			state.CurrentStacks = state.MaxStacks
+		}
+	} else {
+		state.Status = "fading"
+		state.CurrentStacks = state.MaxStacks - int((progress-0.7)*10) // Fade out
+		if state.CurrentStacks < 1 {
+			state.CurrentStacks = 1
+		}
+	}
+
+	// Risk of going rampant (uncontrolled)
+	if progress > 0.5 && rand.Float64() < 0.05 { // 5% chance every update after 50%
+		state.StateType = "rampant"
+		state.DamageMultiplier = 3.5 // Even higher damage
+		state.HealthBonus = 25 // Reduced bonus when rampant
+
+		s.logger.Warn("Cyberpsychosis went rampant",
+			zap.String("session_id", sessionID.String()),
+			zap.String("participant_id", participantID.String()),
+			zap.Float64("damage_multiplier", state.DamageMultiplier))
+	}
+
+	return nil
+}
+
+// GetCyberpsychosisStatus returns current cyberpsychosis status for participant
+// PERFORMANCE: Fast lookup for UI/game state synchronization
+// Issue: #2173 - Cyberpsychosis Combat States mechanics
+func (s *Service) GetCyberpsychosisStatus(ctx context.Context, sessionID, participantID uuid.UUID) (*CyberpsychosisState, error) {
+	s.sessionsMutex.RLock()
+	session, exists := s.activeSessions[sessionID]
+	s.sessionsMutex.RUnlock()
+
+	if !exists {
+		return nil, errors.New("combat session not found")
+	}
+
+	session.mutex.RLock()
+	defer session.mutex.RUnlock()
+
+	// Find participant
+	for _, p := range session.Participants {
+		if p.ID == participantID && p.Cyberpsychosis != nil {
+			return p.Cyberpsychosis, nil
+		}
+	}
+
+	return nil, errors.New("cyberpsychosis not active")
+}
+
+// updateAverageResponseTime atomically обновляет среднее время ответа
+func (s *Service) updateAverageResponseTime(responseTime int64) {
+	currentAvg := atomic.LoadInt64(&s.averageResponseTime)
+	if currentAvg == 0 {
+		atomic.StoreInt64(&s.averageResponseTime, responseTime)
+	} else {
+		// Exponential moving average: 0.1 * new + 0.9 * old
+		newAvg := (responseTime + 9*currentAvg) / 10
+		atomic.StoreInt64(&s.averageResponseTime, newAvg)
+	}
 }

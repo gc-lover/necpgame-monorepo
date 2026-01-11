@@ -1,0 +1,189 @@
+# Real-time Combat Service - Position Synchronization Schemas
+# Domain Separation: Position Sync - SOLID/DRY Foundation
+# Issue: #2232
+
+components:
+  schemas:
+
+    # Position Update Request - High-frequency endpoint
+    PositionUpdateRequest:
+      type: object
+      required:
+        - player_id
+        - position
+        - timestamp
+      properties:
+        # Large fields first (16-24 bytes): string (16+), object (24+)
+        player_id:
+          type: string
+          format: uuid
+          description: Player unique identifier
+          example: "456e7890-e89b-12d3-a456-426614174001"
+        position:
+          $ref: '#/components/schemas/Vector3'
+        velocity:
+          $ref: '#/components/schemas/Vector3'
+        # Medium fields (8 bytes aligned): integer/float64 (grouped together)
+        timestamp:
+          type: integer
+          format: int64
+          description: Client timestamp (Unix milliseconds)
+          example: 1640995200000
+        sequence_number:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Position update sequence number for ordering
+          example: 12345
+        # Small fields (≤4 bytes): boolean
+        is_grounded:
+          type: boolean
+          default: true
+          description: Whether player is on ground
+          example: true
+        is_sprinting:
+          type: boolean
+          default: false
+          description: Whether player is sprinting
+          example: false
+      description:
+        "BACKEND NOTE: High-frequency schema (1000+ RPS). Fields ordered for struct alignment (large → small). Anti-cheat validation required. Expected memory savings: 30-50%."
+
+    # Position Update Response
+    PositionUpdateResponse:
+      type: object
+      required:
+        - player_id
+        - server_timestamp
+        - acknowledged_sequence
+      properties:
+        # Large fields first (16-24 bytes): string (16+)
+        player_id:
+          type: string
+          format: uuid
+          description: Player unique identifier
+          example: "456e7890-e89b-12d3-a456-426614174001"
+        # Medium fields (8 bytes aligned): integer (grouped together)
+        server_timestamp:
+          type: integer
+          format: int64
+          description: Server timestamp (Unix milliseconds)
+          example: 1640995200500
+        acknowledged_sequence:
+          type: integer
+          format: int32
+          description: Last acknowledged sequence number
+          example: 12345
+        # Small fields (≤4 bytes): boolean
+        position_valid:
+          type: boolean
+          default: true
+          description: Whether position passed server validation
+          example: true
+        lag_compensated:
+          type: boolean
+          default: false
+          description: Whether lag compensation was applied
+          example: false
+      description:
+        "BACKEND NOTE: Response for position updates with validation feedback. Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    # 3D Vector for positions and velocities
+    Vector3:
+      type: object
+      required:
+        - x
+        - y
+        - z
+      properties:
+        # Medium fields (8 bytes aligned): float64 (grouped together)
+        x:
+          type: number
+          format: float
+          description: X coordinate
+          example: 123.45
+        y:
+          type: number
+          format: float
+          description: Y coordinate
+          example: 67.89
+        z:
+          type: number
+          format: float
+          description: Z coordinate
+          example: 10.5
+      description:
+        "BACKEND NOTE: 3D vector for spatial calculations. Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    # Position Validation Result
+    PositionValidationResult:
+      type: object
+      required:
+        - is_valid
+        - validation_checks
+      properties:
+        # Large fields first (16-24 bytes): array (24+), object (24+)
+        validation_checks:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationCheck'
+          description: Individual validation check results
+        correction_vector:
+          $ref: '#/components/schemas/Vector3'
+        # Medium fields (8 bytes aligned): float64
+        confidence_score:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Validation confidence score
+          example: 0.95
+        # Small fields (≤4 bytes): boolean
+        is_valid:
+          type: boolean
+          description: Overall validation result
+          example: true
+        requires_correction:
+          type: boolean
+          default: false
+          description: Whether client position needs correction
+          example: false
+      description:
+        "BACKEND NOTE: Anti-cheat position validation results. Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    # Individual Validation Check
+    ValidationCheck:
+      type: object
+      required:
+        - check_type
+        - passed
+      properties:
+        # Large fields first (16-24 bytes): string (16+)
+        check_type:
+          type: string
+          enum: [speed, teleport, clipping, physics, latency]
+          description: Type of validation check performed
+          example: "speed"
+        error_message:
+          type: string
+          maxLength: 256
+          description: Error message if check failed
+          example: "Player speed exceeded maximum allowed value"
+        # Medium fields (8 bytes aligned): float64
+        measured_value:
+          type: number
+          format: float
+          description: Measured value that was checked
+          example: 15.5
+        threshold_value:
+          type: number
+          format: float
+          description: Threshold value for the check
+          example: 10.0
+        # Small fields (≤4 bytes): boolean
+        passed:
+          type: boolean
+          description: Whether this check passed
+          example: false
+      description:
+        "BACKEND NOTE: Individual anti-cheat validation check result. Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."

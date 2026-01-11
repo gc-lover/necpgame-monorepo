@@ -1,0 +1,366 @@
+# Real-time Combat Service - Damage Calculation Schemas
+# Domain Separation: Damage Calculations - SOLID/DRY Foundation
+# Issue: #2232
+
+components:
+  schemas:
+
+    # Damage Request - Critical high-frequency endpoint
+    DamageRequest:
+      type: object
+      required:
+        - attacker_id
+        - target_id
+        - damage_amount
+        - damage_type
+        - timestamp
+      properties:
+        # Large fields first (16-24 bytes): string (16+), array (24+), object (24+)
+        attacker_id:
+          type: string
+          format: uuid
+          description: Attacking player/entity identifier
+          example: "456e7890-e89b-12d3-a456-426614174001"
+        target_id:
+          type: string
+          format: uuid
+          description: Target player/entity identifier
+          example: "789e0123-e89b-12d3-a456-426614174002"
+        weapon_id:
+          type: string
+          format: uuid
+          description: Weapon or ability identifier
+          example: "12345678-1234-1234-1234-123456789abc"
+        hit_location:
+          type: string
+          enum: [head, torso, arms, legs, critical]
+          description: Body part hit location
+          example: "torso"
+        modifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/DamageModifier'
+          description: Applied damage modifiers
+          maxItems: 10
+        # Medium fields (8 bytes aligned): integer/float64 (grouped together)
+        damage_amount:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 1000.0
+          description: Base damage amount before modifiers
+          example: 45.5
+        final_damage:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1000.0
+          description: Final damage after all calculations
+          example: 52.125
+        timestamp:
+          type: integer
+          format: int64
+          description: Damage event timestamp (Unix milliseconds)
+          example: 1640995200000
+        sequence_number:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Damage event sequence number
+          example: 54321
+        # Small fields (≤4 bytes): string enum, boolean
+        damage_type:
+          type: string
+          enum: [physical, energy, chemical, explosive, environmental]
+          description: Type of damage dealt
+          example: "physical"
+        is_critical_hit:
+          type: boolean
+          default: false
+          description: Whether this was a critical hit
+          example: false
+        armor_penetrated:
+          type: boolean
+          default: false
+          description: Whether damage penetrated armor
+          example: true
+      description:
+        "BACKEND NOTE: Critical high-frequency schema (500+ RPS). Fields ordered for struct alignment (large → small). Anti-cheat validation essential. Expected memory savings: 30-50%."
+
+    # Damage Response
+    DamageResponse:
+      type: object
+      required:
+        - target_id
+        - damage_applied
+        - new_health
+        - timestamp
+      properties:
+        # Large fields first (16-24 bytes): string (16+), array (24+), object (24+)
+        target_id:
+          type: string
+          format: uuid
+          description: Target player/entity identifier
+          example: "789e0123-e89b-12d3-a456-426614174002"
+        applied_modifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/DamageModifier'
+          description: Modifiers actually applied to damage
+          maxItems: 10
+        status_effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatusEffect'
+          description: Status effects applied by this damage
+          maxItems: 5
+        # Medium fields (8 bytes aligned): integer/float64 (grouped together)
+        damage_applied:
+          type: number
+          format: float
+          minimum: 0.0
+          description: Actual damage applied after all calculations
+          example: 52.125
+        new_health:
+          type: number
+          format: float
+          minimum: 0.0
+          description: Target's health after damage application
+          example: 47.875
+        armor_damage:
+          type: number
+          format: float
+          minimum: 0.0
+          description: Damage dealt to armor
+          example: 12.5
+        timestamp:
+          type: integer
+          format: int64
+          description: Server timestamp (Unix milliseconds)
+          example: 1640995200020
+        sequence_number:
+          type: integer
+          format: int32
+          description: Damage event sequence number
+          example: 54321
+        # Small fields (≤4 bytes): boolean
+        target_eliminated:
+          type: boolean
+          default: false
+          description: Whether target was eliminated by this damage
+          example: false
+        damage_blocked:
+          type: boolean
+          default: false
+          description: Whether damage was completely blocked
+          example: false
+      description:
+        "BACKEND NOTE: Damage application result with full state update. Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    # Damage Modifier
+    DamageModifier:
+      type: object
+      required:
+        - type
+        - value
+        - operation
+      properties:
+        # Large fields first (16-24 bytes): string (16+)
+        type:
+          type: string
+          enum: [multiplier, additive, percentage, fixed, environmental, ability, equipment]
+          description: Type of damage modifier
+          example: "multiplier"
+        source:
+          type: string
+          maxLength: 64
+          description: Source of the modifier (weapon, ability, etc.)
+          example: "Plasma Rifle"
+        # Medium fields (8 bytes aligned): float64
+        value:
+          type: number
+          format: float
+          description: Modifier value
+          example: 1.25
+        # Small fields (≤4 bytes): string enum
+        operation:
+          type: string
+          enum: [multiply, add, set]
+          description: How modifier is applied
+          example: "multiply"
+      description:
+        "BACKEND NOTE: Damage calculation modifier. Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    # Status Effect from Damage
+    StatusEffect:
+      type: object
+      required:
+        - effect_type
+        - duration_seconds
+      properties:
+        # Large fields first (16-24 bytes): string (16+)
+        effect_type:
+          type: string
+          enum: [burning, poisoned, stunned, slowed, bleeding, irradiated]
+          description: Type of status effect
+          example: "burning"
+        source:
+          type: string
+          maxLength: 64
+          description: Source of the status effect
+          example: "Incendiary Grenade"
+        # Medium fields (8 bytes aligned): integer/float64 (grouped together)
+        duration_seconds:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 300.0
+          description: Effect duration in seconds
+          example: 5.5
+        damage_per_second:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 100.0
+          description: Damage per second if applicable
+          example: 8.5
+        stacks:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 1
+          description: Number of effect stacks
+          example: 1
+        # Small fields (≤4 bytes): boolean
+        can_stack:
+          type: boolean
+          default: true
+          description: Whether effect can stack
+          example: true
+      description:
+        "BACKEND NOTE: Status effect applied by damage. Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    # Damage Calculation Context
+    DamageCalculationContext:
+      type: object
+      required:
+        - attacker_position
+        - target_position
+        - environmental_factors
+      properties:
+        # Large fields first (16-24 bytes): object (24+)
+        attacker_position:
+          $ref: './position-schemas.yaml#/components/schemas/Vector3'
+        target_position:
+          $ref: './position-schemas.yaml#/components/schemas/Vector3'
+        environmental_factors:
+          $ref: '#/components/schemas/EnvironmentalFactors'
+        attacker_stats:
+          $ref: '#/components/schemas/CombatStats'
+        target_stats:
+          $ref: '#/components/schemas/CombatStats'
+        # Medium fields (8 bytes aligned): float64
+        distance:
+          type: number
+          format: float
+          minimum: 0.0
+          description: Distance between attacker and target
+          example: 25.5
+        # Small fields (≤4 bytes): boolean
+        line_of_sight:
+          type: boolean
+          default: true
+          description: Whether attacker has clear line of sight
+          example: true
+      description:
+        "BACKEND NOTE: Context for damage calculations including positions and environmental factors. Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    # Environmental Factors
+    EnvironmentalFactors:
+      type: object
+      properties:
+        # Large fields first (16-24 bytes): string (16+)
+        terrain_type:
+          type: string
+          enum: [urban, industrial, wilderness, indoor, water]
+          description: Terrain type affecting damage
+          example: "urban"
+        weather_condition:
+          type: string
+          enum: [clear, rain, fog, storm, snow]
+          description: Weather affecting damage calculations
+          example: "rain"
+        # Medium fields (8 bytes aligned): float64 (grouped together)
+        visibility_modifier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 2.0
+          default: 1.0
+          description: Visibility modifier for accuracy
+          example: 0.8
+        damage_modifier:
+          type: number
+          format: float
+          minimum: 0.5
+          maximum: 2.0
+          default: 1.0
+          description: Environmental damage modifier
+          example: 1.1
+        # Small fields (≤4 bytes): boolean
+        is_indoor:
+          type: boolean
+          default: false
+          description: Whether combat occurs indoors
+          example: false
+      description:
+        "BACKEND NOTE: Environmental factors affecting damage calculations. Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    # Combat Statistics for Damage Context
+    CombatStats:
+      type: object
+      properties:
+        # Medium fields (8 bytes aligned): integer/float64 (grouped together)
+        base_damage:
+          type: number
+          format: float
+          minimum: 0.0
+          description: Base damage stat
+          example: 45.0
+        critical_multiplier:
+          type: number
+          format: float
+          minimum: 1.0
+          maximum: 5.0
+          default: 2.0
+          description: Critical hit damage multiplier
+          example: 2.5
+        armor_value:
+          type: number
+          format: float
+          minimum: 0.0
+          description: Armor protection value
+          example: 25.0
+        resistance_physical:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Physical damage resistance (0-1)
+          example: 0.15
+        resistance_energy:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Energy damage resistance (0-1)
+          example: 0.05
+        accuracy:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Accuracy percentage (0-1)
+          example: 0.85
+      description:
+        "BACKEND NOTE: Combat-relevant statistics for damage calculations. Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."

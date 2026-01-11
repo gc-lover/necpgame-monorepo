@@ -62,12 +62,15 @@ func main() {
 	repo := repository.NewRepository(db, logger)
 
 	// Initialize service
-	svc := service.NewService(service.Config{
+	svc, err := service.NewService(service.Config{
 		Repository: repo,
 		Logger:     logger,
 		Redis:      redisClient,
 		Meter:      meter,
 	})
+	if err != nil {
+		logger.Fatal("Failed to initialize service", zap.Error(err))
+	}
 
 	// Initialize handlers
 	h := handlers.NewHandlers(handlers.Config{

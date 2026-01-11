@@ -1,0 +1,85 @@
+# Real-time Combat Service - Analytics Schemas
+# Domain Separation: Combat Analytics - SOLID/DRY Foundation
+# Issue: #2232
+
+components:
+  schemas:
+
+    CombatAnalyticsResponse:
+      type: object
+      required:
+        - session_id
+        - duration_seconds
+        - statistics
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        duration_seconds:
+          type: integer
+          minimum: 0
+        player_count:
+          type: integer
+          minimum: 0
+        statistics:
+          $ref: '#/components/schemas/DetailedCombatStatistics'
+        heatmaps:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: array
+              items:
+                type: number
+                format: float
+        player_paths:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerPath'
+        combat_events:
+          type: array
+          items:
+            $ref: './action-schemas.yaml#/components/schemas/CombatActionRequest'
+      description: "BACKEND NOTE: Detailed combat analytics for performance analysis."
+
+    DetailedCombatStatistics:
+      type: object
+      properties:
+        total_shots:
+          type: integer
+          minimum: 0
+        total_hits:
+          type: integer
+          minimum: 0
+        accuracy_percentage:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 100.0
+        average_response_time:
+          type: number
+          format: float
+        peak_concurrent_players:
+          type: integer
+          minimum: 0
+      description: "BACKEND NOTE: Extended combat statistics for analytics."
+
+    PlayerPath:
+      type: object
+      required:
+        - player_id
+        - path
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        path:
+          type: array
+          items:
+            $ref: './position-schemas.yaml#/components/schemas/Vector3'
+        timestamps:
+          type: array
+          items:
+            type: string
+            format: date-time
+      description: "BACKEND NOTE: Player movement path for heatmaps and analysis."
