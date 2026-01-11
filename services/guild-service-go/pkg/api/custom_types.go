@@ -58,6 +58,7 @@ type GuildBankResponse struct {
 	Bank []*GuildBank `json:"bank"`
 }
 
+
 type GuildEventResponse struct {
 	Event *GuildEvent `json:"event,omitempty"`
 }
@@ -72,6 +73,43 @@ type GuildRelationshipResponse struct {
 
 type GuildRelationshipListResponse struct {
 	Relationships []*GuildRelationship `json:"relationships"`
+}
+
+// Missing API types for health batch operations
+type HealthBatchRequest struct {
+	Services []string `json:"services"`
+}
+
+type HealthBatchResponse struct {
+	Results map[string]*HealthResponse `json:"results"`
+}
+
+// Missing API types for guild member operations
+type UpdateGuildMemberRequest struct {
+	Role        GuildMemberRole `json:"role"`
+	Permissions []string        `json:"permissions,omitempty"`
+}
+
+type GuildServiceUpdateGuildMemberParams struct {
+	GuildId  string `json:"guildId"`
+	PlayerId string `json:"playerId"`
+}
+
+type GuildServiceRemoveGuildMemberParams struct {
+	GuildId  string `json:"guildId"`
+	PlayerId string `json:"playerId"`
+}
+
+type GuildServiceGetGuildBankParams struct {
+	GuildId string `json:"guildId"`
+}
+
+type GuildServiceGetGuildBankRes struct {
+	Response GuildBank `json:"response"`
+}
+
+type GuildServiceDeleteGuildParams struct {
+	GuildId string `json:"guildId"`
 }
 
 // Helper functions for UUID conversion

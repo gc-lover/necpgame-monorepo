@@ -5,8 +5,8 @@
 ## 🎯 КРИТИЧНЫЕ ТРЕБОВАНИЯ
 
 **Агенты ОБЯЗАНЫ:**
-- ✅ Использовать **MCP GitHub** для всех операций с задачами
-- ✅ Менять статусы **ПОСЛЕ** исполнения задач
+- ✅ Использовать **GitHub CLI** для всех операций с задачами
+- ✅ Менять статусы **ПОСЛЕ** исполнения задач через лейблы и комментарии
 - ✅ Назначать задачи **следующему агенту** по workflow
 - ❌ **НЕ создавать** мусорные файлы в корне проекта
 - ❌ **НЕ создавать** лишние отчеты
@@ -17,23 +17,21 @@
 
 ### Правильные команды поиска задач:
 
-```javascript
-// МЕТОД 1: GitHub Projects API (ПЕРВЫЙ ВЫБОР)
-mcp_github_list_project_items({
-  owner_type: 'user',
-  owner: 'gc-lover',
-  project_number: 1,
-  query: 'Agent:"YourAgent" Status:"Todo"'  // Замени YourAgent на свой
-});
+```bash
+# МЕТОД 1: GitHub CLI (ПЕРВЫЙ ВЫБОР)
+gh issue list --repo gc-lover/necpgame-monorepo --state open --label 'agent:youragent'
 
-// МЕТОД 2: GitHub Issues API (если Projects не работает)
-mcp_github_list_issues({
-  owner: 'gc-lover',
-  repo: 'necpgame-monorepo',
-  state: 'open'
-});
-// Затем ищи по title: '[YourAgent]' или '[OK]' для завершенных
+# МЕТОД 2: Поиск по названию (альтернативный)
+gh issue list --repo gc-lover/necpgame-monorepo --state open | grep "\[YourAgent\]"
 ```
+
+**Статусы задач через лейблы:**
+- `status:todo` - новые задачи (опционально)
+- `status:in-progress` - в работе
+- `status:review` - на ревью
+- `status:blocked` - заблокированы
+- `status:returned` - возвращены
+- `status:done` - завершены (issue закрыта)
 
 ### Какие статусы искать:
 - `Status:"Todo"` - новые задачи
@@ -52,38 +50,21 @@ mcp_github_list_issues({
 ## 📋 4 шага работы
 
 ### 1️⃣ НАЙТИ задачу
-```javascript
-// МЕТОД 1: Через GitHub Projects (рекомендуемый)
-mcp_github_list_project_items({
-  owner_type: 'user',
-  owner: 'gc-lover',
-  project_number: 1,
-  query: 'Agent:"MyAgent" Status:"Todo"'
-});
+```bash
+# МЕТОД 1: Через GitHub CLI (рекомендуемый)
+gh issue list --repo gc-lover/necpgame-monorepo --state open --label 'agent:myagent'
 
-// МЕТОД 2: Через GitHub Issues (если Projects не доступен)
-mcp_github_list_issues({
-  owner: 'gc-lover',
-  repo: 'necpgame-monorepo',
-  state: 'open'
-});
-// Затем фильтровать по title: '[MyAgent]' или '[OK]' для завершенных
+# МЕТОД 2: Поиск по названию (альтернативный)
+gh issue list --repo gc-lover/necpgame-monorepo --state open | grep "\[MyAgent\]"
 ```
 
 ### 2️⃣ ВЗЯТЬ задачу
-```javascript
-mcp_github_update_project_item({
-  owner_type: 'user',
-  owner: 'gc-lover',
-  project_number: 1,
-  item_id: item_id,
-  updated_field: [
-    {id: 239690516, value: '83d488e7'}, // In Progress
-    {id: 243899542, value: agent_id},   // My Agent
-    {id: 246469155, value: type_id},    // Task Type
-    {id: 246468990, value: '22932cc7'}  // Check: 0
-  ]
-});
+```bash
+# Взять задачу в работу
+gh issue comment 123 --body '[OK] Начинаю работу над задачей'
+
+# Добавить лейбл статуса
+gh issue edit 123 --add-label 'status:in-progress'
 ```
 
 ### 3️⃣ РАБОТАТЬ
@@ -92,17 +73,12 @@ mcp_github_update_project_item({
 - Запустить валидацию
 
 ### 4️⃣ ПЕРЕДАТЬ
-```javascript
-// Обновить статус и агента
-mcp_github_update_project_item({...});
+```bash
+# Добавить комментарий о передаче
+gh issue comment 123 --body '[OK] Work complete. Handed off to NextAgent. Issue: #123'
 
-// Добавить комментарий
-mcp_github_add_issue_comment({
-  owner: 'gc-lover',
-  repo: 'necpgame-monorepo',
-  issue_number: issue_number,
-  body: '[OK] Work complete. Handed off to NextAgent.\\n\\nIssue: #123'
-});
+# Обновить лейблы
+gh issue edit 123 --remove-label 'status:in-progress' --add-label 'agent:nextagent'
 ```
 
 ---
@@ -138,10 +114,16 @@ mcp_github_add_issue_comment({
 
 ## ⚡ Быстрые команды
 
-### GitHub Projects
+### GitHub CLI
 ```bash
-# Через скрипт (альтернатива MCP)
-python scripts/update-github-fields.py --item-id 123 --status in_progress --agent Backend
+# Поиск задач
+gh issue list --repo gc-lover/necpgame-monorepo --state open --label 'agent:backend'
+
+# Взятие задачи
+gh issue comment 123 --body '[OK] Начинаю работу' && gh issue edit 123 --add-label 'status:in-progress'
+
+# Передача задачи
+gh issue comment 123 --body '[OK] Work complete. Handed off to Network. Issue: #123' && gh issue edit 123 --remove-label 'status:in-progress' --add-label 'agent:network'
 ```
 
 ### Валидация

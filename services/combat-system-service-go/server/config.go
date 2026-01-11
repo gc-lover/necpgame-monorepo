@@ -28,6 +28,20 @@ type Config struct {
 	ServerHost string
 	ServerPort int
 
+	// WebSocket configuration for real-time combat events
+	WebSocketHost     string
+	WebSocketPort     int
+	WebSocketPath     string
+	WebSocketReadTimeout  time.Duration
+	WebSocketWriteTimeout time.Duration
+
+	// UDP configuration for high-frequency position updates
+	UDPHost          string
+	UDPPort          int
+	UDPReadTimeout   time.Duration
+	UDPWriteTimeout  time.Duration
+	UDPBufferSize    int
+
 	// Combat system configuration
 	MaxWorkers          int
 	CalculationTimeout  time.Duration
@@ -64,6 +78,20 @@ func NewConfig() *Config {
 		// Server defaults
 		ServerHost: "0.0.0.0",
 		ServerPort: 8080,
+
+		// WebSocket defaults for real-time combat
+		WebSocketHost:     "0.0.0.0",
+		WebSocketPort:     8081,
+		WebSocketPath:     "/ws/combat",
+		WebSocketReadTimeout:  60 * time.Second,
+		WebSocketWriteTimeout: 10 * time.Second,
+
+		// UDP defaults for high-frequency updates
+		UDPHost:         "0.0.0.0",
+		UDPPort:         8082,
+		UDPReadTimeout:  5 * time.Second,
+		UDPWriteTimeout: 1 * time.Second,
+		UDPBufferSize:   4096,
 
 		// Combat defaults
 		MaxWorkers:          100,

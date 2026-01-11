@@ -1,4 +1,4 @@
-module guild-service-go
+module necpgame/services/guild-service-go
 
 go 1.24.0
 

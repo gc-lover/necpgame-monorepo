@@ -41,34 +41,40 @@ python scripts/validation/validate-script-types.py
 python scripts/openapi/validate-domains-openapi.py --domain {domain}
 ```
 
-### GitHub Fields Update
-```
-/update-github-fields --item-id {id} --type {TYPE} --check {0|1}
-```
-
-**Purpose:** Updates GitHub Project fields for task management
-
-**Types:**
-- API, MIGRATION, DATA, BACKEND, UE5
-
-**Check values:**
-- 0: Task not checked
-- 1: Task checked
-
-**Implementation:**
+### GitHub Issue Management (GitHub CLI)
 ```bash
-python scripts/update-github-fields.py --item-id 123 --type API --check 1
+# Поиск задач агента (Todo статус)
+gh issue list --repo gc-lover/necpgame-monorepo --state open --label 'agent:backend' -L 10
+
+# Взятие задачи в работу
+gh issue comment 123 --body '[OK] Начинаю работу над задачей'
+
+# Передача следующему агенту
+gh issue comment 123 --body '[OK] Work completed. Handed off to Network. Issue: #123'
+
+# Закрытие завершенной задачи
+gh issue close 123 --comment 'Task completed successfully'
 ```
+
+**Purpose:** Управление задачами через GitHub CLI вместо Projects
+
+**Labels для агентов:**
+- `agent:backend`, `agent:api`, `agent:database`, `agent:network`, etc.
+
+**Статусы в комментариях:**
+- `[OK] Начинаю работу` - взятие задачи
+- `[OK] Ready. Handed off to {NextAgent}` - передача
+- `Task completed successfully` - закрытие
 
 ## Usage Examples
 
-### Backend Agent Workflow
+### Backend Agent Workflow (GitHub CLI)
 ```bash
 # 1. Find tasks
-/backend-find-tasks
+gh issue list --repo gc-lover/necpgame-monorepo --state open --label 'agent:backend'
 
-# 2. Take task and update fields
-python scripts/update-github-fields.py --item-id 123 --type BACKEND --check 0
+# 2. Take task
+gh issue comment 123 --body '[OK] Начинаю работу над задачей'
 
 # 3. Work on implementation...
 
@@ -76,25 +82,25 @@ python scripts/update-github-fields.py --item-id 123 --type BACKEND --check 0
 /backend-validate-optimizations #123
 /backend-validate-result #123
 
-# 5. Update fields for handoff
-python scripts/update-github-fields.py --item-id 123 --type BACKEND --check 1
+# 5. Handoff to next agent
+gh issue comment 123 --body '[OK] Backend implementation complete. Handed off to Network. Issue: #123'
 ```
 
-### Database Agent Workflow
+### Database Agent Workflow (GitHub CLI)
 ```bash
 # 1. Find tasks
-/database-find-tasks
+gh issue list --repo gc-lover/necpgame-monorepo --state open --label 'agent:database'
 
 # 2. Take task
-python scripts/update-github-fields.py --item-id 456 --type MIGRATION --check 0
+gh issue comment 456 --body '[OK] Начинаю работу над задачей'
 
 # 3. Create migrations...
 
 # 4. Validate
 /database-validate-result #456
 
-# 5. Apply migrations if content
-/database-apply-content-migration
+# 5. Apply migrations and handoff
+gh issue comment 456 --body '[OK] Database schema created. Handed off to API Designer. Issue: #456'
 ```
 
 ## Error Handling
@@ -109,11 +115,11 @@ python scripts/update-github-fields.py --item-id 456 --type MIGRATION --check 0
 - Re-run validation
 - Update GitHub status if needed
 
-## Integration with MCP
+## Integration with GitHub CLI
 
-All validation commands are designed to work with MCP (Model Context Protocol) in Cursor IDE:
+All validation commands now work with GitHub CLI for issue management:
 
-- Commands can be executed via MCP interface
+- Commands executed via terminal/GitHub CLI
 - Results displayed in structured format
-- Integration with GitHub Project updates
-- Real-time feedback and suggestions
+- Integration with GitHub Issues and labels
+- Real-time feedback via comments

@@ -1,0 +1,715 @@
+# Seasonal Challenges Domain Entities - SOLID/DRY Foundation
+# These entities are inherited by all seasonal challenges services
+# Issue: #1506
+
+components:
+  schemas:
+
+    # Base Seasonal Entity - inherited by all seasonal objects
+    SeasonalEntity:
+      type: object
+      required:
+        - id
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for seasonal entity
+          example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+        created_at:
+          type: string
+          format: date-time
+          description: Entity creation timestamp
+          example: "2024-01-15T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Last modification timestamp
+          example: "2024-01-15T14:20:00Z"
+        version:
+          type: integer
+          minimum: 1
+          description: Optimistic locking version for concurrent operations
+          example: 1
+
+    # Season Entity - time-limited competitive periods
+    SeasonEntity:
+      allOf:
+        - $ref: '#/components/schemas/SeasonalEntity'
+        - type: object
+          required:
+            - name
+            - start_date
+            - end_date
+            - season_type
+            - status
+          properties:
+            name:
+              type: string
+              minLength: 1
+              maxLength: 100
+              description: Season display name
+              example: "Summer Championship 2026"
+            description:
+              type: string
+              maxLength: 1000
+              description: Detailed season description and theme
+              example: "Prove your worth in the ultimate cyberpunk tournament..."
+            season_type:
+              type: string
+              enum: [championship, tournament, event, special, seasonal]
+              description: Type of seasonal competition
+              example: "championship"
+            start_date:
+              type: string
+              format: date-time
+              description: When season begins
+              example: "2026-06-01T00:00:00Z"
+            end_date:
+              type: string
+              format: date-time
+              description: When season ends
+              example: "2026-08-31T23:59:59Z"
+            status:
+              type: string
+              enum: [upcoming, active, completed, cancelled]
+              description: Current season status
+              example: "active"
+            theme:
+              type: string
+              maxLength: 200
+              description: Visual/audio theme for the season
+              example: "Neon Nights"
+            max_participants:
+              type: integer
+              minimum: 0
+              description: Maximum allowed participants (0 = unlimited)
+              example: 10000
+            current_participants:
+              type: integer
+              minimum: 0
+              description: Currently registered participants
+              example: 8750
+            total_prize_pool:
+              type: integer
+              minimum: 0
+              description: Total value of all season rewards
+              example: 10000000
+            rules_url:
+              type: string
+              format: uri
+              description: Link to detailed season rules
+              example: "https://necpgame.com/seasons/summer-2026/rules"
+            banner_url:
+              type: string
+              format: uri
+              description: Season banner image
+              example: "https://cdn.necpgame.com/seasons/summer-2026/banner.jpg"
+
+    # Challenge Entity - individual competitive tasks
+    ChallengeEntity:
+      allOf:
+        - $ref: '#/components/schemas/SeasonalEntity'
+        - type: object
+          required:
+            - season_id
+            - name
+            - challenge_type
+            - difficulty
+            - max_score
+          properties:
+            season_id:
+              type: string
+              format: uuid
+              description: Parent season identifier
+              example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+            name:
+              type: string
+              minLength: 1
+              maxLength: 100
+              description: Challenge display name
+              example: "Data Fortress Assault"
+            description:
+              type: string
+              maxLength: 500
+              description: Detailed challenge description
+              example: "Hack through corporate firewalls and extract valuable data..."
+            challenge_type:
+              type: string
+              enum: [combat, hacking, racing, collection, survival, puzzle, social]
+              description: Primary gameplay type
+              example: "hacking"
+            difficulty:
+              type: string
+              enum: [easy, medium, hard, expert, nightmare]
+              description: Challenge difficulty rating
+              example: "hard"
+            max_score:
+              type: integer
+              minimum: 1
+              description: Maximum possible score
+              example: 10000
+            time_limit_seconds:
+              type: integer
+              minimum: 0
+              description: Time limit in seconds (0 = no limit)
+              example: 1800
+            min_participants:
+              type: integer
+              minimum: 1
+              maximum: 100
+              description: Minimum players required
+              example: 1
+            max_participants:
+              type: integer
+              minimum: 1
+              maximum: 100
+              description: Maximum players allowed
+              example: 4
+            is_team_based:
+              type: boolean
+              description: Whether challenge supports teams
+              example: true
+            entry_fee:
+              type: integer
+              minimum: 0
+              description: Cost to participate
+              example: 5000
+            reward_multiplier:
+              type: number
+              minimum: 0.1
+              maximum: 5.0
+              description: Score multiplier for rewards
+              example: 1.5
+            prerequisites:
+              type: array
+              items:
+                $ref: '#/components/schemas/ChallengePrerequisite'
+              description: Requirements to unlock this challenge
+            unlock_conditions:
+              type: string
+              maxLength: 500
+              description: Conditions to unlock the challenge
+              example: "Complete 'Basic Training' challenge first"
+            is_active:
+              type: boolean
+              description: Whether challenge is currently available
+              example: true
+            sort_order:
+              type: integer
+              minimum: 0
+              description: Display order within season
+              example: 5
+
+    # Challenge Prerequisite - requirements to unlock challenges
+    ChallengePrerequisite:
+      type: object
+      required:
+        - prerequisite_type
+      properties:
+        prerequisite_type:
+          type: string
+          enum: [level, challenge_completed, item_owned, reputation, currency]
+          description: Type of prerequisite
+          example: "level"
+        required_level:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Required character level
+          example: 15
+        required_challenge_id:
+          type: string
+          format: uuid
+          description: Challenge that must be completed first
+          example: "b2c3d4e5-f6g7-8901-bcde-f23456789012"
+        required_item_id:
+          type: string
+          format: uuid
+          description: Item that must be owned
+          example: "c3d4e5f6-g7h8-9012-cdef-345678901234"
+        required_reputation:
+          type: integer
+          minimum: 0
+          description: Minimum reputation required
+          example: 1000
+        required_currency:
+          type: integer
+          minimum: 0
+          description: Currency amount required
+          example: 10000
+
+    # Challenge Objective - specific goals within challenges
+    ChallengeObjectiveEntity:
+      allOf:
+        - $ref: '#/components/schemas/SeasonalEntity'
+        - type: object
+          required:
+            - challenge_id
+            - objective_type
+            - target_value
+            - description
+          properties:
+            challenge_id:
+              type: string
+              format: uuid
+              description: Parent challenge identifier
+              example: "d4e5f6g7-h8i9-0123-def0-456789012345"
+            objective_type:
+              type: string
+              enum: [kill_count, score_threshold, time_limit, collection, achievement, distance, damage, healing, assists]
+              description: Type of objective to complete
+              example: "kill_count"
+            target_value:
+              type: integer
+              minimum: 1
+              description: Target value to achieve
+              example: 50
+            description:
+              type: string
+              minLength: 1
+              maxLength: 200
+              description: Human-readable objective description
+              example: "Eliminate 50 enemy combatants"
+            progress_type:
+              type: string
+              enum: [cumulative, best_run, threshold]
+              description: How progress is tracked
+              example: "cumulative"
+            is_optional:
+              type: boolean
+              description: Whether this objective is required for completion
+              example: false
+            reward_weight:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: Weight for reward calculation (0-1)
+              example: 0.3
+            metadata:
+              type: object
+              description: Objective-specific configuration data
+              additionalProperties: true
+
+    # Player Progress Entity - tracking player advancement
+    PlayerProgressEntity:
+      allOf:
+        - $ref: '#/components/schemas/SeasonalEntity'
+        - type: object
+          required:
+            - player_id
+            - challenge_id
+            - current_value
+            - is_completed
+          properties:
+            player_id:
+              type: string
+              format: uuid
+              description: Player identifier
+              example: "e5f6g7h8-i9j0-1234-ef01-567890123456"
+            challenge_id:
+              type: string
+              format: uuid
+              description: Challenge identifier
+              example: "f6g7h8i9-j0k1-2345-f012-678901234567"
+            current_value:
+              type: integer
+              minimum: 0
+              description: Current progress value
+              example: 35
+            best_value:
+              type: integer
+              minimum: 0
+              description: Best progress value achieved
+              example: 42
+            is_completed:
+              type: boolean
+              description: Whether challenge is completed
+              example: false
+            completed_at:
+              type: string
+              format: date-time
+              description: Completion timestamp
+              example: "2026-07-15T14:30:00Z"
+            attempts_count:
+              type: integer
+              minimum: 0
+              description: Number of attempts made
+              example: 8
+            time_spent_seconds:
+              type: integer
+              minimum: 0
+              description: Total time spent on challenge
+              example: 3600
+            last_attempt_at:
+              type: string
+              format: date-time
+              description: Last attempt timestamp
+              example: "2026-07-14T20:15:00Z"
+            objectives_progress:
+              type: array
+              items:
+                $ref: '#/components/schemas/ObjectiveProgressEntity'
+              description: Progress for individual objectives
+
+    # Objective Progress Entity - tracking objective completion
+    ObjectiveProgressEntity:
+      allOf:
+        - $ref: '#/components/schemas/SeasonalEntity'
+        - type: object
+          required:
+            - player_progress_id
+            - objective_id
+            - current_value
+          properties:
+            player_progress_id:
+              type: string
+              format: uuid
+              description: Parent player progress identifier
+              example: "g7h8i9j0-k1l2-3456-0123-456789012345"
+            objective_id:
+              type: string
+              format: uuid
+              description: Objective identifier
+              example: "h8i9j0k1-l2m3-4567-1234-567890123456"
+            current_value:
+              type: integer
+              minimum: 0
+              description: Current progress value for this objective
+              example: 25
+            best_value:
+              type: integer
+              minimum: 0
+              description: Best progress value for this objective
+              example: 30
+            is_completed:
+              type: boolean
+              description: Whether this objective is completed
+              example: false
+            completed_at:
+              type: string
+              format: date-time
+              description: Objective completion timestamp
+              example: "2026-07-13T16:45:00Z"
+            completion_count:
+              type: integer
+              minimum: 0
+              description: How many times this objective was completed
+              example: 1
+
+    # Leaderboard Entity - competitive rankings
+    LeaderboardEntity:
+      allOf:
+        - $ref: '#/components/schemas/SeasonalEntity'
+        - type: object
+          required:
+            - season_id
+            - player_id
+            - total_score
+            - rank
+          properties:
+            season_id:
+              type: string
+              format: uuid
+              description: Season identifier
+              example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+            player_id:
+              type: string
+              format: uuid
+              description: Player identifier
+              example: "b2c3d4e5-f6g7-8901-bcde-f23456789012"
+            total_score:
+              type: integer
+              minimum: 0
+              description: Total seasonal score
+              example: 125000
+            rank:
+              type: integer
+              minimum: 1
+              description: Current rank position
+              example: 47
+            previous_rank:
+              type: integer
+              minimum: 1
+              description: Rank from last update
+              example: 52
+            challenges_completed:
+              type: integer
+              minimum: 0
+              description: Number of challenges completed
+              example: 23
+            best_challenge_score:
+              type: integer
+              minimum: 0
+              description: Highest score in any single challenge
+              example: 9500
+            average_completion_time:
+              type: integer
+              minimum: 0
+              description: Average time to complete challenges (seconds)
+              example: 1200
+            streak_current:
+              type: integer
+              minimum: 0
+              description: Current completion streak
+              example: 5
+            streak_best:
+              type: integer
+              minimum: 0
+              description: Best completion streak
+              example: 12
+            last_updated:
+              type: string
+              format: date-time
+              description: Last leaderboard update timestamp
+              example: "2026-07-15T12:00:00Z"
+
+    # Reward Entity - prizes and incentives
+    RewardEntity:
+      allOf:
+        - $ref: '#/components/schemas/SeasonalEntity'
+        - type: object
+          required:
+            - reward_type
+            - value
+          properties:
+            reward_type:
+              type: string
+              enum: [currency, item, cosmetic, title, reputation, experience, premium_time]
+              description: Type of reward
+              example: "currency"
+            value:
+              type: integer
+              minimum: 1
+              description: Reward amount/value
+              example: 50000
+            item_id:
+              type: string
+              format: uuid
+              description: Item identifier (for item rewards)
+              example: "c3d4e5f6-g7h8-9012-cdef-345678901234"
+            cosmetic_id:
+              type: string
+              format: uuid
+              description: Cosmetic identifier (for cosmetic rewards)
+              example: "d4e5f6g7-h8i9-0123-def0-456789012345"
+            title_id:
+              type: string
+              format: uuid
+              description: Title identifier (for title rewards)
+              example: "e5f6g7h8-i9j0-1234-ef01-567890123456"
+            rarity:
+              type: string
+              enum: [common, uncommon, rare, epic, legendary, mythic]
+              description: Reward rarity tier
+              example: "rare"
+            is_premium:
+              type: boolean
+              description: Whether this is a premium-only reward
+              example: false
+            description:
+              type: string
+              maxLength: 200
+              description: Human-readable reward description
+              example: "Exclusive 'Cyber Champion' Title"
+            icon_url:
+              type: string
+              format: uri
+              description: Reward icon image URL
+              example: "https://cdn.necpgame.com/rewards/champion_title_icon.png"
+
+    # Seasonal Event Entity - real-time notifications and broadcasts
+    SeasonalEventEntity:
+      allOf:
+        - $ref: '#/components/schemas/SeasonalEntity'
+        - type: object
+          required:
+            - season_id
+            - event_type
+            - message
+          properties:
+            season_id:
+              type: string
+              format: uuid
+              description: Associated season identifier
+              example: "f6g7h8i9-j0k1-2345-f012-678901234567"
+            event_type:
+              type: string
+              enum: [season_start, season_end, challenge_unlocked, leaderboard_update, milestone_reached, reward_available, emergency]
+              description: Type of seasonal event
+              example: "challenge_unlocked"
+            message:
+              type: string
+              minLength: 1
+              maxLength: 500
+              description: Event notification message
+              example: "New challenge 'Quantum Heist' is now available!"
+            target_players:
+              type: array
+              items:
+                type: string
+                format: uuid
+              description: Specific players to target (empty = all players)
+            priority:
+              type: string
+              enum: [low, normal, high, critical]
+              description: Event priority level
+              example: "normal"
+            expires_at:
+              type: string
+              format: date-time
+              description: When this event expires
+              example: "2026-07-16T00:00:00Z"
+            metadata:
+              type: object
+              description: Event-specific data
+              additionalProperties: true
+            broadcast_count:
+              type: integer
+              minimum: 0
+              description: How many times this event was broadcast
+              example: 1
+
+    # Seasonal Currency Entity - special in-game currency
+    SeasonalCurrencyEntity:
+      allOf:
+        - $ref: '#/components/schemas/SeasonalEntity'
+        - type: object
+          required:
+            - season_id
+            - player_id
+            - balance
+          properties:
+            season_id:
+              type: string
+              format: uuid
+              description: Season identifier
+              example: "g7h8i9j0-k1l2-3456-0123-456789012345"
+            player_id:
+              type: string
+              format: uuid
+              description: Player identifier
+              example: "h8i9j0k1-l2m3-4567-1234-567890123456"
+            balance:
+              type: integer
+              minimum: 0
+              description: Current currency balance
+              example: 25000
+            earned_total:
+              type: integer
+              minimum: 0
+              description: Total currency earned this season
+              example: 45000
+            spent_total:
+              type: integer
+              minimum: 0
+              description: Total currency spent this season
+              example: 20000
+            last_earned_at:
+              type: string
+              format: date-time
+              description: Last time currency was earned
+              example: "2026-07-15T10:30:00Z"
+            last_spent_at:
+              type: string
+              format: date-time
+              description: Last time currency was spent
+              example: "2026-07-14T18:45:00Z"
+
+    # Achievement Entity - seasonal milestones and badges
+    SeasonalAchievementEntity:
+      allOf:
+        - $ref: '#/components/schemas/SeasonalEntity'
+        - type: object
+          required:
+            - season_id
+            - name
+            - achievement_type
+            - requirement_value
+          properties:
+            season_id:
+              type: string
+              format: uuid
+              description: Season identifier
+              example: "i9j0k1l2-m3n4-5678-2345-678901234567"
+            name:
+              type: string
+              minLength: 1
+              maxLength: 100
+              description: Achievement display name
+              example: "Speed Demon"
+            description:
+              type: string
+              maxLength: 300
+              description: Achievement description
+              example: "Complete any challenge in under 5 minutes"
+            achievement_type:
+              type: string
+              enum: [speed, perfection, consistency, social, rare, milestone]
+              description: Type of achievement
+              example: "speed"
+            requirement_value:
+              type: integer
+              minimum: 1
+              description: Value required to unlock
+              example: 300
+            icon_url:
+              type: string
+              format: uri
+              description: Achievement icon image URL
+              example: "https://cdn.necpgame.com/achievements/speed_demon.png"
+            rarity:
+              type: string
+              enum: [common, uncommon, rare, epic, legendary]
+              description: Achievement rarity
+              example: "rare"
+            points_value:
+              type: integer
+              minimum: 0
+              description: Achievement point value
+              example: 50
+            is_hidden:
+              type: boolean
+              description: Whether achievement is hidden until unlocked
+              example: false
+            unlock_message:
+              type: string
+              maxLength: 200
+              description: Message shown when unlocked
+              example: "Lightning fast! Achievement unlocked!"
+
+    # Player Achievement Entity - tracking unlocked achievements
+    PlayerAchievementEntity:
+      allOf:
+        - $ref: '#/components/schemas/SeasonalEntity'
+        - type: object
+          required:
+            - player_id
+            - achievement_id
+          properties:
+            player_id:
+              type: string
+              format: uuid
+              description: Player identifier
+              example: "j0k1l2m3-n4o5-6789-3456-789012345678"
+            achievement_id:
+              type: string
+              format: uuid
+              description: Achievement identifier
+              example: "k1l2m3n4-o5p6-7890-4567-890123456789"
+            unlocked_at:
+              type: string
+              format: date-time
+              description: When achievement was unlocked
+              example: "2026-07-10T15:20:00Z"
+            progress_value:
+              type: integer
+              minimum: 0
+              description: Progress value at time of unlock
+              example: 320
+            is_new:
+              type: boolean
+              description: Whether this is a newly unlocked achievement
+              example: true

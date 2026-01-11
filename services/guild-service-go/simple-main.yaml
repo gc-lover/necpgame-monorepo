@@ -22,6 +22,24 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
+    post:
+      summary: Batch health check for multiple services
+      operationId: guildServiceHealthBatch
+      tags:
+        - Health
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HealthBatchRequest'
+      responses:
+        "200":
+          description: Batch health check completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthBatchResponse'
   /guilds:
     get:
       summary: List guilds
@@ -157,6 +175,73 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GuildMember'
+    put:
+      summary: Update guild member
+      operationId: guildServiceUpdateGuildMember
+      tags:
+        - Member Management
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGuildMemberRequest'
+      responses:
+        "200":
+          description: Member updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildMember'
+    delete:
+      summary: Remove guild member
+      operationId: guildServiceRemoveGuildMember
+      tags:
+        - Member Management
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Member removed successfully
+  /guilds/{guildId}/bank:
+    get:
+      summary: Get guild bank
+      operationId: guildServiceGetGuildBank
+      tags:
+        - Guild Bank
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Guild bank retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildBank'
 components:
   schemas:
     HealthResponse:
@@ -177,6 +262,35 @@ components:
         version:
           type: string
           example: "1.0.0"
+    HealthBatchRequest:
+      type: object
+      properties:
+        services:
+          type: array
+          items:
+            type: string
+          example: ["guild", "combat", "inventory"]
+    HealthBatchResponse:
+      type: object
+      required:
+        - results
+      properties:
+        results:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/HealthResponse'
+    UpdateGuildMemberRequest:
+      type: object
+      required:
+        - role
+      properties:
+        role:
+          $ref: '#/components/schemas/GuildMemberRole'
+        permissions:
+          type: array
+          items:
+            type: string
+          example: ["invite_members", "manage_bank"]
     Guild:
       type: object
       required:
@@ -284,9 +398,7 @@ components:
           type: string
           example: "CyberNinja"
         role:
-          type: string
-          enum: [leader, officer, member, recruit]
-          example: member
+          $ref: '#/components/schemas/GuildMemberRole'
         joinedAt:
           type: string
           format: date-time
@@ -296,6 +408,10 @@ components:
         contribution:
           type: integer
           example: 15000
+    GuildMemberRole:
+      type: string
+      enum: [leader, officer, member, recruit]
+      example: member
     AddMemberRequest:
       type: object
       required:

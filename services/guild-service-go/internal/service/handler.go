@@ -5,10 +5,11 @@ package service
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 
-	"guild-service-go/pkg/api"
+	"necpgame/services/guild-service-go/pkg/api"
 )
 
 // Handler implements the generated Handler interface with MMOFPS optimizations
@@ -27,8 +28,10 @@ func NewHandler(svc *Service) *Handler {
 func (h *Handler) GuildServiceHealthCheck(ctx context.Context) (*api.HealthResponse, error) {
 	// TODO: Implement proper health check
 	return &api.HealthResponse{
-		Status:    api.NewOptString("healthy"),
-		Timestamp: api.NewOptDateTime(api.DateTime{}), // TODO: Fix timestamp
+		Status:    api.HealthResponseStatusOk,
+		Message:   api.OptString{Value: "Guild system service is healthy", Set: true},
+		Timestamp: api.OptDateTime{Value: time.Now(), Set: true},
+		Version:   api.OptString{Value: "1.0.0", Set: true},
 	}, nil
 }
 
@@ -55,34 +58,27 @@ func (h *Handler) GuildServiceGetGuild(ctx context.Context, params api.GuildServ
 }
 
 // GuildServiceUpdateGuild implements guild update
-func (h *Handler) GuildServiceUpdateGuild(ctx context.Context, req *api.UpdateGuildRequest, params api.GuildServiceUpdateGuildParams) (api.GuildServiceUpdateGuildRes, error) {
+func (h *Handler) GuildServiceUpdateGuild(ctx context.Context, req *api.UpdateGuildRequest, params api.GuildServiceUpdateGuildParams) (*api.Guild, error) {
 	guildID, _ := uuid.Parse(params.GuildId)
-	guild, err := h.service.UpdateGuild(ctx, guildID, req)
+	// TODO: Get updater ID from authentication context
+	updaterID := uuid.New()
+	guild, err := h.service.UpdateGuild(ctx, guildID, req, updaterID)
 	if err != nil {
-		return &api.GuildServiceUpdateGuildBadRequest{}, nil // Simplified error handling
+		return nil, err // Simplified error handling
 	}
 	return guild, nil
 }
 
-// GuildServiceDeleteGuild implements guild deletion
-func (h *Handler) GuildServiceDeleteGuild(ctx context.Context, params api.GuildServiceDeleteGuildParams) (api.GuildServiceDeleteGuildRes, error) {
-	guildID, _ := uuid.Parse(params.GuildId)
-	err := h.service.DeleteGuild(ctx, guildID)
-	if err != nil {
-		return &api.GuildServiceDeleteGuildNotFound{}, nil // Simplified error handling
-	}
-	return &api.GuildServiceDeleteGuildNoContent{}, nil
-}
 
 // GuildServiceAddGuildMember implements adding guild member
-func (h *Handler) GuildServiceAddGuildMember(ctx context.Context, req *api.AddMemberRequest, params api.GuildServiceAddGuildMemberParams) (api.GuildServiceAddGuildMemberRes, error) {
+func (h *Handler) GuildServiceAddGuildMember(ctx context.Context, req *api.AddMemberRequest, params api.GuildServiceAddGuildMemberParams) (*api.GuildMember, error) {
 	guildID, _ := uuid.Parse(params.GuildId)
 	// TODO: Get adder ID from authentication context
 	adderID := uuid.New()
 
 	member, err := h.service.AddGuildMember(ctx, guildID, req, adderID)
 	if err != nil {
-		return &api.GuildServiceAddGuildMemberBadRequest{}, nil // Simplified error handling
+		return nil, err // Simplified error handling
 	}
 	return member, nil
 }

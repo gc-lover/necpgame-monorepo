@@ -18,7 +18,6 @@ import (
 	"github.com/NECPGAME/combat-system-service-go/internal/handlers"
 	"github.com/NECPGAME/combat-system-service-go/internal/repository"
 	"github.com/NECPGAME/combat-system-service-go/internal/service"
-	"github.com/NECPGAME/combat-system-service-go/pkg/api"
 )
 
 func main() {
@@ -39,20 +38,47 @@ func main() {
 	// Initialize service
 	svc := service.NewService(repo)
 
-	// Initialize handlers
+	// Initialize handlers with WebSocket and UDP support
 	handlerConfig := &handlers.Config{
 		MaxWorkers: maxCombatWorkers,
 		CacheTTL:   5 * time.Minute,
+
+		// WebSocket configuration for real-time combat
+		WebSocketHost:     getEnv("WEBSOCKET_HOST", "0.0.0.0"),
+		WebSocketPort:     8081,
+		WebSocketPath:     "/ws/combat",
+		WebSocketReadTimeout:  60 * time.Second,
+		WebSocketWriteTimeout: 10 * time.Second,
+
+		// UDP configuration for high-frequency updates
+		UDPHost:         getEnv("UDP_HOST", "0.0.0.0"),
+		UDPPort:         8082,
+		UDPReadTimeout:  5 * time.Second,
+		UDPWriteTimeout: 1 * time.Second,
+		UDPBufferSize:   4096,
+
+		Logger: logger,
 	}
 	h := handlers.NewCombatHandler(handlerConfig, svc, repo)
 
-	// Create server with security handler
-	server, _ := api.NewServer(h, &handlers.SecurityHandler{})
+	// Create custom HTTP mux
+	mux := http.NewServeMux()
+
+	// Add WebSocket endpoint for real-time combat
+	mux.HandleFunc("/ws/combat", func(w http.ResponseWriter, r *http.Request) {
+		h.HandleWebSocketCombat(w, r)
+	})
+
+	// Add health check endpoint
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK"))
+	})
 
 	// PERFORMANCE: Configure HTTP server for low latency
 	srv := &http.Server{
 		Addr:         getEnv("SERVER_ADDR", ":8080"),
-		Handler:      server,
+		Handler:      mux,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
 		IdleTimeout:  60 * time.Second,
@@ -63,14 +89,21 @@ func main() {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 
-	// Start server in background
+	// Start HTTP server in background
 	go func() {
-		logger.Printf("Starting Combat System Service on %s (GOGC=%d, Workers=%d)",
+		logger.Printf("Starting Combat System HTTP Service on %s (GOGC=%d, Workers=%d)",
 			srv.Addr, debug.SetGCPercent(-1), maxCombatWorkers)
 
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Fatalf("HTTP server error: %v", err)
 		}
+	}()
+
+	// Start UDP server for high-frequency position updates
+	go func() {
+		logger.Printf("Starting Combat System UDP Service on %s:%d",
+			handlerConfig.UDPHost, handlerConfig.UDPPort)
+		h.HandleUDPCombat()
 	}()
 
 	// Wait for shutdown signal

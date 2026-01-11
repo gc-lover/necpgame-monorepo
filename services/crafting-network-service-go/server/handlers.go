@@ -6,6 +6,8 @@ package server
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -68,13 +70,14 @@ func (h *CraftingNetworkHandler) CraftingSessionWebSocket(ctx context.Context, p
 	sessionID := params.SessionID
 	playerID := params.PlayerID
 
-	// TODO: Validate session and player authorization
-	// TODO: Upgrade to WebSocket connection
-	// TODO: Register session with WebSocket manager
+	// Validate session and player authorization
+	// TODO: Add proper validation logic
+	if sessionID == uuid.Nil || playerID == uuid.Nil {
+		return &api.CraftingSessionWebSocketBadRequest{}, nil
+	}
 
-	_ = sessionID
-	_ = playerID
-
+	// WebSocket upgrade is handled by HTTP mux in main.go
+	// This handler just validates parameters and returns success
 	return &api.CraftingSessionWebSocketSwitchingProtocols{}, nil
 }
 
@@ -87,10 +90,16 @@ func (h *CraftingNetworkHandler) CraftingQueueWebSocket(ctx context.Context, par
 	}
 	defer h.releaseWorker()
 
-	// TODO: Validate player authorization using params.PlayerID
-	// TODO: Upgrade to WebSocket connection
-	// TODO: Register queue monitoring session
+	playerID := params.PlayerID
 
+	// Validate player authorization
+	// TODO: Add proper validation logic
+	if playerID == uuid.Nil {
+		return &api.CraftingQueueWebSocketForbidden{}, nil
+	}
+
+	// WebSocket upgrade is handled by HTTP mux in main.go
+	// This handler just validates parameters and returns success
 	return &api.CraftingQueueWebSocketSwitchingProtocols{}, nil
 }
 
@@ -104,17 +113,27 @@ func (h *CraftingNetworkHandler) UdpCraftingSessionConnect(ctx context.Context, 
 	defer h.releaseWorker()
 
 	sessionID := params.SessionID
-	// playerID := req.PlayerID
 
-	// TODO: Validate session and player authorization using sessionID and req.PlayerID
-	// TODO: Generate UDP session token
-	// TODO: Allocate UDP endpoint
+	// Validate session and player authorization
+	// TODO: Add proper validation logic
+	if sessionID == uuid.Nil || req.PlayerID == uuid.Nil {
+		return &api.UdpCraftingSessionConnectBadRequest{}, nil
+	}
 
-	sessionToken := fmt.Sprintf("udp-%s-%d", sessionID.String(), time.Now().Unix())
+	// Validate client version
+	if req.ClientVersion == "" || !isValidVersion(req.ClientVersion) {
+		return &api.UdpCraftingSessionConnectBadRequest{}, nil
+	}
+
+	// Generate UDP session token
+	sessionToken := fmt.Sprintf("udp-%s-%s-%d", sessionID.String(), req.PlayerID, time.Now().Unix())
+
+	// Return actual UDP server endpoint (configured in main.go)
+	serverEndpoint := fmt.Sprintf("127.0.0.1:%d", h.config.UDPPort)
 
 	return &api.UdpCraftingSessionConnectOK{
 		SessionToken:   sessionToken,
-		ServerEndpoint: "127.0.0.1:9999", // Mock endpoint
+		ServerEndpoint: serverEndpoint,
 	}, nil
 }
 
@@ -137,6 +156,20 @@ func (h *CraftingNetworkHandler) releaseWorker() {
 	default:
 		// Worker pool is empty, nothing to release
 	}
+}
+
+// isValidVersion validates client version format (semver)
+func isValidVersion(version string) bool {
+	parts := strings.Split(version, ".")
+	if len(parts) != 3 {
+		return false
+	}
+	for _, part := range parts {
+		if _, err := strconv.Atoi(part); err != nil {
+			return false
+		}
+	}
+	return true
 }
 
 // CraftingSession represents a crafting session

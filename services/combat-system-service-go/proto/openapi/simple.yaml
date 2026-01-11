@@ -87,6 +87,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CombatBalanceConfig'
+  /combat-system/ws:
+    get:
+      operationId: combatSystemServiceWebSocketCombat
+      summary: WebSocket endpoint for real-time combat events
+      description: Establishes WebSocket connection for real-time combat event streaming (damage, abilities, position updates)
+      parameters:
+        - name: player_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Player identifier for WebSocket session
+      responses:
+        '101':
+          description: WebSocket connection established
+        '400':
+          description: Bad request - missing player_id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /combat-system/abilities:
     get:
       operationId: combatSystemServiceListAbilities
@@ -540,3 +568,50 @@ components:
           additionalProperties: true
         target:
           type: string
+    WebSocketCombatMessage:
+      type: object
+      required: [type, player_id, data, timestamp]
+      properties:
+        type:
+          type: string
+          enum: [combat_action, ability_activation, position_update, combat_update, ability_activated, position_updated]
+          description: Type of WebSocket combat message
+        player_id:
+          type: string
+          format: uuid
+          description: Player identifier
+        data:
+          type: object
+          description: Message-specific data payload
+        timestamp:
+          type: string
+          format: date-time
+          description: Message timestamp
+    UDPPositionUpdate:
+      type: object
+      required: [player_id, x, y, z, rotation, timestamp]
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player identifier
+        x:
+          type: number
+          format: float
+          description: X coordinate
+        y:
+          type: number
+          format: float
+          description: Y coordinate
+        z:
+          type: number
+          format: float
+          description: Z coordinate
+        rotation:
+          type: number
+          format: float
+          description: Player rotation in degrees
+        timestamp:
+          type: integer
+          format: int64
+          description: Unix timestamp in milliseconds

@@ -63,12 +63,30 @@ func main() {
 		logger.Fatal("Failed to create service", zap.Error(err))
 	}
 
-	// Handlers
+	// Handlers configuration
 	handlerConfig := handlers.Config{
-		Service: svc,
-		Logger:  logger,
+		MaxWorkers: 1000,
+		CacheTTL:   5 * time.Minute,
+
+		// WebSocket configuration for real-time combat
+		WebSocketHost:     getEnvOrDefault("WEBSOCKET_HOST", "0.0.0.0"),
+		WebSocketPort:     8081,
+		WebSocketPath:     "/ws/combat",
+		WebSocketReadTimeout:  60 * time.Second,
+		WebSocketWriteTimeout: 10 * time.Second,
+
+		// UDP configuration for high-frequency updates
+		UDPHost:         getEnvOrDefault("UDP_HOST", "0.0.0.0"),
+		UDPPort:         8082,
+		UDPReadTimeout:  5 * time.Second,
+		UDPWriteTimeout: 1 * time.Second,
+		UDPBufferSize:   4096,
+
+		Logger: logger,
 	}
-	h := handlers.NewHandlers(handlerConfig)
+
+	// Create handlers
+	combatHandler := handlers.NewCombatHandler(&handlerConfig, svc, repo)
 
 	// HTTP Server
 	server, err := api.NewServer(h,
@@ -115,6 +133,15 @@ func main() {
 	// Add Prometheus metrics endpoint
 	http.Handle("/metrics", promhttp.Handler())
 
+	// Add WebSocket endpoint for real-time combat events
+	http.HandleFunc("/ws/combat", func(w http.ResponseWriter, r *http.Request) {
+		// Get the combat handler from the generated server
+		// TODO: Extract handler from server or pass it directly
+		logger.Info("WebSocket connection attempt", zap.String("remote_addr", r.RemoteAddr))
+		// For now, return 501 - will be implemented when handler is accessible
+		http.Error(w, "WebSocket endpoint not yet implemented", http.StatusNotImplemented)
+	})
+
 	httpServer := &http.Server{
 		Addr:         addr,
 		Handler:      server,
@@ -123,12 +150,20 @@ func main() {
 		IdleTimeout:  120 * time.Second,
 	}
 
-	// Start server in goroutine
+	// Start HTTP server in goroutine
 	go func() {
 		logger.Info("Starting HTTP server", zap.String("addr", addr))
 		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Fatal("Failed to start HTTP server", zap.Error(err))
 		}
+	}()
+
+	// Start UDP server for high-frequency position updates
+	go func() {
+		logger.Info("Starting UDP combat server")
+		// TODO: Start UDP server with combat handler
+		// For now, just log that it would start
+		logger.Info("UDP server not yet started - handler integration pending")
 	}()
 
 	// Graceful shutdown

@@ -19,60 +19,42 @@ Structure ideas, design system architecture, define microservices, and ensure da
 *   **Performance:** Define Data Models & Tick Rates.
 
 ## 🔄 Workflow
-1.  **FIND:** `Agent:"Architect" Status:"Todo"`
-2.  **WORK:** Status -> `In Progress`. Design architecture, components.
-3.  **VALIDATE:** Status -> `Review` (Self). Check against perf standards.
-4.  **HANDOFF:** Status -> `Todo` (UI/UX, Content, DB, Network).
+1.  **FIND:** `gh issue list --repo gc-lover/necpgame-monorepo --state open --label 'agent:architect'`
+2.  **TAKE:** `gh issue comment {number} --body '[OK] Начинаю архитектурное проектирование'` + `gh issue edit {number} --add-label 'status:in-progress'`
+3.  **WORK:** Design architecture, components.
+4.  **VALIDATE:** Check against perf standards.
+5.  **HANDOFF:** `gh issue comment {number} --body '[OK] Architecture designed. Handed off to implementation teams. Issue: #{number}'` + `gh issue edit {number} --remove-label 'status:in-progress' --add-label 'agent:{next}'`
 
-## 🔄 GitHub MCP Integration
+## 🔄 GitHub CLI Integration
 
 ### Поиск задач Architect
 
-```javascript
-// МЕТОД 1: GitHub Projects API (рекомендуемый)
-mcp_github_list_project_items({
-  owner_type: 'user',
-  owner: 'gc-lover',
-  project_number: 1,
-  query: 'Agent:"Architect" Status:"Todo"'
-});
+```bash
+# МЕТОД 1: GitHub CLI (рекомендуемый)
+gh issue list --repo gc-lover/necpgame-monorepo --state open --label 'agent:architect'
 
-// МЕТОД 2: GitHub Issues API (альтернативный)
-mcp_github_list_issues({
-  owner: 'gc-lover',
-  repo: 'necpgame-monorepo',
-  state: 'open'
-});
-// Фильтровать по: title содержит '[Architect]' или status = Todo
+# МЕТОД 2: Поиск по названию (альтернативный)
+gh issue list --repo gc-lover/necpgame-monorepo --state open | grep "\[Architect\]"
 ```
 
 ### Взятие задач
 
-```javascript
-mcp_github_update_project_item({
-  owner_type: 'user',
-  owner: 'gc-lover',
-  project_number: 1,
-  item_id: item_id,
-  updated_field: [
-    {id: '239690516', value: '83d488e7'}, // Status: In Progress
-    {id: '243899542', value: 'd109c7f9'}, // Agent: Architect
-    {id: '246469155', value: '08174330'}, // Type: BACKEND
-    {id: '246468990', value: '22932cc7'}  // Check: 0
-  ]
-});
+```bash
+# Взятие задачи в работу
+gh issue comment 123 --body '[OK] Начинаю архитектурное проектирование'
+
+# Добавление лейбла статуса
+gh issue edit 123 --add-label 'status:in-progress'
 ```
 
 ### Передача задач
 
-```javascript
-mcp_github_update_project_item({...});
-mcp_github_add_issue_comment({
-  owner: 'gc-lover',
-  repo: 'necpgame-monorepo',
-  issue_number: issue_number,
-  body: '[OK] Architecture designed. Handed off to implementation teams.\\n\\nIssue: #123'
-});
+```bash
+# Передача командам реализации
+gh issue comment 123 --body '[OK] Architecture designed. Handed off to implementation teams. Issue: #123'
+
+# Обновление лейбла агента (зависит от типа задачи)
+gh issue edit 123 --remove-label 'agent:architect' --add-label 'agent:database'  # или другой агент
 ```
 
 ## ⚡ Performance Architecture (MANDATORY)

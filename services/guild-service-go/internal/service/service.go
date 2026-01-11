@@ -11,28 +11,30 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/redis/go-redis/v9"
 	"golang.org/x/time/rate"
 	"go.uber.org/zap"
 
-	"guild-service-go/internal/repository"
-	"guild-service-go/pkg/api"
+	guildRepository "necpgame/services/guild-service-go/internal/repository"
+	"necpgame/services/guild-service-go/pkg/api"
 )
 
 //go:align 64
 type Config struct {
-	MaxGuildNameLength    int           `yaml:"max_guild_name_length"`
-	MaxGuildDescription   int           `yaml:"max_guild_description"`
-	DefaultMaxMembers     int           `yaml:"default_max_members"`
-	GuildOperationTimeout time.Duration `yaml:"guild_operation_timeout"`
-	MaxConcurrentOps      int           `yaml:"max_concurrent_ops"`
+	MaxGuildNameLength      int           `yaml:"max_guild_name_length"`
+	MaxGuildDescription     int           `yaml:"max_guild_description"`
+	DefaultMaxMembers       int           `yaml:"default_max_members"`
+	GuildOperationTimeout   time.Duration `yaml:"guild_operation_timeout"`
+	DatabaseQueryTimeout    time.Duration `yaml:"database_query_timeout"`
+	MaxConcurrentOps        int           `yaml:"max_concurrent_ops"`
 }
 
 //go:align 64
 type Service struct {
-	repo        repository.Repository
+	repo        guildRepository.Repository
 	logger      *zap.Logger
 	config      Config
 	cacheMutex  sync.RWMutex
@@ -55,7 +57,7 @@ type Service struct {
 }
 
 //go:align 64
-func NewService(repo repository.Repository, config Config, redisClient *redis.Client, logger *zap.Logger) *Service {
+func NewService(repo guildRepository.Repository, config Config, redisClient *redis.Client, logger *zap.Logger) *Service {
 	service := &Service{
 		repo:   repo,
 		config: config,
@@ -181,17 +183,14 @@ func (s *Service) CreateGuild(ctx context.Context, req *api.CreateGuildRequest, 
 	guildID := uuid.New()
 	guild := &api.Guild{
 		ID:          guildID.String(),
-		Version:     1,
 		Name:        req.Name,
-		GuildTag:    req.GuildTag,
 		Description: req.Description,
 		LeaderId:    founderID.String(),
 		Level:       api.OptInt{Value: 1, Set: true},
-		Experience:  api.OptInt64{Value: 0, Set: true},
+		Experience:  api.OptInt{Value: 0, Set: true},
 		MaxMembers:  api.OptInt{Value: s.config.DefaultMaxMembers, Set: true},
 		MemberCount: api.OptInt{Value: 1, Set: true},
 		Reputation:  api.OptInt{Value: 0, Set: true},
-		IsRecruiting: api.OptBool{Value: true, Set: true},
 		CreatedAt:   api.OptDateTime{Value: now, Set: true},
 		UpdatedAt:   api.OptDateTime{Value: now, Set: true},
 	}
@@ -219,14 +218,6 @@ func (s *Service) CreateGuild(ctx context.Context, req *api.CreateGuildRequest, 
 		JoinedAt:    api.OptDateTime{Value: now, Set: true},
 		LastActive:  api.OptDateTime{Value: now, Set: true},
 		Contribution: api.OptInt{Value: 0, Set: true},
-		Permissions: api.GuildMemberPermissions{
-			CanInvite:     api.OptBool{Value: true, Set: true},
-			CanKick:       api.OptBool{Value: true, Set: true},
-			CanManageBank: api.OptBool{Value: true, Set: true},
-			CanSchedule:   api.OptBool{Value: true, Set: true},
-			CanPromote:    api.OptBool{Value: true, Set: true},
-		},
-		Version: 1,
 	}
 
 	if _, err := s.repo.AddGuildMember(ctx, founderMember); err != nil {
@@ -318,6 +309,11 @@ func (s *Service) AddGuildMember(ctx context.Context, guildID uuid.UUID, request
 			role = api.GuildMemberRoleRecruit
 		case api.AddMemberRequestRoleMember:
 			role = api.GuildMemberRoleMember
+		case "officer": // Handle officer role if added to AddMemberRequestRole
+			role = api.GuildMemberRoleOfficer
+		default:
+			// Keep default as Member
+			role = api.GuildMemberRoleMember
 		}
 	}
 
@@ -357,48 +353,6 @@ func (s *Service) RemoveGuildMember(ctx context.Context, guildID, playerID uuid.
 
 // Additional required methods from QA
 
-func (s *Service) GetGuildTreasury(ctx context.Context, guildID uuid.UUID) (*api.GuildBank, error) {
-	timer := prometheus.NewTimer(s.guildOperationTime.WithLabelValues("get_guild_treasury"))
-	defer timer.ObserveDuration()
-
-	s.guildOperations.Inc()
-	// TODO: Implement with repository call
-	return &api.GuildBank{
-		ID:             uuid.New().String(),
-		GuildID:        guildID.String(),
-		Version:        1,
-		CurrencyType:   "eddies",
-		Amount:         0,
-		LastTransaction: time.Now(),
-	}, nil
-}
-
-func (s *Service) NeutralizeGuildTerritories(ctx context.Context, guildID uuid.UUID) error {
-	timer := prometheus.NewTimer(s.guildOperationTime.WithLabelValues("neutralize_guild_territories"))
-	defer timer.ObserveDuration()
-
-	s.guildOperations.Inc()
-	// TODO: Implement with repository call
-	return nil
-}
-
-func (s *Service) CancelGuildEvents(ctx context.Context, guildID uuid.UUID) error {
-	timer := prometheus.NewTimer(s.guildOperationTime.WithLabelValues("cancel_guild_events"))
-	defer timer.ObserveDuration()
-
-	s.guildOperations.Inc()
-	// TODO: Implement with repository call
-	return nil
-}
-
-func (s *Service) ArchiveGuildAnnouncements(ctx context.Context, guildID uuid.UUID) error {
-	timer := prometheus.NewTimer(s.guildOperationTime.WithLabelValues("archive_guild_announcements"))
-	defer timer.ObserveDuration()
-
-	s.guildOperations.Inc()
-	// TODO: Implement with repository call
-	return nil
-}
 
 // HealthCheck performs a health check
 func (s *Service) HealthCheck(ctx context.Context) (*api.HealthResponse, error) {
@@ -463,9 +417,6 @@ func (s *Service) validateCreateGuildRequest(req *api.CreateGuildRequest) error 
 	}
 	if req.Description.Set && len(req.Description.Value) > s.config.MaxGuildDescription {
 		return fmt.Errorf("guild description must be less than %d characters", s.config.MaxGuildDescription)
-	}
-	if len(req.GuildTag) < 2 || len(req.GuildTag) > 5 {
-		return fmt.Errorf("guild tag must be 2-5 characters")
 	}
 	return nil
 }

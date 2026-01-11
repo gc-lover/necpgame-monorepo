@@ -1,6 +1,6 @@
-# MCP GitHub Integration Guide
+# GitHub CLI Integration Guide
 
-**Единый гайд по работе с GitHub Projects через MCP для Cursor IDE и Antigravity**
+**Единый гайд по работе с GitHub Issues через GitHub CLI для Cursor IDE**
 
 ## 🎯 КРИТИЧНЫЕ ТРЕБОВАНИЯ
 
@@ -15,12 +15,18 @@
 
 ## ⚙️ КОНФИГУРАЦИЯ ПРОЕКТА
 
-**Project Parameters:**
-- **Owner Type:** `user`
+**Repository Parameters:**
 - **Owner:** `gc-lover`
-- **Project Number:** `1`
-- **Project Node ID:** `PVT_kwHODCWAw84BIyie`
-- **Repository:** `gc-lover/necpgame-monorepo`
+- **Repository:** `necpgame-monorepo`
+- **GitHub CLI:** Должен быть установлен и настроен (`gh auth status`)
+
+**Статусы задач через лейблы:**
+- `status:todo` - новые задачи (опционально)
+- `status:in-progress` - в работе
+- `status:review` - на ревью
+- `status:blocked` - заблокированы
+- `status:returned` - возвращены
+- `status:done` - завершены (issue закрыта)
 
 ### Field IDs (КРИТИЧНО знать!)
 
@@ -78,130 +84,92 @@ const CHECK_OPTIONS = {
 
 ---
 
-## 📋 Основные MCP команды
+## 📋 Основные GitHub CLI команды
 
 ### Поиск задач агента
-```javascript
-// В Cursor IDE: MCP сервер cursor-github
-// В Antigravity: аналогичный MCP сервер
+```bash
+# В терминале: GitHub CLI
 
-// МЕТОД 1: GitHub Projects API (рекомендуемый)
-mcp_github_list_project_items({
-  owner_type: 'user',
-  owner: 'gc-lover',
-  project_number: 1,
-  query: 'Agent:"Backend" Status:"Todo"'
-});
+# МЕТОД 1: Поиск по лейблу агента (рекомендуемый)
+gh issue list --repo gc-lover/necpgame-monorepo --state open --label 'agent:backend'
 
-// МЕТОД 2: GitHub Issues API (альтернативный, если Projects не работает)
-mcp_github_list_issues({
-  owner: 'gc-lover',
-  repo: 'necpgame-monorepo',
-  state: 'open',
-  labels: 'Agent:Backend,Status:Todo'  // или поиск по title префиксам
-});
+# МЕТОД 2: Поиск по названию (альтернативный)
+gh issue list --repo gc-lover/necpgame-monorepo --state open | grep "\[Backend\]"
 ```
 
-**Response:**
-```json
-{
-  "items": [
-    {
-      "id": "PVTI_lAHODCWAw84BIyiezg8JzKw",
-      "number": 123,
-      "title": "Implement combat service API",
-      "status": "Todo",
-      "agent": "Backend"
-    }
-  ]
-}
+**Output:**
+```
+2296	OPEN	[Backend] Implement crafting-network-service-go with enterprise-grade real-time combat	agent:qa, status:ready-for-qa	2026-01-11T13:53:30Z
+2294	OPEN	[Backend] Implement combat-system-service-go with enterprise-grade real-time combat	agent:qa, status:ready-for-qa	2026-01-11T13:43:00Z
 ```
 
 ### Взятие задачи в работу
-```javascript
-mcp_github_update_project_item({
-  owner_type: 'user',
-  owner: 'gc-lover',
-  project_number: 1,
-  item_id: 'PVTI_lAHODCWAw84BIyiezg8JzKw',
-  updated_field: [
-    {id: '239690516', value: '83d488e7'}, // Status: In Progress
-    {id: '243899542', value: '1fc13998'}, // Agent: Backend
-    {id: '246469155', value: '08174330'}, // Type: BACKEND
-    {id: '246468990', value: '22932cc7'}  // Check: 0 (unchecked)
-  ]
-});
+```bash
+# Добавить комментарий
+gh issue comment 123 --body '[OK] Начинаю работу над задачей'
+
+# Добавить лейбл статуса
+gh issue edit 123 --add-label 'status:in-progress'
 ```
 
 ### Передача задачи следующему агенту
-```javascript
-mcp_github_update_project_item({
-  owner_type: 'user',
-  owner: 'gc-lover',
-  project_number: 1,
-  item_id: 'PVTI_lAHODCWAw84BIyiezg8JzKw',
-  updated_field: [
-    {id: '239690516', value: 'f75ad846'}, // Status: Todo
-    {id: '243899542', value: 'c60ebab1'}, // Agent: Network
-    {id: '246469155', value: '08174330'}, // Type: BACKEND (сохранить)
-    {id: '246468990', value: '4e8cf8f5'}  // Check: 1 (validated)
-  ]
-});
+```bash
+# Добавить комментарий о передаче
+gh issue comment 123 --body '[OK] Backend implementation complete. Handed off to Network. Issue: #123'
 
-// ОБЯЗАТЕЛЬНО добавить комментарий
-mcp_github_add_issue_comment({
-  owner: 'gc-lover',
-  repo: 'necpgame-monorepo',
-  issue_number: 123,
-  body: '[OK] Backend implementation complete. Handed off to Network.\\n\\nIssue: #123'
-});
+# Обновить лейблы
+gh issue edit 123 --remove-label 'status:in-progress' --add-label 'agent:network'
+```
+
+### Закрытие задачи
+```bash
+# Для завершенных задач
+gh issue close 123 --comment 'Task completed successfully'
 ```
 
 ---
 
-## 🔑 Field IDs (КРИТИЧНО знать!)
+## 🏷️ Labels Reference (КРИТИЧНО знать!)
 
-### Status Field (239690516)
-```javascript
-const STATUS_OPTIONS = {
-  'Todo': 'f75ad846',
-  'In Progress': '83d488e7',
-  'Review': '55060662',
-  'Blocked': 'af634d5b',
-  'Returned': 'c01c12e9',
-  'Done': '98236657'
-};
+### Agent Labels
+```bash
+# Назначение агентов через лейблы
+agent:backend      # Backend агент
+agent:api          # API Designer
+agent:database     # Database агент
+agent:network      # Network агент
+agent:security     # Security агент
+agent:devops       # DevOps агент
+agent:qa           # QA агент
+agent:performance  # Performance агент
+agent:ue5          # UE5 агент
+agent:content      # Content Writer
+agent:architect    # Architect
+agent:idea         # Idea Writer
+agent:ui-ux        # UI/UX Designer
+agent:game-balance # Game Balance агент
+agent:release      # Release агент
 ```
 
-### Agent Field (243899542)
-```javascript
-const AGENT_OPTIONS = {
-  'Backend': '1fc13998',
-  'Network': 'c60ebab1',
-  'Security': '12586c50',
-  'DevOps': '7e67a39b',
-  'QA': '3352c488'
-  // Полный список в GITHUB_PROJECT_CONFIG.md
-};
+### Status Labels
+```bash
+# Статусы задач через лейблы
+status:todo        # Новые задачи (опционально)
+status:in-progress # В работе
+status:review      # На ревью
+status:blocked     # Заблокированы
+status:returned    # Возвращены на доработку
+# status:done - не нужен, issue закрывается
 ```
 
-### Type Field (246469155)
-```javascript
-const TYPE_OPTIONS = {
-  'API': '66f88b2c',         // OpenAPI спецификации
-  'MIGRATION': 'd3702826',   // БД миграции
-  'DATA': 'b06014a2',         // Импорт данных
-  'BACKEND': '08174330',      // Go код
-  'UE5': 'd4d523a0'           // Unreal Engine
-};
-```
-
-### Check Field (246468990)
-```javascript
-const CHECK_OPTIONS = {
-  '0': '22932cc7', // NOT_CHECKED
-  '1': '4e8cf8f5'  // CHECKED
-};
+### Type Labels (опционально)
+```bash
+# Типы задач (для дополнительной классификации)
+type:api           # OpenAPI спецификации
+type:migration     # БД миграции
+type:data          # Импорт данных
+type:backend       # Go код
+type:ue5           # Unreal Engine
 ```
 
 ---
@@ -209,21 +177,18 @@ const CHECK_OPTIONS = {
 ## 🔄 Полный workflow агента
 
 ### 1. Найти задачу
-```javascript
-const tasks = await mcp_github_list_project_items({
-  owner_type: 'user',
-  owner: 'gc-lover',
-  project_number: 1,
-  query: 'Agent:"Backend" Status:"Todo"'
-});
+```bash
+# Найти задачи своего агента
+gh issue list --repo gc-lover/necpgame-monorepo --state open --label 'agent:backend'
 ```
 
 ### 2. Взять задачу
-```javascript
-const task = tasks.items[0];
-await mcp_github_update_project_item({
-  // ... обновить статус на In Progress, назначить агента
-});
+```bash
+# Добавить комментарий о начале работы
+gh issue comment 123 --body '[OK] Начинаю работу над задачей'
+
+# Добавить лейбл статуса
+gh issue edit 123 --add-label 'status:in-progress'
 ```
 
 ### 3. Выполнить работу
@@ -232,14 +197,18 @@ await mcp_github_update_project_item({
 - Сделать коммит
 
 ### 4. Передать следующему агенту
-```javascript
-await mcp_github_update_project_item({
-  // ... обновить статус на Todo, назначить следующего агента
-});
+```bash
+# Добавить комментарий о передаче
+gh issue comment 123 --body '[OK] Work completed. Handed off to Network. Issue: #123'
 
-await mcp_github_add_issue_comment({
-  // ... добавить комментарий с результатами
-});
+# Обновить лейблы
+gh issue edit 123 --remove-label 'status:in-progress' --add-label 'agent:network'
+```
+
+### 5. Закрыть задачу (для финальных агентов)
+```bash
+# Для завершенных задач
+gh issue close 123 --comment 'Task completed successfully'
 ```
 
 ---
@@ -247,18 +216,19 @@ await mcp_github_add_issue_comment({
 ## 🚨 Обработка ошибок
 
 ### Задача не найдена
-- Проверить корректность query
-- Проверить права доступа
-- Проверить что проект существует
+- Проверить корректность лейбла агента (`agent:{name}`)
+- Проверить состояние issue (`--state open`)
+- Проверить права доступа к репозиторию
 
-### Поля не обновляются
-- Проверить Field IDs в `GITHUB_PROJECT_CONFIG.md`
-- Проверить что item_id корректный
-- Проверить права на запись
+### Лейбл не добавляется
+- Проверить что лейбл существует в репозитории
+- Проверить права на редактирование issues
+- Создать лейбл если его нет: `gh label create {name}`
 
 ### Комментарий не добавляется
-- Проверить issue_number (не item_id!)
-- Проверить права на issues
+- Проверить номер issue
+- Проверить права на комментирование
+- Проверить аутентификацию: `gh auth status`
 
 ---
 
@@ -300,13 +270,13 @@ const comment = `[OK] ${description}. Handed off to ${nextAgent}.\\n\\nIssue: #$
 ## 🎯 Поддержка сред
 
 ### Cursor IDE
-- Использует MCP сервер `cursor-github`
-- Все команды работают через MCP интерфейс
-- Интеграция с IDE для seamless workflow
+- Использует GitHub CLI в терминале
+- Все команды работают через командную строку
+- Интеграция с IDE через терминал для seamless workflow
 
-### Antigravity
-- Аналогичные MCP команды
-- Поддержка всех GitHub Project операций
+### Другие среды
+- Любая среда с установленным GitHub CLI
+- Работает в bash, zsh, PowerShell, cmd
 - Compatible API для enterprise использования
 
 ---
@@ -315,26 +285,27 @@ const comment = `[OK] ${description}. Handed off to ${nextAgent}.\\n\\nIssue: #$
 
 ### Поиск задач
 ```bash
-# Через скрипт (альтернатива MCP)
-python scripts/update-github-fields.py --find --agent Backend
+# Прямой поиск через GitHub CLI
+gh issue list --repo gc-lover/necpgame-monorepo --state open --label 'agent:backend'
 ```
 
-### Обновление статуса
+### Взятие задачи
 ```bash
-# Через скрипт
-python scripts/update-github-fields.py --item-id 123 --status in_progress --agent Backend
+# Две команды для взятия задачи
+gh issue comment 123 --body '[OK] Начинаю работу над задачей' && gh issue edit 123 --add-label 'status:in-progress'
 ```
 
 ### Передача задачи
 ```bash
-# Через скрипт
-python scripts/update-github-fields.py --item-id 123 --status todo --agent Network
+# Две команды для передачи
+gh issue comment 123 --body '[OK] Work completed. Handed off to Network. Issue: #123' && gh issue edit 123 --remove-label 'status:in-progress' --add-label 'agent:network'
 ```
 
 ---
 
 ## 📚 Ссылки
 
-- `GITHUB_PROJECT_CONFIG.md` - все Field IDs и опции
-- `AGENT_SIMPLE_GUIDE.md` - общий workflow
+- `github-integration.md` - команды GitHub CLI для работы с issues
+- `AGENT_QUICK_START.md` - общий workflow агентов
 - `CONTENT_WORKFLOW.md` - для контентных задач
+- `common-validation.md` - валидация и общие команды

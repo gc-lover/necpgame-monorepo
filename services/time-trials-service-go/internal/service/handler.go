@@ -20,6 +20,7 @@ import (
 	"go.uber.org/zap"
 
 	"necpgame/services/time-trials-service-go/api"
+	"necpgame/services/time-trials-service-go/internal/models"
 )
 
 // Handler implements the API handler interface
@@ -110,8 +111,6 @@ func NewHandler(svc *Service) *Handler {
 
 // HealthGet implements health check endpoint
 func (h *Handler) GetHealth(ctx context.Context) (api.GetHealthRes, error) {
-	// Calculate actual uptime since service start
-	uptimeSeconds := int(time.Since(h.service.startTime).Seconds())
 
 	// Get active sessions count from database
 	// PERFORMANCE: Direct database query for accurate real-time session count
@@ -150,13 +149,13 @@ func (h *Handler) ListTrials(ctx context.Context, params api.ListTrialsParams) (
 	}
 
 	limit := 20
-	if params.Limit != nil {
-		limit = int(*params.Limit)
+	if params.Limit.IsSet() {
+		limit = params.Limit.Value
 	}
 
 	offset := 0
-	if params.Offset != nil {
-		offset = int(*params.Offset)
+	if params.Offset.IsSet() {
+		offset = params.Offset.Value
 	}
 
 	// Build query with filters
@@ -248,7 +247,7 @@ func (h *Handler) ListTrials(ctx context.Context, params api.ListTrialsParams) (
 		var createdAt, updatedAt time.Time
 
 		err := rows.Scan(
-			&trial.Id, &trial.Name, &trial.Description, &trial.Type, &trial.ContentId,
+			&trial.ID, &trial.Name, &trial.Description, &trial.Type, &trial.ContentID,
 			&trial.Difficulty, &trial.Status, &trial.TimeLimit, &trial.MinPlayers,
 			&trial.MaxPlayers, &rewards, &validationRules, &createdAt, &updatedAt,
 		)
@@ -270,8 +269,8 @@ func (h *Handler) ListTrials(ctx context.Context, params api.ListTrialsParams) (
 			}
 		}
 
-		trial.CreatedAt = &createdAt
-		trial.UpdatedAt = &updatedAt
+		trial.CreatedAt.SetTo(createdAt)
+		trial.UpdatedAt.SetTo(updatedAt)
 
 		trials = append(trials, trial)
 	}
@@ -327,7 +326,7 @@ func (h *Handler) CreateTrial(ctx context.Context, req api.TimeTrial) (api.Creat
 		req.Name,
 		req.Description,
 		req.Type,
-		req.ContentId,
+		req.ContentID,
 		req.Difficulty,
 		req.Status,
 		req.TimeLimit,
@@ -540,8 +539,33 @@ func (h *Handler) CompleteTrialSession(ctx context.Context, params api.CompleteT
 		}, nil
 	}
 
+	// Get trial reward configuration
+	rewardConfig := &models.TrialRewardConfig{
+		BronzeTime:   120000, // 2 minutes in milliseconds
+		SilverTime:   90000,  // 1.5 minutes
+		GoldTime:     60000,  // 1 minute
+		PlatinumTime: 30000,  // 30 seconds
+		BronzeRewards: models.RewardTiers{
+			Experience: 500,
+			Currency:   models.CurrencyReward{Gold: 100},
+		},
+		SilverRewards: models.RewardTiers{
+			Experience: 750,
+			Currency:   models.CurrencyReward{Gold: 150},
+		},
+		GoldRewards: models.RewardTiers{
+			Experience: 1000,
+			Currency:   models.CurrencyReward{Gold: 200, SeasonalTokens: 1},
+		},
+		PlatinumRewards: models.RewardTiers{
+			Experience: 1500,
+			Currency:   models.CurrencyReward{Gold: 300, SeasonalTokens: 2},
+			Items:      []models.ItemReward{{ItemID: "speed_boost_potion", Quantity: 1}},
+		},
+	}
+
 	// Calculate rewards
-	rewards, err := h.service.rewardDistributor.CalculateRewards(ctx, trialID, result.CompletionTime, "normal")
+	rewards, err := h.service.rewardDistributor.CalculateRewards(ctx, trialID, result.CompletionTime, "normal", rewardConfig)
 	if err != nil {
 		h.service.logger.Error("Failed to calculate rewards", zap.Error(err))
 	}

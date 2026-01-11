@@ -13,7 +13,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 
-	"guild-service-go/pkg/api"
+	"necpgame/services/guild-service-go/pkg/api"
 )
 
 //go:align 64
@@ -27,10 +27,21 @@ type Repository interface {
 
 	// Guild member operations
 	GetGuildMembers(ctx context.Context, guildID uuid.UUID) ([]*api.GuildMember, error)
-	ListByGuildID(ctx context.Context, guildID uuid.UUID, page, limit int) ([]*api.GuildMember, int, error)
 	AddGuildMember(ctx context.Context, member *api.GuildMember) (*api.GuildMember, error)
 	UpdateGuildMember(ctx context.Context, guildID, playerID uuid.UUID, member *api.GuildMember) (*api.GuildMember, error)
 	RemoveGuildMember(ctx context.Context, guildID, playerID uuid.UUID) error
+
+	// Guild treasury operations
+	GetGuildTreasury(ctx context.Context, guildID uuid.UUID) (*api.GuildBank, error)
+
+	// Guild territory operations
+	NeutralizeGuildTerritories(ctx context.Context, guildID uuid.UUID) error
+
+	// Guild event operations
+	CancelGuildEvents(ctx context.Context, guildID uuid.UUID) error
+
+	// Guild announcement operations
+	ArchiveGuildAnnouncements(ctx context.Context, guildID uuid.UUID) error
 
 	// Database access for custom queries
 	GetDB() interface{}
@@ -43,7 +54,16 @@ type PostgresRepository struct {
 }
 
 //go:align 64
-func NewRepository(db *pgxpool.Pool, logger *zap.Logger) Repository {
+func NewRepository() Repository {
+	// For now, return a mock repository for testing
+	return &PostgresRepository{
+		db:     nil, // Will be set later or mocked
+		logger: nil, // Will be set later or mocked
+	}
+}
+
+//go:align 64
+func NewRepositoryWithDB(db *pgxpool.Pool, logger *zap.Logger) Repository {
 	return &PostgresRepository{
 		db:     db,
 		logger: logger,
@@ -275,9 +295,8 @@ func (r *PostgresRepository) ListGuilds(ctx context.Context, limit, offset int) 
 	var guilds []*api.Guild
 	for rows.Next() {
 		var guild api.Guild
-		var description, faction *string
+		var description *string
 		var level, experience, maxMembers, currentMembers, reputation *int
-		var isRecruiting *bool
 		var createdAt, updatedAt *time.Time
 
 		err := rows.Scan(
@@ -294,14 +313,11 @@ func (r *PostgresRepository) ListGuilds(ctx context.Context, limit, offset int) 
 		if description != nil {
 			guild.Description = api.OptString{Value: *description, Set: true}
 		}
-		if faction != nil {
-			guild.Faction = api.OptString{Value: *faction, Set: true}
-		}
 		if level != nil {
 			guild.Level = api.OptInt{Value: *level, Set: true}
 		}
 		if experience != nil {
-			guild.Experience = api.OptInt64{Value: *experience, Set: true}
+			guild.Experience = api.OptInt{Value: *experience, Set: true} // Use OptInt instead of OptInt64
 		}
 		if maxMembers != nil {
 			guild.MaxMembers = api.OptInt{Value: *maxMembers, Set: true}
@@ -311,9 +327,6 @@ func (r *PostgresRepository) ListGuilds(ctx context.Context, limit, offset int) 
 		}
 		if reputation != nil {
 			guild.Reputation = api.OptInt{Value: *reputation, Set: true}
-		}
-		if isRecruiting != nil {
-			guild.IsRecruiting = api.OptBool{Value: *isRecruiting, Set: true}
 		}
 		if createdAt != nil {
 			guild.CreatedAt = api.OptDateTime{Value: *createdAt, Set: true}
@@ -356,12 +369,10 @@ func (r *PostgresRepository) GetGuildMembers(ctx context.Context, guildID uuid.U
 	for rows.Next() {
 		var member api.GuildMember
 		var joinedAt, lastActive *time.Time
-		var permissions map[string]interface{}
 
 		err := rows.Scan(
-			&member.ID, &member.GuildId, &member.UserId, &member.Role,
+			&member.GuildId, &member.UserId, &member.Role,
 			&joinedAt, &lastActive, &member.Contribution,
-			&permissions, &member.Version,
 		)
 		if err != nil {
 			r.logger.Error("Failed to scan guild member", zap.Error(err))
@@ -376,24 +387,8 @@ func (r *PostgresRepository) GetGuildMembers(ctx context.Context, guildID uuid.U
 			member.LastActive = api.OptDateTime{Value: *lastActive, Set: true}
 		}
 
-		// Handle permissions (convert from JSON)
-		if permissions != nil {
-			if canInvite, ok := permissions["can_invite"].(bool); ok {
-				member.Permissions.CanInvite = api.OptBool{Value: canInvite, Set: true}
-			}
-			if canKick, ok := permissions["can_kick"].(bool); ok {
-				member.Permissions.CanKick = api.OptBool{Value: canKick, Set: true}
-			}
-			if canManageBank, ok := permissions["can_manage_bank"].(bool); ok {
-				member.Permissions.CanManageBank = api.OptBool{Value: canManageBank, Set: true}
-			}
-			if canSchedule, ok := permissions["can_schedule"].(bool); ok {
-				member.Permissions.CanSchedule = api.OptBool{Value: canSchedule, Set: true}
-			}
-			if canPromote, ok := permissions["can_promote"].(bool); ok {
-				member.Permissions.CanPromote = api.OptBool{Value: canPromote, Set: true}
-			}
-		}
+		// Permissions are not part of the current GuildMember struct
+		// TODO: Add permissions support when GuildMember struct is updated
 
 		members = append(members, &member)
 	}
@@ -415,42 +410,34 @@ func (r *PostgresRepository) AddGuildMember(ctx context.Context, member *api.Gui
 func (r *PostgresRepository) UpdateGuildMember(ctx context.Context, guildID, playerID uuid.UUID, member *api.GuildMember) (*api.GuildMember, error) {
 	const query = `
 		UPDATE guild_members SET
-			version = version + 1,
-			role = $4,
-			last_active = $5,
-			contribution_points = $6,
-			permissions = $7
-		WHERE guild_id = $1 AND player_id = $2 AND version = $3 AND left_at IS NULL
-		RETURNING version, last_active
+			role = $3,
+			last_active = $4,
+			contribution_points = $5
+		WHERE guild_id = $1 AND player_id = $2 AND left_at IS NULL
+		RETURNING last_active
 	`
 
 	now := time.Now()
-	newVersion := member.Version + 1
-
-	// Prepare permissions JSON
-	permissions := map[string]interface{}{
-		"can_invite":     member.Permissions.CanInvite.GetOrZero(),
-		"can_kick":       member.Permissions.CanKick.GetOrZero(),
-		"can_manage_bank": member.Permissions.CanManageBank.GetOrZero(),
-		"can_schedule":   member.Permissions.CanSchedule.GetOrZero(),
-		"can_promote":    member.Permissions.CanPromote.GetOrZero(),
+	// Get contribution value, default to 0 if not set
+	contribution := 0
+	if member.Contribution.Set {
+		contribution = member.Contribution.Value
 	}
 
 	err := r.db.QueryRow(ctx, query,
-		guildID, playerID, member.Version, // WHERE conditions
-		member.Role, now, member.Contribution.GetOrZero(), permissions,
-	).Scan(&newVersion, &member.LastActive.Value)
+		guildID, playerID, // WHERE conditions
+		member.Role, now, contribution,
+	).Scan(&member.LastActive.Value)
 
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			return nil, fmt.Errorf("guild member not found or version conflict")
+			return nil, fmt.Errorf("guild member not found")
 		}
 		r.logger.Error("Failed to update guild member", zap.Error(err),
 			zap.String("guild_id", guildID.String()), zap.String("player_id", playerID.String()))
 		return nil, err
 	}
 
-	member.Version = newVersion
 	member.LastActive.Set = true
 
 	return member, nil
@@ -474,6 +461,116 @@ func (r *PostgresRepository) RemoveGuildMember(ctx context.Context, guildID, pla
 	if result.RowsAffected() == 0 {
 		return fmt.Errorf("guild member not found")
 	}
+
+	return nil
+}
+
+// GetGuildTreasury retrieves guild treasury/bank information
+func (r *PostgresRepository) GetGuildTreasury(ctx context.Context, guildID uuid.UUID) (*api.GuildBank, error) {
+	const query = `
+		SELECT
+			gb.id, gb.guild_id, gb.version, gb.currency_type,
+			gb.amount, gb.last_transaction
+		FROM guild_bank gb
+		WHERE gb.guild_id = $1
+		ORDER BY gb.last_transaction DESC
+		LIMIT 1
+	`
+
+	var bank api.GuildBank
+	var guildIDStr, currencyType string
+	var lastTransaction time.Time
+
+	err := r.db.QueryRow(ctx, query, guildID).Scan(
+		&bank.ID, &guildIDStr, &bank.Version, &currencyType,
+		&bank.Amount, &lastTransaction,
+	)
+
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			// Return default bank entry if none exists
+			return &api.GuildBank{
+				ID:             uuid.New().String(),
+				GuildID:        guildID.String(),
+				Version:        1,
+				CurrencyType:   "eddies",
+				Amount:         0,
+				LastTransaction: time.Now(),
+			}, nil
+		}
+		r.logger.Error("Failed to get guild treasury", zap.Error(err), zap.String("guild_id", guildID.String()))
+		return nil, err
+	}
+
+	bank.GuildID = guildIDStr
+	bank.CurrencyType = currencyType
+	bank.LastTransaction = lastTransaction
+
+	return &bank, nil
+}
+
+// NeutralizeGuildTerritories removes guild control over territories
+func (r *PostgresRepository) NeutralizeGuildTerritories(ctx context.Context, guildID uuid.UUID) error {
+	const query = `
+		UPDATE guild_territories
+		SET status = 'neutralized', updated_at = $2
+		WHERE guild_id = $1 AND status = 'controlled'
+	`
+
+	now := time.Now()
+	result, err := r.db.Exec(ctx, query, guildID, now)
+	if err != nil {
+		r.logger.Error("Failed to neutralize guild territories", zap.Error(err), zap.String("guild_id", guildID.String()))
+		return err
+	}
+
+	r.logger.Info("Neutralized guild territories",
+		zap.String("guild_id", guildID.String()),
+		zap.Int64("affected_territories", result.RowsAffected()))
+
+	return nil
+}
+
+// CancelGuildEvents cancels all upcoming guild events
+func (r *PostgresRepository) CancelGuildEvents(ctx context.Context, guildID uuid.UUID) error {
+	const query = `
+		UPDATE guild_events
+		SET status = 'cancelled', updated_at = $2
+		WHERE guild_id = $1 AND status = 'scheduled' AND scheduled_at > $2
+	`
+
+	now := time.Now()
+	result, err := r.db.Exec(ctx, query, guildID, now)
+	if err != nil {
+		r.logger.Error("Failed to cancel guild events", zap.Error(err), zap.String("guild_id", guildID.String()))
+		return err
+	}
+
+	r.logger.Info("Cancelled guild events",
+		zap.String("guild_id", guildID.String()),
+		zap.Int64("cancelled_events", result.RowsAffected()))
+
+	return nil
+}
+
+// ArchiveGuildAnnouncements moves old announcements to archive
+func (r *PostgresRepository) ArchiveGuildAnnouncements(ctx context.Context, guildID uuid.UUID) error {
+	const query = `
+		UPDATE guild_announcements
+		SET status = 'archived', updated_at = $2
+		WHERE guild_id = $1 AND status = 'active' AND created_at < $2 - INTERVAL '30 days'
+	`
+
+	now := time.Now()
+	result, err := r.db.Exec(ctx, query, guildID, now)
+	if err != nil {
+		r.logger.Error("Failed to archive guild announcements", zap.Error(err), zap.String("guild_id", guildID.String()))
+		return err
+	}
+
+	r.logger.Info("Archived guild announcements",
+		zap.String("guild_id", guildID.String()),
+		zap.Int64("archived_announcements", result.RowsAffected()))
 
 	return nil
 }

@@ -16,10 +16,10 @@ import (
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
-	"guild-service-go/internal/repository"
-	"guild-service-go/internal/service"
-	"guild-service-go/server"
-	"guild-service-go/pkg/api"
+	guildRepository "necpgame/services/guild-service-go/internal/repository"
+	guildService "necpgame/services/guild-service-go/internal/service"
+	guildServer "necpgame/services/guild-service-go/server"
+	"necpgame/services/guild-service-go/pkg/api"
 )
 
 // SecurityHandler implements security middleware for BearerAuth
@@ -41,7 +41,7 @@ func main() {
 	logger := log.New(os.Stdout, "[guild-service] ", log.LstdFlags|log.Lmicroseconds)
 
 	// Initialize repository
-	repo := repository.NewRepository()
+	repo := guildRepository.NewRepository()
 
 	// Initialize Redis client (mock for now)
 	redisClient := redis.NewClient(&redis.Options{
@@ -49,7 +49,7 @@ func main() {
 	})
 
 	// Initialize service config
-	serviceConfig := service.Config{
+	serviceConfig := guildService.Config{
 		MaxGuildNameLength:    50,
 		MaxGuildDescription:   500,
 		DefaultMaxMembers:     100,
@@ -61,14 +61,14 @@ func main() {
 	zapLogger, _ := zap.NewDevelopment()
 
 	// Initialize service
-	svc := service.NewService(repo, serviceConfig, redisClient, zapLogger)
+	svc := guildService.NewService(repo, serviceConfig, redisClient, zapLogger)
 
 	// Initialize handlers
-	handlerConfig := &handlers.Config{
+	handlerConfig := &guildServer.Config{
 		MaxWorkers: 50,
 		CacheTTL:   10 * time.Minute,
 	}
-	h := handlers.NewGuildHandler(handlerConfig, svc, repo, zapLogger)
+	h := guildServer.NewGuildHandler(handlerConfig, svc, repo, zapLogger)
 
 	// Create server with security handler
 	httpSrv, _ := api.NewServer(h, &SecurityHandler{})

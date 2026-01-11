@@ -14,7 +14,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 
-	"necpgame/services/time-trials-service-go/internal/reward"
+	"necpgame/services/time-trials-service-go/internal/models"
 )
 
 // Repository handles database operations for time trials service
@@ -42,16 +42,17 @@ type TrialConfigRecord struct {
 	CreatedAt       time.Time `db:"created_at"`
 	UpdatedAt       time.Time `db:"updated_at"`
 	CreatedBy       string    `db:"created_by"`
+	RewardConfig    string    `db:"reward_config"` // JSON blob for reward configuration
 }
 
-// GetTrialConfig retrieves trial configuration from database
-func (r *Repository) GetTrialConfig(ctx context.Context, trialID uuid.UUID) (*reward.TrialConfig, error) {
+// GetTrialRewardConfig retrieves trial reward configuration from database
+func (r *Repository) GetTrialRewardConfig(ctx context.Context, trialID uuid.UUID) (*models.TrialRewardConfig, error) {
 	// PERFORMANCE: Add timeout for database operations (50ms P99 target)
 	dbCtx, cancel := context.WithTimeout(ctx, 50*time.Millisecond)
 	defer cancel()
 
 	query := `
-		SELECT id, trial_id, name, description, config_data, is_active, created_at, updated_at, created_by
+		SELECT id, trial_id, name, description, reward_config, is_active, created_at, updated_at, created_by
 		FROM time_trials.trial_configs
 		WHERE trial_id = $1 AND is_active = true
 		ORDER BY updated_at DESC
@@ -64,7 +65,7 @@ func (r *Repository) GetTrialConfig(ctx context.Context, trialID uuid.UUID) (*re
 		&record.TrialID,
 		&record.Name,
 		&record.Description,
-		&record.ConfigData,
+		&record.RewardConfig,
 		&record.IsActive,
 		&record.CreatedAt,
 		&record.UpdatedAt,
@@ -76,7 +77,7 @@ func (r *Repository) GetTrialConfig(ctx context.Context, trialID uuid.UUID) (*re
 			r.logger.Warn("Trial configuration not found in database, using defaults",
 				zap.String("trial_id", trialID.String()))
 			// Return default configuration if not found in database
-			return r.getDefaultTrialConfig(), nil
+			return r.getDefaultTrialRewardConfig(), nil
 		}
 		r.logger.Error("Failed to retrieve trial configuration",
 			zap.String("trial_id", trialID.String()),
@@ -85,7 +86,7 @@ func (r *Repository) GetTrialConfig(ctx context.Context, trialID uuid.UUID) (*re
 	}
 
 	// Parse JSON config data
-	config, err := r.parseTrialConfigJSON(record.ConfigData)
+	config, err := r.parseTrialRewardConfigJSON(record.RewardConfig)
 	if err != nil {
 		r.logger.Error("Failed to parse trial configuration JSON",
 			zap.String("trial_id", trialID.String()),
@@ -101,8 +102,8 @@ func (r *Repository) GetTrialConfig(ctx context.Context, trialID uuid.UUID) (*re
 }
 
 // parseTrialConfigJSON parses JSON configuration data into TrialConfig struct
-func (r *Repository) parseTrialConfigJSON(jsonData string) (*reward.TrialConfig, error) {
-	var config reward.TrialConfig
+func (r *Repository) parseTrialRewardConfigJSON(jsonData string) (*models.TrialRewardConfig, error) {
+	var config models.TrialRewardConfig
 	if err := json.Unmarshal([]byte(jsonData), &config); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal trial config JSON: %w", err)
 	}
@@ -110,36 +111,36 @@ func (r *Repository) parseTrialConfigJSON(jsonData string) (*reward.TrialConfig,
 }
 
 // getDefaultTrialConfig returns default trial configuration when database lookup fails
-func (r *Repository) getDefaultTrialConfig() *reward.TrialConfig {
-	return &reward.TrialConfig{
+func (r *Repository) getDefaultTrialRewardConfig() *models.TrialRewardConfig {
+	return &models.TrialRewardConfig{
 		BronzeTime:  180000, // 3 minutes
 		SilverTime:  150000, // 2.5 minutes
 		GoldTime:    120000, // 2 minutes
 		PlatinumTime: 90000, // 1.5 minutes
-		BronzeRewards: reward.RewardTiers{
+		BronzeRewards: models.RewardTiers{
 			Experience: 100,
-			Currency: reward.CurrencyReward{
+			Currency: models.CurrencyReward{
 				Gold:           50,
 				SeasonalTokens: 10,
 			},
 		},
-		SilverRewards: reward.RewardTiers{
+		SilverRewards: models.RewardTiers{
 			Experience: 150,
-			Currency: reward.CurrencyReward{
+			Currency: models.CurrencyReward{
 				Gold:           75,
 				SeasonalTokens: 15,
 			},
 		},
-		GoldRewards: reward.RewardTiers{
+		GoldRewards: models.RewardTiers{
 			Experience: 200,
-			Currency: reward.CurrencyReward{
+			Currency: models.CurrencyReward{
 				Gold:           100,
 				SeasonalTokens: 25,
 			},
 		},
-		PlatinumRewards: reward.RewardTiers{
+		PlatinumRewards: models.RewardTiers{
 			Experience: 300,
-			Currency: reward.CurrencyReward{
+			Currency: models.CurrencyReward{
 				Gold:           150,
 				SeasonalTokens: 50,
 			},
@@ -148,7 +149,7 @@ func (r *Repository) getDefaultTrialConfig() *reward.TrialConfig {
 }
 
 // CreateTrialConfig creates a new trial configuration in database
-func (r *Repository) CreateTrialConfig(ctx context.Context, trialID uuid.UUID, name, description string, config *reward.TrialConfig) (*TrialConfigRecord, error) {
+func (r *Repository) CreateTrialRewardConfig(ctx context.Context, trialID uuid.UUID, name, description string, config *models.TrialRewardConfig) (*TrialConfigRecord, error) {
 	dbCtx, cancel := context.WithTimeout(ctx, 100*time.Millisecond)
 	defer cancel()
 
@@ -204,7 +205,7 @@ func (r *Repository) CreateTrialConfig(ctx context.Context, trialID uuid.UUID, n
 }
 
 // UpdateTrialConfig updates existing trial configuration
-func (r *Repository) UpdateTrialConfig(ctx context.Context, configID string, config *reward.TrialConfig) error {
+func (r *Repository) UpdateTrialRewardConfig(ctx context.Context, configID string, config *models.TrialRewardConfig) error {
 	dbCtx, cancel := context.WithTimeout(ctx, 100*time.Millisecond)
 	defer cancel()
 

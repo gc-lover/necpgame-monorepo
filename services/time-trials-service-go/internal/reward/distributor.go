@@ -7,7 +7,6 @@ package reward
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/go-faster/errors"
@@ -18,7 +17,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 
-	"necpgame/services/time-trials-service-go/internal/repository"
+	"necpgame/services/time-trials-service-go/internal/models"
 )
 
 // Config holds reward distributor configuration
@@ -28,23 +27,21 @@ type Config struct {
 	Logger *zap.Logger
 	Tracer trace.Tracer
 	Meter  metric.Meter
-	Repo   *repository.Repository
 }
 
 // Distributor manages reward calculation and distribution
 type Distributor struct {
-	db        *pgxpool.Pool
-	redis     *redis.Client
-	logger    *zap.Logger
-	tracer    trace.Tracer
-	meter     metric.Meter
-	repo      *Repository
+	db     *pgxpool.Pool
+	redis  *redis.Client
+	logger *zap.Logger
+	tracer trace.Tracer
+	meter  metric.Meter
 }
 
 // NewDistributor creates a new reward distributor instance
 func NewDistributor(cfg Config) (*Distributor, error) {
-	if cfg.DB == nil || cfg.Redis == nil || cfg.Logger == nil || cfg.Repo == nil {
-		return nil, errors.New("database, redis, logger, and repository are required")
+	if cfg.DB == nil || cfg.Redis == nil || cfg.Logger == nil {
+		return nil, errors.New("database, redis, and logger are required")
 	}
 
 	return &Distributor{
@@ -53,39 +50,32 @@ func NewDistributor(cfg Config) (*Distributor, error) {
 		logger: cfg.Logger,
 		tracer: cfg.Tracer,
 		meter:  cfg.Meter,
-		repo:   cfg.Repo,
 	}, nil
 }
 
 // CalculateRewards determines rewards based on completion time and trial configuration
-func (d *Distributor) CalculateRewards(ctx context.Context, trialID uuid.UUID, completionTime int, difficulty string) (*RewardPackage, error) {
+func (d *Distributor) CalculateRewards(ctx context.Context, trialID uuid.UUID, completionTime int, difficulty string, rewardConfig *models.TrialRewardConfig) (*RewardPackage, error) {
 	ctx, span := d.tracer.Start(ctx, "reward.CalculateRewards")
 	defer span.End()
-
-	// Get trial configuration
-	trialConfig, err := d.getTrialConfig(ctx, trialID)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get trial config")
-	}
 
 	package_ := &RewardPackage{
 		TrialID:        trialID,
 		CompletionTime: completionTime,
 		Difficulty:     difficulty,
-		Tier:           d.calculateTier(completionTime, trialConfig),
-		Rewards:        RewardTiers{},
+		Tier:           d.calculateTier(completionTime, rewardConfig),
+		Rewards:        models.RewardTiers{},
 	}
 
 	// Calculate rewards based on tier
 	switch package_.Tier {
-	case TierBronze:
-		package_.Rewards = trialConfig.BronzeRewards
-	case TierSilver:
-		package_.Rewards = trialConfig.SilverRewards
-	case TierGold:
-		package_.Rewards = trialConfig.GoldRewards
-	case TierPlatinum:
-		package_.Rewards = trialConfig.PlatinumRewards
+	case models.TierBronze:
+		package_.Rewards = rewardConfig.BronzeRewards
+	case models.TierSilver:
+		package_.Rewards = rewardConfig.SilverRewards
+	case models.TierGold:
+		package_.Rewards = rewardConfig.GoldRewards
+	case models.TierPlatinum:
+		package_.Rewards = rewardConfig.PlatinumRewards
 	}
 
 	// Apply difficulty multipliers
@@ -169,17 +159,17 @@ func (d *Distributor) DistributeRewards(ctx context.Context, playerID string, pa
 }
 
 // calculateTier determines reward tier based on completion time
-func (d *Distributor) calculateTier(completionTime int, config *TrialConfig) RewardTier {
+func (d *Distributor) calculateTier(completionTime int, config *models.TrialRewardConfig) models.RewardTier {
 	if completionTime <= config.PlatinumTime {
-		return TierPlatinum
+		return models.TierPlatinum
 	}
 	if completionTime <= config.GoldTime {
-		return TierGold
+		return models.TierGold
 	}
 	if completionTime <= config.SilverTime {
-		return TierSilver
+		return models.TierSilver
 	}
-	return TierBronze
+	return models.TierBronze
 }
 
 // applyDifficultyMultiplier adjusts rewards based on difficulty
@@ -200,75 +190,17 @@ func (d *Distributor) applyDifficultyMultiplier(package_ *RewardPackage, difficu
 	package_.Rewards.Currency.SeasonalTokens = int(float64(package_.Rewards.Currency.SeasonalTokens) * multiplier)
 }
 
-// getTrialConfig retrieves trial reward configuration from database
-func (d *Distributor) getTrialConfig(ctx context.Context, trialID uuid.UUID) (*TrialConfig, error) {
-	// PERFORMANCE: Database config retrieval with fallback to defaults
-	config, err := d.repo.GetTrialConfig(ctx, trialID)
-	if err != nil {
-		d.logger.Error("Failed to retrieve trial configuration from database",
-			zap.String("trial_id", trialID.String()),
-			zap.Error(err))
-		return nil, fmt.Errorf("failed to get trial config: %w", err)
-	}
 
-	d.logger.Debug("Retrieved trial configuration",
-		zap.String("trial_id", trialID.String()),
-		zap.Int("bronze_time", config.BronzeTime),
-		zap.Int("gold_time", config.GoldTime))
-
-	return config, nil
-}
-
-// RewardTier represents reward tier levels
-type RewardTier string
-
-const (
-	TierBronze   RewardTier = "bronze"
-	TierSilver   RewardTier = "silver"
-	TierGold     RewardTier = "gold"
-	TierPlatinum RewardTier = "platinum"
-)
 
 // RewardPackage represents calculated rewards for trial completion
 type RewardPackage struct {
 	TrialID        uuid.UUID  `json:"trial_id"`
 	CompletionTime int        `json:"completion_time"`
 	Difficulty     string     `json:"difficulty"`
-	Tier           RewardTier `json:"tier"`
-	Rewards        RewardTiers `json:"rewards"`
+	Tier           models.RewardTier `json:"tier"`
+	Rewards        models.RewardTiers `json:"rewards"`
 }
 
-// RewardTiers represents rewards for different tiers
-type RewardTiers struct {
-	Experience int            `json:"experience"`
-	Currency   CurrencyReward `json:"currency"`
-	Items      []ItemReward   `json:"items,omitempty"`
-	Achievements []string     `json:"achievements,omitempty"`
-}
-
-// CurrencyReward represents currency rewards
-type CurrencyReward struct {
-	Gold           int `json:"gold"`
-	SeasonalTokens int `json:"seasonal_tokens"`
-}
-
-// ItemReward represents item rewards
-type ItemReward struct {
-	ItemID   string `json:"item_id"`
-	Quantity int    `json:"quantity"`
-}
-
-// TrialConfig represents trial reward configuration
-type TrialConfig struct {
-	BronzeTime      int         `json:"bronze_time"`
-	SilverTime      int         `json:"silver_time"`
-	GoldTime        int         `json:"gold_time"`
-	PlatinumTime    int         `json:"platinum_time"`
-	BronzeRewards   RewardTiers `json:"bronze_rewards"`
-	SilverRewards   RewardTiers `json:"silver_rewards"`
-	GoldRewards     RewardTiers `json:"gold_rewards"`
-	PlatinumRewards RewardTiers `json:"platinum_rewards"`
-}
 
 // distributeExperience adds experience points to player profile
 func (d *Distributor) distributeExperience(ctx context.Context, playerID string, experience int) error {
@@ -303,7 +235,7 @@ func (d *Distributor) distributeExperience(ctx context.Context, playerID string,
 }
 
 // distributeCurrency adds currency to player economy balance
-func (d *Distributor) distributeCurrency(ctx context.Context, playerID string, currency *CurrencyReward) error {
+func (d *Distributor) distributeCurrency(ctx context.Context, playerID string, currency *models.CurrencyReward) error {
 	if currency.Gold == 0 && currency.SeasonalTokens == 0 {
 		return nil // No currency to distribute
 	}
@@ -354,7 +286,7 @@ func (d *Distributor) distributeCurrency(ctx context.Context, playerID string, c
 }
 
 // distributeItems adds items to player inventory
-func (d *Distributor) distributeItems(ctx context.Context, playerID string, items []ItemReward) error {
+func (d *Distributor) distributeItems(ctx context.Context, playerID string, items []models.ItemReward) error {
 	if len(items) == 0 {
 		return nil // No items to distribute
 	}
