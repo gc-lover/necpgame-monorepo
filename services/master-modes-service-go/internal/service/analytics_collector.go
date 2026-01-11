@@ -138,7 +138,7 @@ func (ac *AnalyticsCollector) RecordCheckpointUsed(ctx context.Context, sessionI
 
 	stats.CheckpointsUsed++
 
-	if err := ac.saveSessionStats(ctx, &stats); err != nil {
+	if err := ac.saveSessionStats(ctx, stats); err != nil {
 		return errors.Wrap(err, "failed to save updated session stats")
 	}
 
@@ -163,7 +163,7 @@ func (ac *AnalyticsCollector) RecordRespawnUsed(ctx context.Context, sessionID u
 
 	stats.RespawnsUsed++
 
-	if err := ac.saveSessionStats(ctx, &stats); err != nil {
+	if err := ac.saveSessionStats(ctx, stats); err != nil {
 		return errors.Wrap(err, "failed to save updated session stats")
 	}
 
@@ -198,7 +198,7 @@ func (ac *AnalyticsCollector) RecordSessionEnd(ctx context.Context, sessionID uu
 	stats.Score = score
 	stats.TimeLeft = timeLeft
 
-	if err := ac.saveSessionStats(ctx, &stats); err != nil {
+	if err := ac.saveSessionStats(ctx, stats); err != nil {
 		return errors.Wrap(err, "failed to save updated session stats")
 	}
 
@@ -251,7 +251,7 @@ func (ac *AnalyticsCollector) RecordAchievement(ctx context.Context, sessionID u
 
 	stats.Achievements = append(stats.Achievements, achievement)
 
-	if err := ac.saveSessionStats(ctx, &stats); err != nil {
+	if err := ac.saveSessionStats(ctx, stats); err != nil {
 		return errors.Wrap(err, "failed to save updated session stats")
 	}
 

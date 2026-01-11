@@ -1,72 +1,58 @@
 # Agent Commands Reference
 
-This directory contains documentation for all agent commands available in the NECPGAME project.
+Команды для агентов NECPGAME проекта.
 
-## Command Categories
+## 📂 Структура
 
-### Agent-Specific Commands
-- `architect-*.md` - Architect agent commands
-- `backend-*.md` - Backend agent commands
-- `database-*.md` - Database agent commands
-- `content-writer-*.md` - Content Writer agent commands
-- `qa-*.md` - QA agent commands
-- `performance-*.md` - Performance agent commands
-- `network-*.md` - Network agent commands
-- `security-*.md` - Security agent commands
-- `devops-*.md` - DevOps agent commands
-- `ui-ux-designer-*.md` - UI/UX Designer agent commands
-- `ue5-*.md` - UE5 agent commands
-- `game-balance-*.md` - Game Balance agent commands
-- `release-*.md` - Release agent commands
+### Общие команды
+- `github-integration.md` - **ОБЯЗАТЕЛЬНО** для работы с GitHub Projects
+- `common-validation.md` - валидация кода и спецификаций
 
-### Common Commands
-- `common-validation.md` - Shared validation commands
-- `github-integration.md` - GitHub Project integration
+### Специфические команды агентов
+Большинство команд устарели. Используйте MCP для всех операций.
 
-## Command Syntax
+## 🔧 Основные команды
 
-All commands are executed via MCP in Cursor IDE:
+### Работа с GitHub Projects (MCP)
+```javascript
+// Поиск задач
+mcp_github_list_project_items({...});
 
-```
-/{agent}-{action} {parameters}
+// Обновление статуса
+mcp_github_update_project_item({...});
+
+// Добавление комментария
+mcp_github_add_issue_comment({...});
 ```
 
-Example:
+**Детали:** `MCP_GITHUB_GUIDE.md`
+
+### Валидация
+```bash
+# Запрет эмодзи
+python scripts/validation/validate-emoji-ban.py .
+
+# OpenAPI домены
+python scripts/openapi/validate-domains-openapi.py
+
+# Миграции БД
+python scripts/migrations/validate-all-migrations.py
 ```
-/backend-find-tasks
-/backend-validate-optimizations #123
-/database-refactor-schema players
-```
 
-## Implementation Status
+**Детали:** `common-validation.md`
 
-| Command | Status | File |
-|---------|--------|------|
-| **Backend Commands** | | |
-| backend-find-tasks | ✅ Available | backend-find-tasks.md |
-| backend-validate-optimizations | ✅ Available | backend-validate-optimizations.md |
-| backend-validate-result | ✅ Available | backend-validate-result.md |
-| backend-import-quest-to-db | ✅ Available | backend-import-quest-to-db.md |
-| **Database Commands** | | |
-| database-find-tasks | ✅ Available | database-find-tasks.md |
-| database-validate-result | ✅ Available | database-validate-result.md |
-| database-refactor-schema | ✅ Available | database-refactor-schema.md |
-| database-apply-content-migration | ✅ Available | database-apply-content-migration.md |
-| **Architect Commands** | | |
-| architect-find-tasks | ✅ Available | architect-find-tasks.md |
-| **Content Writer Commands** | | |
-| content-writer-validate-result | ✅ Available | content-writer-validate-result.md |
-| **QA Commands** | | |
-| qa-find-tasks | ✅ Available | qa-find-tasks.md |
-| **Common Commands** | | |
-| common-validation | ✅ Available | common-validation.md |
-| github-integration | ✅ Available | github-integration.md |
+## 📋 Статус команд
 
-**Total Commands Available: 13**
+| Категория | Статус | Комментарий |
+|-----------|--------|-------------|
+| **MCP GitHub** | ✅ Активно | Основной способ работы с задачами |
+| **Валидация** | ✅ Активно | Обязательно для всех агентов |
+| **Специфические** | ⚠️ Устарело | Использовать MCP вместо скриптов |
 
-## Adding New Commands
+## 🚀 Быстрый старт
 
-1. Create new `.md` file in this directory
-2. Follow the template structure
-3. Update this README
-4. Test the command via MCP
+1. **AGENT_QUICK_START.md** - главный гайд для агентов
+2. **MCP_GITHUB_GUIDE.md** - все команды MCP для GitHub
+3. **common-validation.md** - валидация кода
+
+Все операции через MCP - никаких специфических команд агентов.

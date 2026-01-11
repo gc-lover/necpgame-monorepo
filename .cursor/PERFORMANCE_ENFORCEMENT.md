@@ -63,36 +63,17 @@
 
 ## [SYMBOL] КРИТИЧНО: Backend Agent
 
-### BLOCKER - задачу НЕЛЬЗЯ передавать без этого:
+### BLOCKER - задачу НЕЛЬЗЯ передавать без этого
 
-```bash
-# Автоматическая проверка перед передачей:
-./scripts/validate-backend-optimizations.sh services/{service}-go
+**Backend агенты ДОЛЖНЫ использовать:** `BACKEND_OPTIMIZATION_CHECKLIST.md`
 
-# Или для всех enterprise-grade сервисов:
-python scripts/generate-all-domains-go.py  # включает валидацию
-
-# Если хоть один BLOCKER → исправь и повтори
-# Передавай ТОЛЬКО после: [OK] All checks passed
-```
-
-**BLOCKER checklist:**
-
+**Ключевые BLOCKER требования:**
 - [ERROR] No context timeouts
 - [ERROR] No DB pool config
 - [ERROR] Goroutine leaks
 - [ERROR] No struct alignment
-- [ERROR] No structured logging
-- [ERROR] No profiling endpoints (pprof)
-- [ERROR] No health/metrics endpoints
-- [ERROR] Unbounded channels (для production)
 
-**Что делать при BLOCKER:**
-
-1. Исправь проблемы
-2. Запусти валидацию снова
-3. Повтори пока не пройдет
-4. ТОЛЬКО после [OK] → передавай задачу
+**Подробный чеклист:** См. `BACKEND_OPTIMIZATION_CHECKLIST.md`
 
 ---
 

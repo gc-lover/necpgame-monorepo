@@ -62,7 +62,7 @@ func (h *Handler) CreateDifficultyMode(ctx context.Context, req *api.CreateDiffi
 		IsActive:            true, // По умолчанию активен
 	}
 
-	createdMode, err := h.service.GetDifficultyManager().CreateDifficultyMode(ctx, mode)
+	err := h.service.GetDifficultyManager().CreateDifficultyMode(ctx, mode)
 	if err != nil {
 		h.logger.Error("Failed to create difficulty mode", zap.Error(err))
 		return &api.CreateDifficultyModeInternalServerError{}, nil
@@ -70,24 +70,21 @@ func (h *Handler) CreateDifficultyMode(ctx context.Context, req *api.CreateDiffi
 
 	// Конвертируем обратно в API формат
 	apiMode := api.DifficultyMode{
-		Id:                  createdMode.ID.String(),
-		Name:                createdMode.Name,
-		Level:               api.DifficultyLevel(createdMode.Level),
-		Description:         createdMode.Description,
-		HpModifier:          createdMode.HpModifier,
-		DamageModifier:      createdMode.DamageModifier,
-		TimeLimitMultiplier: createdMode.TimeLimitMultiplier,
-		RespawnLimit:        createdMode.RespawnLimit,
-		CheckpointLimit:     createdMode.CheckpointLimit,
-		SpecialMechanics:    createdMode.SpecialMechanics,
-		IsActive:            createdMode.IsActive,
-		CreatedAt:           createdMode.CreatedAt,
-		UpdatedAt:           createdMode.UpdatedAt,
+		ID:             mode.ID,
+		Name:           mode.Name,
+		Level:          api.DifficultyModeLevel(mode.Level),
+		Description:    api.NewOptString(mode.Description),
+		HpModifier:     float32(mode.HpModifier),
+		DamageModifier: float32(mode.DamageModifier),
+		TimeLimitMultiplier: float32(mode.TimeLimitMultiplier),
+		RespawnLimit:   mode.RespawnLimit,
+		CheckpointLimit: mode.CheckpointLimit,
+		RewardModifier: float32(mode.RewardModifier),
 	}
 
 	h.logger.Info("Created difficulty mode",
-		zap.String("mode_id", createdMode.ID.String()),
-		zap.String("name", createdMode.Name))
+		zap.String("mode_id", mode.ID.String()),
+		zap.String("name", mode.Name))
 
 	return &apiMode, nil
 }
@@ -102,9 +99,9 @@ func (h *Handler) GetContentDifficultyModes(ctx context.Context, params api.GetC
 		attribute.String("content_id", params.ContentID),
 	)
 
-	contentID, err := uuid.Parse(params.ContentID)
+	contentID, err := uuid.Parse(string(params.ContentId))
 	if err != nil {
-		h.logger.Warn("Invalid content ID format", zap.String("content_id", params.ContentID), zap.Error(err))
+		h.logger.Warn("Invalid content ID format", zap.String("content_id", string(params.ContentId)), zap.Error(err))
 		return &api.GetContentDifficultyModesBadRequest{}, nil
 	}
 
@@ -117,11 +114,16 @@ func (h *Handler) GetContentDifficultyModes(ctx context.Context, params api.GetC
 	// Конвертируем в API формат
 	apiModes := make([]api.ContentDifficultyMode, len(modes))
 	for i, mode := range modes {
+		var unlockDate api.OptDateTime
+		if mode.UnlockDate != nil {
+			unlockDate = api.NewOptDateTime(*mode.UnlockDate)
+		}
+
 		apiModes[i] = api.ContentDifficultyMode{
-			ContentId:  mode.ContentID.String(),
-			ModeId:     mode.ModeID.String(),
+			ContentId:  mode.ContentID,
+			ModeId:     mode.ModeID,
 			IsEnabled:  mode.IsEnabled,
-			UnlockDate: mode.UnlockDate,
+			UnlockDate: unlockDate,
 		}
 	}
 
@@ -129,7 +131,7 @@ func (h *Handler) GetContentDifficultyModes(ctx context.Context, params api.GetC
 		zap.String("content_id", contentID.String()),
 		zap.Int("count", len(apiModes)))
 
-	return &apiModes, nil
+	return api.GetContentDifficultyModesOK(apiModes), nil
 }
 
 // GetDifficultyMode возвращает подробную информацию о конкретном режиме сложности
@@ -142,9 +144,9 @@ func (h *Handler) GetDifficultyMode(ctx context.Context, params api.GetDifficult
 		attribute.String("mode_id", params.ModeID),
 	)
 
-	modeID, err := uuid.Parse(params.ModeID)
+	modeID, err := uuid.Parse(string(params.ModeId))
 	if err != nil {
-		h.logger.Warn("Invalid mode ID format", zap.String("mode_id", params.ModeID), zap.Error(err))
+		h.logger.Warn("Invalid mode ID format", zap.String("mode_id", string(params.ModeId)), zap.Error(err))
 		return &api.GetDifficultyModeBadRequest{}, nil
 	}
 
@@ -160,19 +162,16 @@ func (h *Handler) GetDifficultyMode(ctx context.Context, params api.GetDifficult
 
 	// Конвертируем в API формат
 	apiMode := api.DifficultyMode{
-		Id:                  mode.ID.String(),
-		Name:                mode.Name,
-		Level:               api.DifficultyLevel(mode.Level),
-		Description:         mode.Description,
-		HpModifier:          mode.HpModifier,
-		DamageModifier:      mode.DamageModifier,
-		TimeLimitMultiplier: mode.TimeLimitMultiplier,
-		RespawnLimit:        mode.RespawnLimit,
-		CheckpointLimit:     mode.CheckpointLimit,
-		SpecialMechanics:    mode.SpecialMechanics,
-		IsActive:            mode.IsActive,
-		CreatedAt:           mode.CreatedAt,
-		UpdatedAt:           mode.UpdatedAt,
+		ID:             mode.ID,
+		Name:           mode.Name,
+		Level:          api.DifficultyModeLevel(mode.Level),
+		Description:    api.NewOptString(mode.Description),
+		HpModifier:     float32(mode.HpModifier),
+		DamageModifier: float32(mode.DamageModifier),
+		TimeLimitMultiplier: float32(mode.TimeLimitMultiplier),
+		RespawnLimit:   mode.RespawnLimit,
+		CheckpointLimit: mode.CheckpointLimit,
+		RewardModifier: float32(mode.RewardModifier),
 	}
 
 	h.logger.Debug("Retrieved difficulty mode", zap.String("mode_id", modeID.String()))
@@ -281,19 +280,16 @@ func (h *Handler) GetDifficultyModes(ctx context.Context) (api.GetDifficultyMode
 	apiModes := make([]api.DifficultyMode, len(modes))
 	for i, mode := range modes {
 		apiModes[i] = api.DifficultyMode{
-			Id:                  mode.ID.String(),
-			Name:                mode.Name,
-			Level:               api.DifficultyLevel(mode.Level),
-			Description:         mode.Description,
-			HpModifier:          mode.HpModifier,
-			DamageModifier:      mode.DamageModifier,
-			TimeLimitMultiplier: mode.TimeLimitMultiplier,
-			RespawnLimit:        mode.RespawnLimit,
-			CheckpointLimit:     mode.CheckpointLimit,
-			SpecialMechanics:    mode.SpecialMechanics,
-			IsActive:            mode.IsActive,
-			CreatedAt:           mode.CreatedAt,
-			UpdatedAt:           mode.UpdatedAt,
+			ID:             mode.ID,
+			Name:           mode.Name,
+			Level:          api.DifficultyModeLevel(mode.Level),
+			Description:    api.NewOptString(mode.Description),
+			HpModifier:     float32(mode.HpModifier),
+			DamageModifier: float32(mode.DamageModifier),
+			TimeLimitMultiplier: float32(mode.TimeLimitMultiplier),
+			RespawnLimit:   mode.RespawnLimit,
+			CheckpointLimit: mode.CheckpointLimit,
+			RewardModifier: float32(mode.RewardModifier),
 		}
 	}
 
@@ -475,7 +471,7 @@ func (h *Handler) UpdateDifficultyMode(ctx context.Context, req *api.UpdateDiffi
 		IsActive:            req.IsActive,
 	}
 
-	updatedMode, err := h.service.GetDifficultyManager().UpdateDifficultyMode(ctx, mode)
+	err = h.service.GetDifficultyManager().UpdateDifficultyMode(ctx, mode)
 	if err != nil {
 		h.logger.Error("Failed to update difficulty mode", zap.Error(err))
 		return &api.UpdateDifficultyModeInternalServerError{}, nil
@@ -483,19 +479,16 @@ func (h *Handler) UpdateDifficultyMode(ctx context.Context, req *api.UpdateDiffi
 
 	// Конвертируем обратно в API формат
 	apiMode := api.DifficultyMode{
-		Id:                  updatedMode.ID.String(),
-		Name:                updatedMode.Name,
-		Level:               api.DifficultyLevel(updatedMode.Level),
-		Description:         updatedMode.Description,
-		HpModifier:          updatedMode.HpModifier,
-		DamageModifier:      updatedMode.DamageModifier,
-		TimeLimitMultiplier: updatedMode.TimeLimitMultiplier,
-		RespawnLimit:        updatedMode.RespawnLimit,
-		CheckpointLimit:     updatedMode.CheckpointLimit,
-		SpecialMechanics:    updatedMode.SpecialMechanics,
-		IsActive:            updatedMode.IsActive,
-		CreatedAt:           updatedMode.CreatedAt,
-		UpdatedAt:           updatedMode.UpdatedAt,
+		ID:             mode.ID,
+		Name:           mode.Name,
+		Level:          api.DifficultyModeLevel(mode.Level),
+		Description:    api.NewOptString(mode.Description),
+		HpModifier:     float32(mode.HpModifier),
+		DamageModifier: float32(mode.DamageModifier),
+		TimeLimitMultiplier: float32(mode.TimeLimitMultiplier),
+		RespawnLimit:   mode.RespawnLimit,
+		CheckpointLimit: mode.CheckpointLimit,
+		RewardModifier: float32(mode.RewardModifier),
 	}
 
 	h.logger.Info("Updated difficulty mode", zap.String("mode_id", modeID.String()))

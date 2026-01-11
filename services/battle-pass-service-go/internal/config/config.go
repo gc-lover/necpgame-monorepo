@@ -1,147 +1,86 @@
 package config
 
 import (
-	"fmt"
-	"os"
-	"strconv"
-	"time"
-
-	"gopkg.in/yaml.v3"
+	"github.com/kelseyhightower/envconfig"
 )
 
-// Config represents the application configuration
+// Config содержит всю конфигурацию сервиса battle-pass-service
 type Config struct {
-	Server   ServerConfig   `yaml:"server"`
-	Database DatabaseConfig `yaml:"database"`
-	Redis    RedisConfig    `yaml:"redis"`
-	JWT      JWTConfig      `yaml:"jwt"`
-	Services ServicesConfig `yaml:"services"`
+	Environment string `envconfig:"ENV" default:"development"`
+	Server      ServerConfig
+	Database    DatabaseConfig
+	Redis       RedisConfig
+	Logging     LoggingConfig
+	SLA         SLAConfig
+	JWT         JWTConfig
 }
 
-// ServerConfig holds server-related configuration
+// ServerConfig конфигурация HTTP сервера
 type ServerConfig struct {
-	Host         string        `yaml:"host"`
-	Port         int           `yaml:"port"`
-	ReadTimeout  time.Duration `yaml:"read_timeout"`
-	WriteTimeout time.Duration `yaml:"write_timeout"`
+	Port    int    `envconfig:"PORT" default:"8080"`
+	Host    string `envconfig:"HOST" default:"0.0.0.0"`
+	Timeout struct {
+		Read  int `envconfig:"READ_TIMEOUT" default:"30"`
+		Write int `envconfig:"WRITE_TIMEOUT" default:"30"`
+		Idle  int `envconfig:"IDLE_TIMEOUT" default:"60"`
+	}
 }
 
-// DatabaseConfig holds database configuration
+// DatabaseConfig конфигурация PostgreSQL
 type DatabaseConfig struct {
-	Host     string `yaml:"host"`
-	Port     int    `yaml:"port"`
-	User     string `yaml:"user"`
-	Password string `yaml:"password"`
-	DBName   string `yaml:"dbname"`
-	SSLMode  string `yaml:"sslmode"`
-	MaxConns int    `yaml:"max_conns"`
+	Host         string `envconfig:"DB_HOST" default:"localhost"`
+	Port         int    `envconfig:"DB_PORT" default:"5432"`
+	User         string `envconfig:"DB_USER" default:"battle_pass"`
+	Password     string `envconfig:"DB_PASSWORD" required:"true"`
+	Database     string `envconfig:"DB_NAME" default:"battle_pass"`
+	SSLMode      string `envconfig:"DB_SSLMODE" default:"disable"`
+	MaxConns     int    `envconfig:"DB_MAX_CONNS" default:"25"`
+	MinConns     int    `envconfig:"DB_MIN_CONNS" default:"5"`
+	MaxConnLifetime string `envconfig:"DB_MAX_CONN_LIFETIME" default:"1h"`
+	MaxConnIdleTime string `envconfig:"DB_MAX_CONN_IDLE_TIME" default:"30m"`
+	HealthCheckPeriod string `envconfig:"DB_HEALTH_CHECK_PERIOD" default:"1m"`
 }
 
-// RedisConfig holds Redis configuration
+// RedisConfig конфигурация Redis
 type RedisConfig struct {
-	Host     string `yaml:"host"`
-	Port     int    `yaml:"port"`
-	Password string `yaml:"password"`
-	DB       int    `yaml:"db"`
+	Host         string `envconfig:"REDIS_HOST" default:"localhost"`
+	Port         int    `envconfig:"REDIS_PORT" default:"6379"`
+	Password     string `envconfig:"REDIS_PASSWORD" default:""`
+	DB           int    `envconfig:"REDIS_DB" default:"0"`
+	PoolSize     int    `envconfig:"REDIS_POOL_SIZE" default:"10"`
+	MinIdleConns int    `envconfig:"REDIS_MIN_IDLE_CONNS" default:"5"`
+	MaxConnAge   string `envconfig:"REDIS_MAX_CONN_AGE" default:"1h"`
+	IdleTimeout  string `envconfig:"REDIS_IDLE_TIMEOUT" default:"30m"`
+	ReadTimeout  string `envconfig:"REDIS_READ_TIMEOUT" default:"3s"`
+	WriteTimeout string `envconfig:"REDIS_WRITE_TIMEOUT" default:"3s"`
 }
 
-// JWTConfig holds JWT configuration
+// LoggingConfig конфигурация логирования
+type LoggingConfig struct {
+	Level  string `envconfig:"LOG_LEVEL" default:"info"`
+	Format string `envconfig:"LOG_FORMAT" default:"json"`
+}
+
+// SLAConfig конфигурация SLA и QoS
+type SLAConfig struct {
+	RequestTimeout     string `envconfig:"REQUEST_TIMEOUT" default:"30s"`
+	RateLimitPerMinute int    `envconfig:"RATE_LIMIT_PER_MINUTE" default:"100"`
+	BurstLimit         int    `envconfig:"BURST_LIMIT" default:"20"`
+}
+
+// JWTConfig конфигурация JWT
 type JWTConfig struct {
-	Secret     string        `yaml:"secret"`
-	ExpiryTime time.Duration `yaml:"expiry_time"`
+	Secret     string `envconfig:"JWT_SECRET" required:"true"`
+	Issuer     string `envconfig:"JWT_ISSUER" default:"battle-pass-service"`
+	Audience   string `envconfig:"JWT_AUDIENCE" default:"necp-game"`
+	Expiration string `envconfig:"JWT_EXPIRATION" default:"24h"`
 }
 
-// ServicesConfig holds external service configurations
-type ServicesConfig struct {
-	PlayerServiceURL    string `yaml:"player_service_url"`
-	InventoryServiceURL string `yaml:"inventory_service_url"`
-	EconomyServiceURL   string `yaml:"economy_service_url"`
-}
-
-// Load loads configuration from environment variables and config file
+// Load загружает конфигурацию из переменных окружения
 func Load() (*Config, error) {
-	config := &Config{
-		Server: ServerConfig{
-			Host:         getEnv("SERVER_HOST", "0.0.0.0"),
-			Port:         getEnvAsInt("SERVER_PORT", 8080),
-			ReadTimeout:  getEnvAsDuration("SERVER_READ_TIMEOUT", 30*time.Second),
-			WriteTimeout: getEnvAsDuration("SERVER_WRITE_TIMEOUT", 30*time.Second),
-		},
-		Database: DatabaseConfig{
-			Host:     getEnv("DB_HOST", "localhost"),
-			Port:     getEnvAsInt("DB_PORT", 5432),
-			User:     getEnv("DB_USER", "battlepass"),
-			Password: getEnv("DB_PASSWORD", "password"),
-			DBName:   getEnv("DB_NAME", "battlepass"),
-			SSLMode:  getEnv("DB_SSLMODE", "disable"),
-			MaxConns: getEnvAsInt("DB_MAX_CONNS", 10),
-		},
-		Redis: RedisConfig{
-			Host:     getEnv("REDIS_HOST", "localhost"),
-			Port:     getEnvAsInt("REDIS_PORT", 6379),
-			Password: getEnv("REDIS_PASSWORD", ""),
-			DB:       getEnvAsInt("REDIS_DB", 0),
-		},
-		JWT: JWTConfig{
-			Secret:     getEnv("JWT_SECRET", "your-secret-key"),
-			ExpiryTime: getEnvAsDuration("JWT_EXPIRY_TIME", 24*time.Hour),
-		},
-		Services: ServicesConfig{
-			PlayerServiceURL:    getEnv("PLAYER_SERVICE_URL", "http://localhost:8081"),
-			InventoryServiceURL: getEnv("INVENTORY_SERVICE_URL", "http://localhost:8082"),
-			EconomyServiceURL:   getEnv("ECONOMY_SERVICE_URL", "http://localhost:8083"),
-		},
+	var cfg Config
+	if err := envconfig.Process("", &cfg); err != nil {
+		return nil, err
 	}
-
-	// Load from YAML config file if exists
-	if configFile := getEnv("CONFIG_FILE", "config.yaml"); configFile != "" {
-		if err := loadFromFile(configFile, config); err != nil {
-			return nil, fmt.Errorf("failed to load config from file: %w", err)
-		}
-	}
-
-	return config, nil
-}
-
-// loadFromFile loads configuration from a YAML file
-func loadFromFile(filename string, config *Config) error {
-	file, err := os.Open(filename)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil // File doesn't exist, use defaults
-		}
-		return err
-	}
-	defer file.Close()
-
-	decoder := yaml.NewDecoder(file)
-	return decoder.Decode(config)
-}
-
-// getEnv gets an environment variable with a default value
-func getEnv(key, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
-	}
-	return defaultValue
-}
-
-// getEnvAsInt gets an environment variable as integer with a default value
-func getEnvAsInt(key string, defaultValue int) int {
-	if value := os.Getenv(key); value != "" {
-		if intValue, err := strconv.Atoi(value); err == nil {
-			return intValue
-		}
-	}
-	return defaultValue
-}
-
-// getEnvAsDuration gets an environment variable as duration with a default value
-func getEnvAsDuration(key string, defaultValue time.Duration) time.Duration {
-	if value := os.Getenv(key); value != "" {
-		if duration, err := time.ParseDuration(value); err == nil {
-			return duration
-		}
-	}
-	return defaultValue
+	return &cfg, nil
 }
