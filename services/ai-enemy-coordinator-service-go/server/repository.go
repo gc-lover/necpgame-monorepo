@@ -85,7 +85,7 @@ func (r *PostgresRepository) CreateAiEnemy(ctx context.Context, enemy *AiEnemyEn
 }
 
 // GetAiEnemy retrieves an AI enemy by ID
-func (r *PostgresRepository) GetAiEnemy(ctx context.Context, enemyID string) (*api.AiEnemyEntity, error) {
+func (r *PostgresRepository) GetAiEnemy(ctx context.Context, enemyID string) (*AiEnemyEntity, error) {
 	query := `
 		SELECT id, enemy_type, level, zone_id, position_x, position_y, position_z,
 			   behavior_state, health, max_health, faction, created_at, updated_at
@@ -192,7 +192,7 @@ func (r *PostgresRepository) DeleteAiEnemy(ctx context.Context, enemyID string) 
 }
 
 // GetZoneActiveEnemies gets all active enemies in a zone
-func (r *PostgresRepository) GetZoneActiveEnemies(ctx context.Context, zoneID string) ([]*api.AiEnemyEntity, error) {
+func (r *PostgresRepository) GetZoneActiveEnemies(ctx context.Context, zoneID string) ([]*AiEnemyEntity, error) {
 	query := `
 		SELECT id, enemy_type, level, zone_id, position_x, position_y, position_z,
 			   behavior_state, health, max_health, faction, created_at, updated_at
