@@ -2385,6 +2385,44 @@ components:
           example: single-elimination
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
         Expected memory savings: 30-50%.'
+    SpectatorInfo:
+      type: object
+      required:
+        - user_id
+        - camera_mode
+        - joined_at
+        - last_activity
+        - is_active
+      properties:
+        # Large fields first (16-24 bytes): string (16+)
+        user_id:
+          type: string
+          format: uuid
+          description: Spectator user identifier
+          example: "456e7890-e89b-12d3-a456-426614174001"
+        camera_mode:
+          type: string
+          enum: [free, follow_player, overview, cinematic]
+          default: free
+          description: Current spectator camera mode
+          example: "follow_player"
+        # Medium fields (8 bytes): timestamps
+        joined_at:
+          type: string
+          format: date-time
+          description: When spectator joined the tournament
+          example: "2024-01-15T10:30:00Z"
+        last_activity:
+          type: string
+          format: date-time
+          description: Last spectator activity timestamp
+          example: "2024-01-15T10:35:00Z"
+        # Small fields (1 byte): boolean
+        is_active:
+          type: boolean
+          description: Whether spectator is currently active
+          example: true
+      description: 'BACKEND NOTE: Spectator information with activity tracking. Fields ordered for struct alignment.'
     TournamentSpectatorsResponse:
       type: object
       required:
@@ -2394,8 +2432,7 @@ components:
         spectators:
           type: array
           items:
-            type: object
-            properties:
+            $ref: '#/components/schemas/SpectatorInfo'
               spectator_id:
                 type: string
                 format: uuid

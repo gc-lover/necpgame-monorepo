@@ -26,10 +26,12 @@ const (
 type TournamentStatus string
 
 const (
-	TournamentStatusDraft      TournamentStatus = "draft"
-	TournamentStatusActive     TournamentStatus = "active"
-	TournamentStatusCompleted  TournamentStatus = "completed"
-	TournamentStatusCancelled  TournamentStatus = "cancelled"
+	TournamentStatusDraft         TournamentStatus = "draft"
+	TournamentStatusRegistration  TournamentStatus = "registration"
+	TournamentStatusActive        TournamentStatus = "active"
+	TournamentStatusInProgress    TournamentStatus = "in_progress"
+	TournamentStatusCompleted     TournamentStatus = "completed"
+	TournamentStatusCancelled     TournamentStatus = "cancelled"
 )
 
 // Tournament represents a tournament in the database
@@ -210,6 +212,26 @@ func (r *Repository) RegisterParticipant(ctx context.Context, participant *Parti
 		string(participant.Status), participant.JoinedAt)
 
 	return err
+}
+
+// RemoveParticipant removes a participant from a tournament
+func (r *Repository) RemoveParticipant(ctx context.Context, tournamentID, userID string) error {
+	query := `
+		DELETE FROM tournament_participants
+		WHERE tournament_id = $1 AND user_id = $2
+	`
+
+	result, err := r.db.Exec(ctx, query, tournamentID, userID)
+	if err != nil {
+		return fmt.Errorf("failed to remove participant: %w", err)
+	}
+
+	rowsAffected := result.RowsAffected()
+	if rowsAffected == 0 {
+		return fmt.Errorf("participant not found")
+	}
+
+	return nil
 }
 
 // PERFORMANCE: Optimized tournament start with batch operations

@@ -1,0 +1,266 @@
+# Real-time Combat Service - UDP Protocol Schemas
+# Domain Separation: UDP Real-time Communication - Low-latency MMOFPS
+# Issue: #2232
+
+components:
+  schemas:
+
+    # UDP Packet Structures for Real-time Combat
+    UdpPacketHeader:
+      type: object
+      required: [packet_type, session_token, sequence_number, timestamp]
+      properties:
+        packet_type:
+          type: integer
+          minimum: 0
+          maximum: 255
+          description: UDP packet type identifier
+        session_token:
+          type: string
+          description: Session authentication token (first 8 bytes)
+        sequence_number:
+          type: integer
+          format: uint32
+          description: Packet sequence number for ordering
+        timestamp:
+          type: integer
+          format: uint32
+          description: Client timestamp for lag compensation
+        player_id:
+          type: string
+          format: uuid
+          description: Player identifier (compressed to 16 bytes)
+
+    # Position Update Packet (Packet Type: 1)
+    PositionUpdatePacket:
+      allOf:
+        - $ref: '#/components/schemas/UdpPacketHeader'
+        - type: object
+          properties:
+            packet_type:
+              type: integer
+              enum: [1]
+              description: Position update packet type
+            position:
+              $ref: '#/components/schemas/Vector3Compressed'
+            rotation:
+              $ref: '#/components/schemas/Vector3Compressed'
+            velocity:
+              $ref: '#/components/schemas/Vector3Compressed'
+            movement_flags:
+              type: integer
+              format: uint8
+              description: Bit flags for movement state (crouching, sprinting, etc.)
+            terrain_height:
+              type: number
+              format: float
+              description: Ground height at player position
+
+    # Combat Action Packet (Packet Type: 2)
+    CombatActionPacket:
+      allOf:
+        - $ref: '#/components/schemas/UdpPacketHeader'
+        - type: object
+          properties:
+            packet_type:
+              type: integer
+              enum: [2]
+              description: Combat action packet type
+            action_type:
+              type: integer
+              format: uint8
+              enum: [0, 1, 2, 3, 4, 5]  # shoot, reload, ability, grenade, melee, switch_weapon
+              description: Type of combat action
+            target_position:
+              $ref: '#/components/schemas/Vector3Compressed'
+            weapon_id:
+              type: integer
+              format: uint16
+              description: Weapon identifier
+            ammo_count:
+              type: integer
+              format: uint8
+              description: Remaining ammunition
+
+    # Damage Event Packet (Packet Type: 3)
+    DamageEventPacket:
+      allOf:
+        - $ref: '#/components/schemas/UdpPacketHeader'
+        - type: object
+          properties:
+            packet_type:
+              type: integer
+              enum: [3]
+              description: Damage event packet type
+            damage_amount:
+              type: integer
+              format: uint16
+              description: Damage dealt
+            damage_type:
+              type: integer
+              format: uint8
+              enum: [0, 1, 2, 3, 4]  # ballistic, energy, explosive, cyber, pure
+              description: Type of damage
+            hit_location:
+              type: integer
+              format: uint8
+              enum: [0, 1, 2, 3, 4, 5]  # head, torso, left_arm, right_arm, left_leg, right_leg
+              description: Body part hit
+            critical_hit:
+              type: boolean
+              description: Whether this was a critical hit
+            attacker_id:
+              type: string
+              format: uuid
+              description: Attacking player ID
+            target_id:
+              type: string
+              format: uuid
+              description: Target player ID
+
+    # State Synchronization Packet (Packet Type: 4)
+    StateSyncPacket:
+      allOf:
+        - $ref: '#/components/schemas/UdpPacketHeader'
+        - type: object
+          properties:
+            packet_type:
+              type: integer
+              enum: [4]
+              description: State synchronization packet type
+            health:
+              type: integer
+              format: uint16
+              description: Current health points
+            armor:
+              type: integer
+              format: uint16
+              description: Current armor points
+            status_effects:
+              type: array
+              items:
+                $ref: '#/components/schemas/StatusEffectCompressed'
+              maxItems: 8
+              description: Active status effects
+            ability_cooldowns:
+              type: array
+              items:
+                type: integer
+                format: uint16
+              maxItems: 4
+              description: Ability cooldowns in milliseconds
+
+    # Heartbeat Packet (Packet Type: 255)
+    HeartbeatPacket:
+      allOf:
+        - $ref: '#/components/schemas/UdpPacketHeader'
+        - type: object
+          properties:
+            packet_type:
+              type: integer
+              enum: [255]
+              description: Heartbeat packet type
+            ping_time:
+              type: integer
+              format: uint32
+              description: Client ping timestamp for latency measurement
+
+    # Compressed Vector3 for UDP efficiency (12 bytes vs 24 bytes JSON)
+    Vector3Compressed:
+      type: object
+      required: [x, y, z]
+      properties:
+        x:
+          type: number
+          format: float
+          description: X coordinate
+        y:
+          type: number
+          format: float
+          description: Y coordinate
+        z:
+          type: number
+          format: float
+          description: Z coordinate
+
+    # Compressed Status Effect for UDP packets
+    StatusEffectCompressed:
+      type: object
+      required: [effect_id, duration]
+      properties:
+        effect_id:
+          type: integer
+          format: uint8
+          description: Status effect identifier
+        duration:
+          type: integer
+          format: uint16
+          description: Effect duration in milliseconds
+
+    # UDP Connection Statistics
+    UdpConnectionStats:
+      type: object
+      required: [packets_sent, packets_received, packet_loss, average_latency]
+      properties:
+        packets_sent:
+          type: integer
+          format: uint32
+          description: Total UDP packets sent
+        packets_received:
+          type: integer
+          format: uint32
+          description: Total UDP packets received
+        packet_loss:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Packet loss percentage
+        average_latency:
+          type: integer
+          format: uint16
+          description: Average round-trip latency in milliseconds
+        jitter:
+          type: integer
+          format: uint16
+          description: Latency jitter in milliseconds
+        last_heartbeat:
+          type: string
+          format: date-time
+          description: Timestamp of last heartbeat
+
+    # UDP Server Configuration
+    UdpServerConfig:
+      type: object
+      required: [server_port, max_connections, packet_buffer_size]
+      properties:
+        server_port:
+          type: integer
+          minimum: 1024
+          maximum: 65535
+          default: 27015
+          description: UDP server port
+        max_connections:
+          type: integer
+          minimum: 1
+          maximum: 10000
+          default: 1000
+          description: Maximum concurrent UDP connections
+        packet_buffer_size:
+          type: integer
+          minimum: 512
+          maximum: 65536
+          default: 2048
+          description: UDP packet buffer size in bytes
+        heartbeat_timeout:
+          type: integer
+          minimum: 1000
+          maximum: 30000
+          default: 5000
+          description: Heartbeat timeout in milliseconds
+        max_packet_rate:
+          type: integer
+          minimum: 10
+          maximum: 1000
+          default: 100
+          description: Maximum packets per second per connection

@@ -8,7 +8,7 @@ Complete real-time combat service for NECPGAME with WebSocket-based live combat 
 
 ## Key Features
 
-- **Enterprise-grade architecture** with proper domain separation - **Real-time WebSocket support** for 10k+ concurrent connections - **Backend optimization hints** for struct alignment and memory savings - **Event-driven microservice** with Kafka integration - **Anti-cheat validation** and lag compensation algorithms
+- **Enterprise-grade architecture** with proper domain separation - **Dual-protocol support**: WebSocket + UDP for optimal real-time performance - **UDP low-latency**: <5ms position sync for MMOFPS gameplay - **WebSocket reliable**: 10k+ concurrent connections for session management - **Backend optimization hints** for struct alignment and memory savings - **Event-driven microservice** with Kafka integration - **Anti-cheat validation** and lag compensation algorithms
 
 ## Domain Purpose
 
@@ -30,6 +30,7 @@ Manages real-time combat components including session lifecycle, live player syn
 - **Position Synchronization**: `schemas/position-schemas.yaml` - Real-time position updates
 - **Damage Calculations**: `schemas/damage-schemas.yaml` - Damage processing and effects
 - **Combat Actions**: `schemas/action-schemas.yaml` - Abilities and combat mechanics
+- **UDP Protocol**: `schemas/udp-schemas.yaml` - Low-latency UDP packet structures
 - **Spectator Mode**: `schemas/spectator-schemas.yaml` - Spectator functionality
 - **Statistics**: `schemas/stats-schemas.yaml` - Combat performance metrics
 - **Replay System**: `schemas/replay-schemas.yaml` - Combat replay and analysis
@@ -41,6 +42,8 @@ Manages real-time combat components including session lifecycle, live player syn
 
 #### Real-time Combat Sessions
 - **WebSocket Connections**: Long-lived connections with heartbeat validation
+- **UDP Low-Latency Protocol**: <5ms position sync for MMOFPS gameplay
+- **Dual-Protocol Architecture**: WebSocket for reliability, UDP for speed
 - **Session Management**: Create, join, leave, and manage combat sessions
 - **State Synchronization**: Real-time position, health, and combat state updates
 - **Spectator Support**: Advanced spectator modes with camera controls

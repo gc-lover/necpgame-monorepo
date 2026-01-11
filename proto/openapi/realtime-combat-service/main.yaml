@@ -477,6 +477,85 @@ paths:
                 type: string
               description: WebSocket handshake confirmation
 
+  # UDP Endpoints for Low-Latency Real-time Combat
+  # UDP protocols provide <5ms latency for position sync and combat actions
+  /udp/sessions/{session_id}/connect:
+    post:
+      summary: UDP connection establishment for real-time combat
+      description: "**UDP connection handshake for low-latency combat**
+
+        Establishes UDP connection for position synchronization and real-time combat actions.
+        Critical for MMOFPS gameplay with <5ms target latency.
+
+        **NETWORK NOTE:** UDP socket binding with connection validation and anti-cheat initialization.
+
+        "
+      operationId: establishUdpConnection
+      tags:
+        - Real-time Updates
+        - Position Sync
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [client_udp_port, client_version]
+              properties:
+                client_udp_port:
+                  type: integer
+                  minimum: 1024
+                  maximum: 65535
+                  description: Client UDP port for receiving updates
+                client_version:
+                  type: string
+                  default: "1.0.0"
+                  description: Client application version
+                preferred_region:
+                  type: string
+                  enum: [us-east, us-west, eu-central, asia-pacific]
+                  description: Preferred server region for latency optimization
+      responses:
+        '200':
+          description: UDP connection established
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  server_udp_port:
+                    type: integer
+                    description: Server UDP port for client to send to
+                  session_token:
+                    type: string
+                    description: Session token for UDP packet authentication
+                  heartbeat_interval:
+                    type: integer
+                    default: 1000
+                    description: Heartbeat interval in milliseconds
+                  max_packet_size:
+                    type: integer
+                    default: 1400
+                    description: Maximum UDP packet size
+        '400':
+          description: Invalid UDP connection parameters
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/components/responses/BadRequest'
+        '429':
+          $ref: '../common/responses/error.yaml#/components/responses/TooManyRequests'
+
   # Position synchronization
   /sessions/{session_id}/positions:
     post:
@@ -979,6 +1058,24 @@ components:
     # Domain Separation - Analytics Schemas
     CombatAnalyticsResponse:
       $ref: './schemas/analytics-schemas.yaml#/components/schemas/CombatAnalyticsResponse'
+
+    # Domain Separation - UDP Protocol Schemas
+    UdpPacketHeader:
+      $ref: './schemas/udp-schemas.yaml#/components/schemas/UdpPacketHeader'
+    PositionUpdatePacket:
+      $ref: './schemas/udp-schemas.yaml#/components/schemas/PositionUpdatePacket'
+    CombatActionPacket:
+      $ref: './schemas/udp-schemas.yaml#/components/schemas/CombatActionPacket'
+    DamageEventPacket:
+      $ref: './schemas/udp-schemas.yaml#/components/schemas/DamageEventPacket'
+    StateSyncPacket:
+      $ref: './schemas/udp-schemas.yaml#/components/schemas/StateSyncPacket'
+    HeartbeatPacket:
+      $ref: './schemas/udp-schemas.yaml#/components/schemas/HeartbeatPacket'
+    UdpConnectionStats:
+      $ref: './schemas/udp-schemas.yaml#/components/schemas/UdpConnectionStats'
+    UdpServerConfig:
+      $ref: './schemas/udp-schemas.yaml#/components/schemas/UdpServerConfig'
 
   securitySchemes:
     BearerAuth:

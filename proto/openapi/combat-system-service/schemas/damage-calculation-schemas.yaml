@@ -1,223 +1,186 @@
-# Damage Calculation Schemas - Enterprise-grade Combat System API
-# Domain Separation: Damage calculation and combat resolution
+# Damage Calculation Schemas - Domain Separation
+# Handles damage calculation and resolution logic
 # Issue: #2231
+
+openapi: 3.0.3
+info:
+  title: Damage Calculation Schemas
+  version: 1.0.0
+  description: Domain-separated schemas for damage calculation engine
 
 components:
   schemas:
 
-    # Damage Calculation Request
     DamageCalculationRequest:
       type: object
-      required:
-        - attacker_id
-        - target_id
-        - damage_type
-        - base_damage
+      required: [attacker_id, defender_id, weapon_id, hit_location]
       properties:
-        # Large fields first (16-24 bytes): string (16+), array (24+), object (24+)
         attacker_id:
           type: string
           format: uuid
-          description: Unique identifier of the attacking entity
-          example: "550e8400-e29b-41d4-a716-446655440000"
-        target_id:
+          description: Attacking entity identifier
+        defender_id:
           type: string
           format: uuid
-          description: Unique identifier of the target entity
-          example: "550e8400-e29b-41d4-a716-446655440001"
-        damage_modifiers:
-          type: array
-          items:
-            $ref: '#/components/schemas/DamageModifier'
-          description: List of damage modifiers to apply
-        environmental_factors:
-          type: object
-          properties:
-            terrain_type:
-              type: string
-              enum: [urban, industrial, wilderness, water, air]
-              description: Terrain type affecting damage
-              example: "urban"
-            weather_condition:
-              type: string
-              enum: [clear, rain, fog, storm, toxic]
-              description: Weather condition affecting damage
-              example: "clear"
-            time_of_day:
-              type: string
-              enum: [day, night, dawn, dusk]
-              description: Time of day affecting damage
-              example: "day"
-        # Medium fields (8 bytes aligned): float64, integer
+          description: Defending entity identifier
+        weapon_id:
+          type: string
+          description: Weapon or ability identifier
+        hit_location:
+          type: string
+          enum: [head, torso, left_arm, right_arm, left_leg, right_leg]
+          description: Body part hit location
         base_damage:
           type: integer
           minimum: 0
           maximum: 10000
-          description: Base damage value before modifiers
-          example: 150
-        attacker_level:
-          type: integer
-          minimum: 1
-          maximum: 100
-          description: Level of the attacking entity
-          example: 25
-        target_level:
-          type: integer
-          minimum: 1
-          maximum: 100
-          description: Level of the target entity
-          example: 23
-        # Small fields (≤4 bytes): string, boolean
-        damage_type:
-          type: string
-          enum: [physical, energy, chemical, thermal, cyberware, environmental]
-          description: Type of damage being dealt
-          example: "physical"
-        is_critical_hit:
-          type: boolean
-          default: false
-          description: Whether this is a critical hit
-          example: false
-        ignore_armor:
-          type: boolean
-          default: false
-          description: Whether armor should be ignored
-          example: false
-      description:
-        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%."
-
-    # Damage Calculation Response
-    DamageCalculationResponse:
-      type: object
-      required:
-        - final_damage
-        - damage_reduction
-        - applied_modifiers
-      properties:
-        # Large fields first (16-24 bytes): array (24+), object (24+)
-        applied_modifiers:
+          description: Base weapon damage before modifiers
+        attacker_stats:
+          $ref: '#/components/schemas/EntityStats'
+        defender_stats:
+          $ref: '#/components/schemas/EntityStats'
+        environmental_factors:
+          $ref: '#/components/schemas/EnvironmentalFactors'
+        modifiers:
           type: array
           items:
-            $ref: '#/components/schemas/AppliedDamageModifier'
-          description: List of modifiers that were applied
-        calculation_breakdown:
-          type: object
-          properties:
-            base_damage:
-              type: integer
-              description: Original base damage
-              example: 150
-            damage_after_modifiers:
-              type: integer
-              description: Damage after attacker modifiers
-              example: 165
-            damage_after_reductions:
-              type: integer
-              description: Damage after target reductions
-              example: 120
-            final_damage:
-              type: integer
-              description: Final damage dealt
-              example: 120
-        # Medium fields (8 bytes aligned): float64, integer
-        final_damage:
+            $ref: '#/components/schemas/DamageModifier'
+          description: Additional damage modifiers to apply
+
+    EntityStats:
+      type: object
+      required: [level, strength, defense, armor_rating]
+      properties:
+        level:
+          type: integer
+          minimum: 1
+          maximum: 100
+        strength:
           type: integer
           minimum: 0
-          description: Final calculated damage value
-          example: 120
-        damage_reduction:
+          maximum: 1000
+        defense:
+          type: integer
+          minimum: 0
+          maximum: 1000
+        armor_rating:
+          type: integer
+          minimum: 0
+          maximum: 1000
+        critical_chance:
           type: number
           format: float
           minimum: 0.0
           maximum: 1.0
-          description: Damage reduction percentage (0.0 = no reduction, 1.0 = 100% reduction)
-          example: 0.27
-        overkill_damage:
-          type: integer
-          minimum: 0
-          description: Excess damage beyond target's health (for special effects)
-          example: 0
-        # Small fields (≤4 bytes): boolean, string
-        was_critical_hit:
-          type: boolean
-          description: Whether the hit was critical
-          example: false
-        damage_type:
-          type: string
-          enum: [physical, energy, chemical, thermal, cyberware, environmental]
-          description: Final damage type after calculations
-          example: "physical"
-      description:
-        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%."
+          default: 0.05
+        critical_multiplier:
+          type: number
+          format: float
+          minimum: 1.0
+          maximum: 3.0
+          default: 1.5
 
-    # Damage Modifier
+    EnvironmentalFactors:
+      type: object
+      properties:
+        weather_condition:
+          type: string
+          enum: [clear, rain, snow, fog, storm]
+          description: Current weather affecting damage
+        time_of_day:
+          type: string
+          enum: [dawn, day, dusk, night]
+          description: Time of day affecting visibility and damage
+        terrain_type:
+          type: string
+          enum: [open, urban, forest, mountain, water]
+          description: Terrain type affecting positioning
+        cover_type:
+          type: string
+          enum: [none, light, medium, heavy]
+          description: Cover type affecting damage reduction
+
     DamageModifier:
       type: object
-      required:
-        - modifier_type
-        - value
+      required: [type, value]
       properties:
-        # Large fields first (16-24 bytes): string (16+)
-        modifier_type:
+        type:
           type: string
-          enum: [multiplier, additive, percentage, fixed]
-          description: Type of damage modification
-          example: "multiplier"
-        modifier_source:
-          type: string
-          enum: [weapon, ability, equipment, status_effect, environmental, faction_bonus]
-          description: Source of the damage modifier
-          example: "weapon"
-        # Medium fields (8 bytes aligned): float64
+          enum: [additive, multiplicative, percentage, fixed]
+          description: How the modifier is applied
         value:
           type: number
           format: float
-          description: Modifier value (interpretation depends on modifier_type)
-          example: 1.2
-        # Small fields (≤4 bytes): integer, boolean
-        order:
+          description: Modifier value
+        source:
+          type: string
+          enum: [weapon, ability, implant, environmental, status_effect]
+          description: Source of the modifier
+        description:
+          type: string
+          description: Human-readable description of the modifier
+
+    DamageCalculationResponse:
+      type: object
+      required: [total_damage, final_damage, critical_hit, modifiers_applied]
+      properties:
+        total_damage:
           type: integer
           minimum: 0
-          maximum: 100
-          default: 50
-          description: Application order (lower numbers applied first)
-          example: 10
-        can_stack:
+          description: Total calculated damage before armor
+        final_damage:
+          type: integer
+          minimum: 0
+          description: Final damage after all reductions
+        critical_hit:
           type: boolean
-          default: true
-          description: Whether this modifier can stack with others of same type
-          example: true
-      description:
-        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%."
+          description: Whether this was a critical hit
+        modifiers_applied:
+          type: array
+          items:
+            $ref: '#/components/schemas/AppliedModifier'
+          description: List of all modifiers that were applied
+        damage_breakdown:
+          type: object
+          properties:
+            base_damage:
+              type: integer
+              description: Base weapon damage
+            critical_multiplier:
+              type: number
+              format: float
+              description: Critical hit multiplier applied
+            armor_reduction:
+              type: integer
+              description: Damage reduced by armor
+            environmental_modifier:
+              type: number
+              format: float
+              description: Environmental damage modifier
+        calculation_metadata:
+          type: object
+          properties:
+            processing_time_ms:
+              type: integer
+              description: Time taken to calculate damage
+            rules_version:
+              type: integer
+              description: Combat rules version used
+            calculation_id:
+              type: string
+              format: uuid
+              description: Unique calculation identifier
 
-    # Applied Damage Modifier
-    AppliedDamageModifier:
+    AppliedModifier:
       type: object
-      required:
-        - modifier
-        - applied_value
+      required: [modifier, value_change]
       properties:
-        # Large fields first (16-24 bytes): object (24+)
         modifier:
           $ref: '#/components/schemas/DamageModifier'
-        # Medium fields (8 bytes aligned): float64, integer
-        applied_value:
+        value_change:
           type: number
           format: float
-          description: Actual value applied in this calculation
-          example: 1.2
-        damage_change:
+          description: How much this modifier changed the damage
+        order:
           type: integer
-          description: Change in damage caused by this modifier
-          example: 30
-        # Small fields (≤4 bytes): boolean
-        was_applied:
-          type: boolean
-          description: Whether this modifier was successfully applied
-          example: true
-      description:
-        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%."
+          description: Order in which modifier was applied

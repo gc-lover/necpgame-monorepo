@@ -1,256 +1,168 @@
-# Combat Rules Schemas - Enterprise-grade Combat System API
-# Domain Separation: Core combat system rules and configurations
+# Combat Rules Schemas - Domain Separation
+# Handles core combat system rules and mechanics
 # Issue: #2231
+
+openapi: 3.0.3
+info:
+  title: Combat Rules Schemas
+  version: 1.0.0
+  description: Domain-separated schemas for combat system rules management
 
 components:
   schemas:
 
-    # Combat System Rules - main configuration entity
     CombatSystemRules:
-      allOf:
-        - $ref: '../../common/schemas/infrastructure-entities.yaml#/components/schemas/InfrastructureEntity'
-        - type: object
-          required:
-            - damage_calculation_rules
-            - combat_mechanics
-            - balance_parameters
-          properties:
-            # Large fields first (16-24 bytes): time.Duration (8), string (16+), array (24+), object (24+)
-            damage_calculation_rules:
-              $ref: '#/components/schemas/DamageCalculationRules'
-            combat_mechanics:
-              $ref: '#/components/schemas/CombatMechanics'
-            balance_parameters:
-              $ref: '#/components/schemas/BalanceParameters'
-            # Medium fields (8 bytes aligned): time.Duration (grouped together)
-            turn_timeout_seconds:
-              type: integer
-              minimum: 10
-              maximum: 300
-              default: 60
-              description: Maximum time for combat turn
-              example: 60
-            max_participants:
-              type: integer
-              minimum: 2
-              maximum: 8
-              default: 2
-              description: Maximum participants in combat
-              example: 4
-            # Small fields (≤4 bytes): boolean
-            allow_critical_hits:
-              type: boolean
-              default: true
-              description: Whether critical hits are enabled
-              example: true
-            allow_dodging:
-              type: boolean
-              default: true
-              description: Whether dodging mechanics are enabled
-              example: true
-      description:
-        "BACKEND NOTE: SOLID inheritance from InfrastructureEntity. Fields
-        ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
-    # Update request with optimistic locking
-    UpdateCombatSystemRulesRequest:
       type: object
-      required:
-        - version
+      required: [version, damage_rules, combat_mechanics, balance_parameters]
       properties:
-        # Large fields first (16-24 bytes): object (24+)
-        damage_calculation_rules:
-          $ref: '#/components/schemas/DamageCalculationRules'
+        id:
+          type: string
+          format: uuid
+          description: Unique configuration identifier
+        version:
+          type: integer
+          minimum: 1
+          description: Configuration version for optimistic locking
+        damage_rules:
+          $ref: '#/components/schemas/DamageRules'
         combat_mechanics:
           $ref: '#/components/schemas/CombatMechanics'
         balance_parameters:
           $ref: '#/components/schemas/BalanceParameters'
-        # Medium fields (8 bytes aligned): integer (grouped together)
-        turn_timeout_seconds:
-          type: integer
-          minimum: 10
-          maximum: 300
-          description: Maximum time for combat turn
-        max_participants:
-          type: integer
-          minimum: 2
-          maximum: 8
-          description: Maximum participants in combat
-        # Small fields (≤4 bytes): boolean, integer
-        allow_critical_hits:
-          type: boolean
-          description: Whether critical hits are enabled
-        allow_dodging:
-          type: boolean
-          description: Whether dodging mechanics are enabled
-        version:
-          type: integer
-          minimum: 1
-          description: Current entity version for optimistic locking
-          example: 5
-      description:
-        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Optimistic locking prevents concurrent modification conflicts."
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        created_by:
+          type: string
+          description: User who created this configuration
 
-    # Damage Calculation Rules
-    DamageCalculationRules:
+    DamageRules:
       type: object
-      required:
-        - base_damage_multiplier
-        - critical_hit_multiplier
-        - armor_reduction_factor
+      required: [base_damage_multiplier, critical_hit_multiplier, armor_reduction_factor]
       properties:
-        # Large fields first (16-24 bytes): object (24+)
-        elemental_damage_multipliers:
-          type: object
-          additionalProperties:
-            type: number
-            format: float
-            minimum: 0.1
-            maximum: 3.0
-          description: Damage multipliers by elemental type
-          example: {"fire": 1.2, "ice": 0.8, "lightning": 1.5}
-        weapon_damage_multipliers:
-          type: object
-          additionalProperties:
-            type: number
-            format: float
-            minimum: 0.1
-            maximum: 3.0
-          description: Damage multipliers by weapon type
-          example: {"melee": 1.0, "ranged": 0.9, "magic": 1.1}
-        # Medium fields (8 bytes aligned): float64 (grouped together)
         base_damage_multiplier:
           type: number
           format: float
           minimum: 0.1
-          maximum: 2.0
+          maximum: 5.0
           default: 1.0
-          description: Global base damage multiplier
-          example: 1.0
+          description: Global damage multiplier
         critical_hit_multiplier:
           type: number
           format: float
-          minimum: 1.1
+          minimum: 1.0
           maximum: 3.0
-          default: 2.0
+          default: 1.5
           description: Critical hit damage multiplier
-          example: 2.0
         armor_reduction_factor:
           type: number
           format: float
           minimum: 0.0
           maximum: 1.0
-          default: 0.8
-          description: How much armor reduces incoming damage (0.8 = 80% reduction)
-          example: 0.8
-        critical_hit_chance:
-          type: number
-          format: float
-          minimum: 0.0
-          maximum: 1.0
-          default: 0.05
-          description: Base critical hit chance (5%)
-          example: 0.05
-      description:
-        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%."
-
-    # Combat Mechanics
-    CombatMechanics:
-      type: object
-      required:
-        - turn_based
-        - action_points_system
-      properties:
-        # Large fields first (16-24 bytes): string (16+), object (24+)
-        combat_mode:
-          type: string
-          enum: [real_time, turn_based, hybrid]
-          default: real_time
-          description: Combat timing mode
-          example: "real_time"
-        action_economy:
+          default: 0.7
+          description: How much armor reduces incoming damage
+        environmental_modifiers:
           type: object
           properties:
-            base_action_points:
+            weather_damage_modifier:
+              type: number
+              format: float
+              description: Weather-based damage modifier
+            time_of_day_modifier:
+              type: number
+              format: float
+              description: Time-based damage modifier
+
+    CombatMechanics:
+      type: object
+      required: [turn_based_enabled, action_points_system, interruption_rules]
+      properties:
+        turn_based_enabled:
+          type: boolean
+          default: false
+          description: Enable turn-based combat mode
+        action_points_system:
+          type: object
+          properties:
+            max_action_points:
               type: integer
               minimum: 1
               maximum: 10
               default: 3
-              description: Base action points per turn
-            action_costs:
-              type: object
-              additionalProperties:
-                type: integer
-                minimum: 0
-                maximum: 10
-              description: Action point costs by action type
-              example: {"attack": 1, "ability": 2, "move": 1}
-        # Medium fields (8 bytes aligned): boolean (grouped together)
-        turn_based:
-          type: boolean
-          default: false
-          description: Whether combat is turn-based
-          example: false
-        action_points_system:
-          type: boolean
-          default: true
-          description: Whether action points system is enabled
-          example: true
-        allow_interruptions:
-          type: boolean
-          default: true
-          description: Whether actions can be interrupted
-          example: true
-      description:
-        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%."
+            points_per_turn:
+              type: integer
+              minimum: 1
+              maximum: 5
+              default: 3
+        interruption_rules:
+          type: object
+          properties:
+            allow_interruptions:
+              type: boolean
+              default: true
+            interruption_penalty:
+              type: integer
+              minimum: 0
+              maximum: 100
+              default: 50
+              description: Action point penalty for interruptions
 
-    # Balance Parameters
     BalanceParameters:
       type: object
-      required:
-        - difficulty_scaling
-        - player_advantage
+      required: [difficulty_scaling, player_advantages, npc_modifiers]
       properties:
-        # Large fields first (16-24 bytes): object (24+)
         difficulty_scaling:
           type: object
           properties:
-            player_count_multiplier:
-              type: number
-              format: float
-              minimum: 0.5
-              maximum: 2.0
-              default: 1.0
-              description: Difficulty multiplier based on player count
-              example: 1.0
-            level_difference_modifier:
+            scaling_factor:
               type: number
               format: float
               minimum: 0.1
               maximum: 2.0
               default: 1.0
-              description: Difficulty modifier based on level difference
-              example: 1.0
-        # Medium fields (8 bytes aligned): float64 (grouped together)
-        player_advantage:
-          type: number
-          format: float
-          minimum: 0.5
-          maximum: 1.5
-          default: 1.0
-          description: Global player advantage modifier
-          example: 1.0
-        npc_difficulty_modifier:
-          type: number
-          format: float
-          minimum: 0.1
-          maximum: 3.0
-          default: 1.0
-          description: NPC difficulty scaling modifier
-          example: 1.0
-      description:
-        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%."
+            level_difference_modifier:
+              type: number
+              format: float
+              description: Damage modifier based on level difference
+        player_advantages:
+          type: object
+          properties:
+            first_strike_bonus:
+              type: number
+              format: float
+              description: Damage bonus for first strike
+            positional_advantage:
+              type: number
+              format: float
+              description: Damage bonus for high ground
+        npc_modifiers:
+          type: object
+          properties:
+            elite_multiplier:
+              type: number
+              format: float
+              default: 1.5
+              description: Damage multiplier for elite NPCs
+            boss_multiplier:
+              type: number
+              format: float
+              default: 2.0
+              description: Damage multiplier for boss NPCs
+
+    UpdateCombatSystemRulesRequest:
+      type: object
+      required: [version]
+      properties:
+        version:
+          type: integer
+          minimum: 1
+          description: Current version for optimistic locking
+        damage_rules:
+          $ref: '#/components/schemas/DamageRules'
+        combat_mechanics:
+          $ref: '#/components/schemas/CombatMechanics'
+        balance_parameters:
+          $ref: '#/components/schemas/BalanceParameters'

@@ -6,6 +6,7 @@ require (
 	github.com/go-faster/errors v0.7.1
 	github.com/go-faster/jx v1.2.0
 	github.com/google/uuid v1.6.0
+	github.com/gorilla/websocket v1.5.1
 	github.com/jackc/pgx/v5 v5.5.4
 	github.com/ogen-go/ogen v1.18.0
 	github.com/prometheus/client_golang v1.19.0
