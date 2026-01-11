@@ -355,24 +355,15 @@ func (h *Handler) CreateTrial(ctx context.Context, req api.TimeTrial) (api.Creat
 	h.service.trialOperations.WithLabelValues("create_trial", "success").Inc()
 
 	return &api.TimeTrial{
-		ID:   trialID.String(),
+		ID:   trialID,
 		Name: req.Name,
 		Type: req.Type,
 	}, nil
 }
 
-// APIV1TimeTrialsTrialsTrialIdGet implements GET /api/v1/time-trials/trials/{trialId}
+// GetTrial implements GET /trials/{trialId}
 func (h *Handler) GetTrial(ctx context.Context, params api.GetTrialParams) (api.GetTrialRes, error) {
-	trialID, err := uuid.Parse(params.TrialId)
-	if err != nil {
-		return &api.APIV1TimeTrialsTrialsTrialIdGetResDefault{
-			StatusCode: http.StatusBadRequest,
-			Data: api.Error{
-				Code:    "INVALID_ID",
-				Message: "Invalid trial ID format",
-			},
-		}, nil
-	}
+	trialID := params.TrialId
 
 	// Retrieve trial data from database
 	query := `
@@ -388,7 +379,7 @@ func (h *Handler) GetTrial(ctx context.Context, params api.GetTrialParams) (api.
 		dbCreatedAt, dbUpdatedAt                                                 sql.NullTime
 	)
 
-	err = h.service.db.QueryRow(ctx, query, trialID).Scan(
+	err := h.service.db.QueryRow(ctx, query, trialID).Scan(
 		&dbID, &dbName, &dbDescription, &dbType, &dbContentID, &dbDifficulty, &dbStatus,
 		&dbTimeLimit, &dbMinPlayers, &dbMaxPlayers, &dbRewards, &dbValidationRules,
 		&dbCreatedAt, &dbUpdatedAt,
@@ -397,22 +388,10 @@ func (h *Handler) GetTrial(ctx context.Context, params api.GetTrialParams) (api.
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			h.service.logger.Warn("Trial not found", zap.String("trial_id", trialID.String()))
-			return &api.APIV1TimeTrialsTrialsTrialIdGetResDefault{
-				StatusCode: http.StatusNotFound,
-				Data: api.Error{
-					Code:    "TRIAL_NOT_FOUND",
-					Message: "Trial not found",
-				},
-			}, nil
+			return &api.GetTrialNotFound{}, nil
 		}
 		h.service.logger.Error("Failed to retrieve trial", zap.Error(err), zap.String("trial_id", trialID.String()))
-		return &api.APIV1TimeTrialsTrialsTrialIdGetResDefault{
-			StatusCode: http.StatusInternalServerError,
-			Data: api.Error{
-				Code:    "DB_ERROR",
-				Message: "Failed to retrieve trial data",
-			},
-		}, nil
+		return &api.GetTrialInternalServerError{}, nil
 	}
 
 	// Parse JSONB fields
@@ -438,37 +417,32 @@ func (h *Handler) GetTrial(ctx context.Context, params api.GetTrialParams) (api.
 		zap.String("trial_name", dbName),
 		zap.Int("active_players", playerCount))
 
-	return &api.APIV1TimeTrialsTrialsTrialIdGetRes200{
-		Id:              dbID,
-		Name:            dbName,
-		Description:     api.OptString{Value: dbDescription, Set: dbDescription != ""},
-		Type:            api.TimeTrialType(dbType),
-		ContentID:       dbContentID,
-		Difficulty:      api.TimeTrialDifficulty(dbDifficulty),
-		Status:          api.TimeTrialStatus(dbStatus),
-		TimeLimit:       api.OptInt{Value: int(dbTimeLimit.Int32), Set: dbTimeLimit.Valid},
-		MinPlayers:      api.OptInt{Value: int(dbMinPlayers.Int32), Set: dbMinPlayers.Valid},
-		MaxPlayers:      api.OptInt{Value: int(dbMaxPlayers.Int32), Set: dbMaxPlayers.Valid},
-		Rewards:         api.OptTrialRewards{Value: rewards, Set: len(dbRewards) > 0},
-		ValidationRules: api.OptValidationRules{Value: validationRules, Set: len(dbValidationRules) > 0},
-		CreatedAt:       dbCreatedAt.Time,
-		UpdatedAt:       api.OptDateTime{Value: dbUpdatedAt.Time, Set: dbUpdatedAt.Valid},
-		ActivePlayers:   playerCount,
+	trial := &api.TimeTrial{
+		ID:               trialID,
+		Name:             dbName,
+		Description:      api.NewOptString(dbDescription),
+		Type:             api.TimeTrialType(dbType),
+		ContentID:        dbContentID,
+		Difficulty:       api.TimeTrialDifficulty(dbDifficulty),
+		Status:           api.TimeTrialStatus(dbStatus),
+		TimeLimit:        api.NewOptInt(int(dbTimeLimit.Int32)),
+		MinPlayers:       api.NewOptInt(int(dbMinPlayers.Int32)),
+		MaxPlayers:       api.NewOptInt(int(dbMaxPlayers.Int32)),
+		Rewards:          api.NewOptTrialRewards(rewards),
+		ValidationRules:  api.NewOptValidationRules(validationRules),
+		CreatedAt:        api.NewOptDateTime(dbCreatedAt.Time),
+		UpdatedAt:        api.NewOptDateTime(dbUpdatedAt.Time),
+	}
+
+	h.service.trialOperations.WithLabelValues("get_trial", "success").Inc()
+	return &api.GetTrialOK{
+		Data: *trial,
 	}, nil
 }
 
-// APIV1TimeTrialsTrialsTrialIdStartPost implements POST /api/v1/time-trials/trials/{trialId}/start
+// StartTrialSession implements POST /trials/{trialId}/start
 func (h *Handler) StartTrialSession(ctx context.Context, params api.StartTrialSessionParams, req api.StartTrialSessionReq) (api.StartTrialSessionRes, error) {
-	trialID, err := uuid.Parse(params.TrialId)
-	if err != nil {
-		return &api.APIV1TimeTrialsTrialsTrialIdStartPostResDefault{
-			StatusCode: http.StatusBadRequest,
-			Data: api.Error{
-				Code:    "INVALID_ID",
-				Message: "Invalid trial ID format",
-			},
-		}, nil
-	}
+	trialID := params.TrialId
 
 	// Get player ID from auth context
 	playerID := h.getPlayerIDFromContext(ctx)
@@ -476,13 +450,7 @@ func (h *Handler) StartTrialSession(ctx context.Context, params api.StartTrialSe
 	// Start trial session
 	playerUUID, err := uuid.Parse(playerID)
 	if err != nil {
-		return &api.APIV1TimeTrialsTrialsTrialIdStartPostResDefault{
-			StatusCode: http.StatusBadRequest,
-			Data: api.Error{
-				Code:    "INVALID_PLAYER_ID",
-				Message: "Invalid player ID format",
-			},
-		}, nil
+		return &api.StartTrialSessionBadRequest{}, nil
 	}
 
 	session, err := h.service.timerEngine.StartSession(ctx, trialID, playerUUID)

@@ -140,3 +140,75 @@ quest_definition:
   quest_type: side
   level_min: 1
   level_max: null
+  requirements:
+    - type: level
+      min_level: 1
+    - type: location
+      location: hong_kong
+    - type: time
+      time_of_day: night
+      description: "Квест доступен только ночью"
+  objectives:
+    - id: explore_mong_kok
+      type: exploration
+      description: "Исследовать улицы Mong Kok ночью"
+      locations:
+        - mong_kok_main_street
+        - yau_ma_tei_neon_district
+        - jordan_night_market
+        - tsim_sha_tsui_waterfront
+    - id: photograph_neon_signs
+      type: collection
+      description: "Сфотографировать 20 культовых неоновых вывесок"
+      count: 20
+      quality_requirements:
+        - color_accuracy
+        - composition
+        - weather_effects
+    - id: weather_interaction
+      type: environmental
+      description: "Взаимодействовать с погодными эффектами (дождь/туман)"
+      conditions:
+        - rain_effects
+        - fog_atmosphere
+        - reflections
+    - id: create_collection
+      type: crafting
+      description: "Сформировать и загрузить коллекцию в эстетическую базу"
+      output: "neon_hong_kong_collection"
+  rewards:
+    base:
+      experience: 1000
+      title: "Неоновый охотник"
+      collection: "Neon Hong Kong Collection"
+      aesthetic_rating: 25  # Повышение эстетического рейтинга Гонконга
+    conditional:
+      perfect_collection:
+        bonus_experience: 500
+        special_title: "Мастер неонового искусства"
+      weather_mastery:
+        skill_boost: "photography +10"
+  branches:
+    - condition: "photographs_quality >= 80%"
+      outcome: "master_photographer"
+      effects:
+        - reputation_gains:
+          - faction: cultural_preservation_society
+            amount: 40
+          - faction: local_artists
+            amount: 30
+        - unlocks: "advanced_photography_quests"
+    - condition: "weather_effects_utilized"
+      outcome: "atmospheric_artist"
+      effects:
+        - skill_boost: "environmental_awareness +15"
+        - collection_bonus: "weather_enhanced_neon_photos"
+    - condition: "collection_uploaded"
+      outcome: "cultural_contributor"
+      effects:
+        - reputation_gains:
+          - faction: hong_kong_culture_foundation
+            amount: 50
+          - faction: tourism_board
+            amount: 35
+        - unlocks: "cultural_heritage_chain"

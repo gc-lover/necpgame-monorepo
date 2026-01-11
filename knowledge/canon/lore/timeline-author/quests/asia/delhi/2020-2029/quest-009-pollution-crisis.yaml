@@ -146,3 +146,72 @@ quest_definition:
   quest_type: side
   level_min: 1
   level_max: null
+  requirements:
+    - type: level
+      min_level: 1
+    - type: location
+      location: delhi
+    - type: survival_gear
+      description: "Базовые средства защиты от смога"
+  objectives:
+    - id: measure_aqi
+      type: location
+      description: "Измерить уровень AQI в Дели"
+      location: "delhi.monitoring_station"
+    - id: acquire_protection
+      type: shopping
+      description: "Приобрести маску N95, фильтры и очиститель воздуха"
+      items_required:
+        - n95_mask
+        - air_filters
+        - air_purifier
+    - id: investigate_causes
+      type: investigation
+      description: "Исследовать причины смога"
+      evidence_count: 4
+    - id: make_strategic_decision
+      type: choice
+      description: "Выбрать стратегию выживания"
+      choices:
+        - adapt_and_stay
+        - temporary_emigration
+        - environmental_activism
+  rewards:
+    base:
+      experience: 3000
+      currency: -1000  # Стоимость защиты
+      title: "Выживший в смоге"
+      stats:
+        endurance: 15
+    conditional:
+      adapt_and_stay:
+        debuff: "smog_exposure_debuff"  # -20% HP пока в Дели
+      environmental_activism:
+        reputation_gains:
+          - faction: environmental_groups
+            amount: 50
+          - faction: local_communities
+            amount: 30
+  branches:
+    - condition: "choice == 'adapt_and_stay'"
+      outcome: "resilient_survivor"
+      effects:
+        - stat_boost: "endurance +15"
+        - debuff: "smog_exposure (-20% HP in Delhi)"
+        - reputation: "survival_credibility +25"
+    - condition: "choice == 'temporary_emigration'"
+      outcome: "strategic_retreat"
+      effects:
+        - access_loss: "delhi_city_quests"
+        - buff: "clean_air_recovery (+10% HP regen outside Delhi)"
+        - reputation: "pragmatist +15"
+    - condition: "choice == 'environmental_activism'"
+      outcome: "change_agent"
+      effects:
+        - reputation_gains:
+          - faction: environmental_activists
+            amount: 60
+          - faction: government_agencies
+            amount: 40
+        - conflict_risk: "agro_business_hostility"
+        - quest_unlock: "environmental_campaign_chain"

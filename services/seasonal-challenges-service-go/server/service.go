@@ -928,6 +928,155 @@ func (s *SeasonalChallengesService) grantPremiumBoost(ctx context.Context, excha
 	return s.activatePremiumBoost(ctx, exchange.PlayerID, boostType, durationHours)
 }
 
+// Premium System Integration Methods
+
+// checkPlayerPremiumStatus checks if player has active premium subscription
+func (s *SeasonalChallengesService) checkPlayerPremiumStatus(ctx context.Context, playerID string) (*PremiumStatus, error) {
+	// TODO: Integrate with actual premium service
+	// For now, return mock premium status
+	return &PremiumStatus{
+		PlayerID:      playerID,
+		IsActive:      true, // Mock: assume player has premium
+		Tier:          "gold",
+		ExpiresAt:     time.Now().Add(24 * time.Hour),
+		Features:      []string{"challenge_bonus", "exclusive_rewards", "priority_matching"},
+		RenewalDate:   time.Now().Add(30 * 24 * time.Hour),
+	}, nil
+}
+
+// activatePremiumBoost activates temporary premium boost
+func (s *SeasonalChallengesService) activatePremiumBoost(ctx context.Context, playerID, boostType string, durationHours int) error {
+	boostID := generateUUID()
+	expiresAt := time.Now().Add(time.Duration(durationHours) * time.Hour)
+
+	// TODO: Store premium boost in database (would integrate with premium service)
+	s.logger.Info("Activated premium boost",
+		zap.String("player_id", playerID),
+		zap.String("boost_id", boostID),
+		zap.String("boost_type", boostType),
+		zap.Int("duration_hours", durationHours),
+		zap.Time("expires_at", expiresAt),
+	)
+
+	// Broadcast premium boost activation event
+	event := &WSEvent{
+		Type:     "premium_boost_activated",
+		PlayerID: playerID,
+		Data: map[string]interface{}{
+			"boost_id":       boostID,
+			"boost_type":     boostType,
+			"duration_hours": durationHours,
+			"expires_at":     expiresAt,
+		},
+	}
+	s.websocket.BroadcastToPlayer(playerID, event)
+
+	return nil
+}
+
+// applyPremiumBonuses applies premium bonuses to challenge rewards
+func (s *SeasonalChallengesService) applyPremiumBonuses(ctx context.Context, playerID string, baseRewards map[string]interface{}) (map[string]interface{}, error) {
+	premiumStatus, err := s.checkPlayerPremiumStatus(ctx, playerID)
+	if err != nil {
+		s.logger.Error("Failed to check premium status", zap.Error(err))
+		return baseRewards, nil // Return base rewards on error
+	}
+
+	if !premiumStatus.IsActive {
+		return baseRewards, nil // No bonuses for non-premium players
+	}
+
+	// Apply tier-based bonuses
+	bonusMultiplier := s.getPremiumBonusMultiplier(premiumStatus.Tier)
+	bonusesApplied := []string{}
+
+	// Currency bonus
+	if currency, ok := baseRewards["currency"].(int); ok {
+		baseRewards["currency"] = int(float64(currency) * bonusMultiplier)
+		bonusesApplied = append(bonusesApplied, "currency")
+	}
+
+	// XP bonus
+	if xp, ok := baseRewards["xp"].(int); ok {
+		baseRewards["xp"] = int(float64(xp) * bonusMultiplier)
+		bonusesApplied = append(bonusesApplied, "xp")
+	}
+
+	// Add premium-exclusive rewards
+	if premiumStatus.Tier == "diamond" || premiumStatus.Tier == "legendary" {
+		baseRewards["premium_exclusive_item"] = map[string]interface{}{
+			"item_id": "premium_challenge_token",
+			"amount":  1,
+		}
+		bonusesApplied = append(bonusesApplied, "exclusive_item")
+	}
+
+	// Log applied bonuses
+	if len(bonusesApplied) > 0 {
+		s.logger.Info("Applied premium bonuses",
+			zap.String("player_id", playerID),
+			zap.String("tier", premiumStatus.Tier),
+			zap.Float64("multiplier", bonusMultiplier),
+			zap.Strings("bonuses", bonusesApplied),
+		)
+	}
+
+	return baseRewards, nil
+}
+
+// getPremiumBonusMultiplier returns bonus multiplier based on premium tier
+func (s *SeasonalChallengesService) getPremiumBonusMultiplier(tier string) float64 {
+	switch tier {
+	case "bronze":
+		return 1.1 // 10% bonus
+	case "silver":
+		return 1.25 // 25% bonus
+	case "gold":
+		return 1.5 // 50% bonus
+	case "diamond":
+		return 2.0 // 100% bonus (double rewards)
+	case "legendary":
+		return 3.0 // 200% bonus (triple rewards)
+	default:
+		return 1.0 // No bonus
+	}
+}
+
+// getPremiumChallengeEligibility checks if player can access premium-only challenges
+func (s *SeasonalChallengesService) getPremiumChallengeEligibility(ctx context.Context, playerID string) (*PremiumEligibility, error) {
+	premiumStatus, err := s.checkPlayerPremiumStatus(ctx, playerID)
+	if err != nil {
+		return nil, err
+	}
+
+	eligibility := &PremiumEligibility{
+		CanAccessPremiumChallenges: premiumStatus.IsActive,
+		CanAccessExclusiveRewards:   premiumStatus.Tier == "diamond" || premiumStatus.Tier == "legendary",
+		MaxDailyChallenges:          s.getMaxDailyChallenges(premiumStatus.Tier),
+		BonusObjectivesUnlocked:     premiumStatus.IsActive,
+	}
+
+	return eligibility, nil
+}
+
+// getMaxDailyChallenges returns max challenges per day based on premium tier
+func (s *SeasonalChallengesService) getMaxDailyChallenges(tier string) int {
+	switch tier {
+	case "bronze":
+		return 3
+	case "silver":
+		return 5
+	case "gold":
+		return 8
+	case "diamond":
+		return 12
+	case "legendary":
+		return 20 // Unlimited practical
+	default:
+		return 2 // Free tier limit
+	}
+}
+
 // grantItemReward adds item to player inventory
 func (s *SeasonalChallengesService) grantItemReward(ctx context.Context, exchange *CurrencyExchange) error {
 	// TODO: Integrate with inventory system
@@ -1358,10 +1507,26 @@ func (s *SeasonalChallengesService) processCompletionRewards(ctx context.Context
 	completionScore := s.calculateCompletionScore(progress, objectives)
 
 	// Apply challenge multiplier
-	finalCurrencyReward := int(float64(completionScore) * challenge.RewardMultiplier)
+	baseCurrencyReward := int(float64(completionScore) * challenge.RewardMultiplier)
 
 	// Calculate XP reward based on challenge difficulty and completion
-	xpReward := s.getChallengeXP(challenge, completionScore)
+	baseXPReward := s.getChallengeXP(challenge, completionScore)
+
+	// Prepare base rewards for premium bonus calculation
+	baseRewards := map[string]interface{}{
+		"currency": baseCurrencyReward,
+		"xp":       baseXPReward,
+	}
+
+	// Apply premium bonuses
+	finalRewards, err := s.applyPremiumBonuses(ctx, progress.PlayerID, baseRewards)
+	if err != nil {
+		s.logger.Error("Failed to apply premium bonuses", zap.Error(err))
+		finalRewards = baseRewards // Use base rewards on error
+	}
+
+	finalCurrencyReward := finalRewards["currency"].(int)
+	finalXPReward := finalRewards["xp"].(int)
 
 	// Award seasonal currency
 	earnReq := EarnCurrencyRequest{
@@ -1377,18 +1542,30 @@ func (s *SeasonalChallengesService) processCompletionRewards(ctx context.Context
 	}
 
 	// Award XP
-	if err := s.grantXP(ctx, progress.PlayerID, xpReward, fmt.Sprintf("challenge_completed_%s", progress.ChallengeID)); err != nil {
+	if err := s.grantXP(ctx, progress.PlayerID, finalXPReward, fmt.Sprintf("challenge_completed_%s", progress.ChallengeID)); err != nil {
 		s.logger.Error("Failed to award completion XP", zap.Error(err))
 		// Don't fail entire reward process for XP error
+	}
+
+	// Award premium exclusive items if any
+	if exclusiveItem, exists := finalRewards["premium_exclusive_item"]; exists {
+		s.logger.Info("Awarding premium exclusive item",
+			zap.String("player_id", progress.PlayerID),
+			zap.Any("item", exclusiveItem),
+		)
+		// TODO: Integrate with inventory system to grant the item
 	}
 
 	s.logger.Info("Challenge completion rewards awarded",
 		zap.String("player_id", progress.PlayerID),
 		zap.String("challenge_id", progress.ChallengeID),
-		zap.Int("base_score", completionScore),
-		zap.Float64("multiplier", challenge.RewardMultiplier),
-		zap.Int("currency_reward", finalCurrencyReward),
-		zap.Int("xp_reward", xpReward),
+		zap.Int("completion_score", completionScore),
+		zap.Float64("challenge_multiplier", challenge.RewardMultiplier),
+		zap.Int("base_currency", baseCurrencyReward),
+		zap.Int("base_xp", baseXPReward),
+		zap.Int("final_currency", finalCurrencyReward),
+		zap.Int("final_xp", finalXPReward),
+		zap.Bool("premium_bonuses_applied", finalCurrencyReward > baseCurrencyReward || finalXPReward > baseXPReward),
 	)
 
 	return nil
@@ -1570,6 +1747,22 @@ type ObjectiveProgress struct {
 	CurrentValue int        `json:"current_value"`
 	IsCompleted  bool       `json:"is_completed"`
 	CompletedAt  *time.Time `json:"completed_at"`
+}
+
+type PremiumStatus struct {
+	PlayerID      string    `json:"player_id"`
+	IsActive      bool      `json:"is_active"`
+	Tier          string    `json:"tier"`
+	ExpiresAt     time.Time `json:"expires_at"`
+	Features      []string  `json:"features"`
+	RenewalDate   time.Time `json:"renewal_date"`
+}
+
+type PremiumEligibility struct {
+	CanAccessPremiumChallenges bool `json:"can_access_premium_challenges"`
+	CanAccessExclusiveRewards   bool `json:"can_access_exclusive_rewards"`
+	MaxDailyChallenges          int  `json:"max_daily_challenges"`
+	BonusObjectivesUnlocked     bool `json:"bonus_objectives_unlocked"`
 }
 
 type SeasonLeaderboard struct {
