@@ -1,0 +1,968 @@
+# Enterprise-Grade OpenAPI 3.0 - Quest Engine Service
+# Core quest logic and state management with CQRS/Event Sourcing
+# Issue: #2301
+
+openapi: 3.0.3
+info:
+  title: Quest Engine Service API
+  description: |
+    **Enterprise-grade API for Quest Engine Service**
+
+    ## Domain Purpose
+    Core quest logic and state management for NECPGAME. Manages quest instances,
+    objective tracking, reward distribution, and player progress synchronization.
+
+    ## Performance Targets
+    - P99 Latency: <50ms for all endpoints
+    - Memory per Instance: <100MB baseline
+    - Concurrent Quests: 10,000+ active instances
+    - Uptime: 99.9% SLA
+
+    ## Domain Inheritance
+    This service inherits from game-entities.yaml providing:
+    - Consistent base entity structure (id, timestamps, version)
+    - Game-specific business entities (Character, Quest, etc.)
+    - Optimistic locking for concurrent operations
+    - Strict typing with validation rules
+
+    ## Architecture Patterns
+    - CQRS/Event Sourcing for quest state management
+    - Real-time synchronization (<50ms P99 target)
+    - Event-driven architecture with WebSocket updates
+
+  version: "1.0.0"
+  contact:
+    name: NECPGAME API Team
+    email: api@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.necpgame.com/v1/quest-engine
+    description: Production environment
+  - url: https://staging-api.necpgame.com/v1/quest-engine
+    description: Staging environment
+  - url: http://localhost:8080/api/v1/quest-engine
+    description: Local development
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Quest Management
+    description: Core quest operations (CRUD, state management)
+  - name: Objective Tracking
+    description: Quest objective progress and completion
+  - name: Reward Distribution
+    description: Quest reward calculation and granting
+  - name: Progress Synchronization
+    description: Real-time quest progress sync
+  - name: Event Sourcing
+    description: CQRS event store operations
+  - name: Health Monitoring
+    description: Service health and performance monitoring
+  - name: Administration
+    description: Administrative operations
+
+paths:
+
+  # Health Check Endpoints
+  /health:
+    get:
+      operationId: questEngineHealthCheck
+      summary: Basic health check
+      description: Returns service health status
+      tags: [Health Monitoring]
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/health.yaml#/HealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/ServiceUnavailable'
+
+  /health/detailed:
+    get:
+      operationId: questEngineDetailedHealthCheck
+      summary: Detailed health check with metrics
+      description: Returns comprehensive health status including quest processing metrics
+      tags: [Health Monitoring]
+      responses:
+        '200':
+          description: Detailed health information
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/health.yaml#/DetailedHealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/ServiceUnavailable'
+
+  # Quest Management Endpoints
+  /quests:
+    get:
+      operationId: listQuests
+      summary: List quests with filtering and pagination
+      description: |
+        Retrieve a paginated list of quests with advanced filtering options.
+
+        **Performance Notes:**
+        - Uses database indexes for efficient filtering by status/player
+        - Implements cursor-based pagination for large quest datasets
+        - Response cached for 30 seconds
+      tags: [Quest Management]
+      parameters:
+        - name: player_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by player ID
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [available, active, completed, failed, expired]
+          description: Filter by quest status
+        - name: quest_type
+          in: query
+          schema:
+            type: string
+            enum: [main, side, daily, weekly, event, guild, cyber]
+          description: Filter by quest type
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items to return
+        - name: cursor
+          in: query
+          schema:
+            type: string
+          description: Pagination cursor
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/QuestSummary'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+    post:
+      operationId: createQuest
+      summary: Create a new quest instance
+      description: |
+        Create a new quest instance for a player with validation and business rules.
+
+        **Business Rules:**
+        - Validates quest template exists and is available
+        - Checks player level and prerequisites
+        - Applies quest cooldowns and limits
+        - Generates unique quest instance ID
+      tags: [Quest Management]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateQuestRequest'
+      responses:
+        '201':
+          description: Quest created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/QuestInstance'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: Quest creation conflict
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/Conflict'
+
+  /quests/{quest_id}:
+    get:
+      operationId: getQuest
+      summary: Get quest instance details
+      description: Retrieve detailed information about a specific quest instance
+      tags: [Quest Management]
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Quest instance ID
+      responses:
+        '200':
+          description: Quest details retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/QuestInstance'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    put:
+      operationId: updateQuest
+      summary: Update quest instance
+      description: Update quest instance properties with optimistic locking
+      tags: [Quest Management]
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Quest instance ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateQuestRequest'
+      responses:
+        '200':
+          description: Quest updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/QuestInstance'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Optimistic lock conflict
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/Conflict'
+
+    delete:
+      operationId: deleteQuest
+      summary: Delete quest instance
+      description: Soft delete a quest instance (mark as cancelled)
+      tags: [Quest Management]
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Quest instance ID
+      responses:
+        '204':
+          description: Quest deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # Objective Tracking Endpoints
+  /quests/{quest_id}/objectives:
+    get:
+      operationId: getQuestObjectives
+      summary: Get quest objectives
+      description: Retrieve all objectives for a quest instance
+      tags: [Objective Tracking]
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Quest instance ID
+      responses:
+        '200':
+          description: Objectives retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/QuestObjective'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    post:
+      operationId: updateObjectiveProgress
+      summary: Update objective progress
+      description: Update progress for quest objectives
+      tags: [Objective Tracking]
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Quest instance ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateObjectiveRequest'
+      responses:
+        '200':
+          description: Objectives updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/QuestObjective'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # Reward Distribution Endpoints
+  /quests/{quest_id}/complete:
+    post:
+      operationId: completeQuest
+      summary: Complete quest and distribute rewards
+      description: |
+        Complete a quest instance and automatically distribute all rewards.
+
+        **Business Rules:**
+        - Validates all objectives are completed
+        - Calculates reward multipliers and bonuses
+        - Updates player statistics and achievements
+        - Generates completion event for analytics
+      tags: [Reward Distribution]
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Quest instance ID
+      responses:
+        '200':
+          description: Quest completed successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/QuestCompletionResult'
+        '400':
+          description: Quest cannot be completed
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Quest already completed
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/Conflict'
+
+  # Progress Synchronization (Real-time)
+  /sync/progress:
+    post:
+      operationId: syncQuestProgress
+      summary: Synchronize quest progress (real-time)
+      description: |
+        Real-time synchronization of quest progress across multiple clients.
+
+        **Performance Requirements:**
+        - P99 latency <50ms
+        - Atomic updates with optimistic locking
+        - Event-driven state propagation
+      tags: [Progress Synchronization]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuestProgressSyncRequest'
+      responses:
+        '200':
+          description: Progress synchronized
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/QuestProgressSyncResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Synchronization conflict
+          content:
+            application/json:
+              schema:
+                $ref: '../common/responses/error.yaml#/Conflict'
+
+  # Event Sourcing Endpoints (CQRS Query Side)
+  /events/quests:
+    get:
+      operationId: getQuestEvents
+      summary: Query quest events (CQRS)
+      description: Retrieve quest events from event store with filtering
+      tags: [Event Sourcing]
+      parameters:
+        - name: quest_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by quest ID
+        - name: player_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by player ID
+        - name: event_type
+          in: query
+          schema:
+            type: string
+            enum: [QuestStarted, ObjectiveProgressed, QuestCompleted, QuestFailed, RewardGranted]
+          description: Filter by event type
+        - name: from_timestamp
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Start timestamp for filtering
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+          description: Maximum events to return
+      responses:
+        '200':
+          description: Events retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '../common/responses/success.yaml#/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/QuestEvent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  # WebSocket Endpoints for Real-time Updates
+  /ws/quests:
+    get:
+      operationId: questWebSocket
+      summary: WebSocket connection for quest updates
+      description: |
+        Establish WebSocket connection for real-time quest updates.
+
+        **Supported Events:**
+        - quest_started
+        - objective_progressed
+        - quest_completed
+        - reward_granted
+        - quest_failed
+      tags: [Progress Synchronization]
+      responses:
+        '101':
+          description: WebSocket connection established
+
+components:
+  schemas:
+
+    # Quest Core Entities
+    QuestInstance:
+      allOf:
+        - $ref: '../common/schemas/game-entities.yaml#/components/schemas/GameEntity'
+        - type: object
+          required:
+            - template_id
+            - player_id
+            - status
+            - started_at
+            - objectives
+          properties:
+            template_id:
+              type: string
+              format: uuid
+              description: Reference to quest template
+              example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+            player_id:
+              type: string
+              format: uuid
+              description: Player who owns this quest instance
+              example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+            status:
+              type: string
+              enum: [active, completed, failed, expired, cancelled]
+              description: Current quest status
+              example: "active"
+            quest_type:
+              type: string
+              enum: [main, side, daily, weekly, event, guild, cyber]
+              description: Type of quest
+              example: "main"
+            started_at:
+              type: string
+              format: date-time
+              description: When quest was started
+              example: "2024-01-15T10:30:00Z"
+            completed_at:
+              type: string
+              format: date-time
+              description: When quest was completed (if applicable)
+              example: "2024-01-15T14:20:00Z"
+            expires_at:
+              type: string
+              format: date-time
+              description: Quest expiration timestamp
+              example: "2024-01-20T10:30:00Z"
+            objectives:
+              type: array
+              items:
+                $ref: '#/components/schemas/QuestObjective'
+              description: Quest objectives to complete
+            rewards:
+              $ref: '#/components/schemas/QuestRewards'
+            progress_percentage:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Overall quest completion percentage
+              example: 75.5
+
+    QuestSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Quest instance ID
+        template_id:
+          type: string
+          format: uuid
+          description: Quest template ID
+        player_id:
+          type: string
+          format: uuid
+          description: Player ID
+        status:
+          type: string
+          enum: [active, completed, failed, expired, cancelled]
+        quest_type:
+          type: string
+          enum: [main, side, daily, weekly, event, guild, cyber]
+        progress_percentage:
+          type: number
+          minimum: 0
+          maximum: 100
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    QuestObjective:
+      allOf:
+        - $ref: '../common/schemas/game-entities.yaml#/components/schemas/GameEntity'
+        - type: object
+          required:
+            - quest_id
+            - objective_type
+            - description
+            - current_progress
+            - target_progress
+            - is_completed
+          properties:
+            quest_id:
+              type: string
+              format: uuid
+              description: Parent quest instance ID
+            objective_type:
+              type: string
+              enum: [kill, collect, explore, interact, deliver, survive, time]
+              description: Type of objective
+              example: "kill"
+            description:
+              type: string
+              description: Human-readable objective description
+              example: "Defeat 5 Cyberpsychos in Night City"
+            current_progress:
+              type: integer
+              minimum: 0
+              description: Current progress value
+              example: 3
+            target_progress:
+              type: integer
+              minimum: 1
+              description: Target progress value to complete
+              example: 5
+            is_completed:
+              type: boolean
+              description: Whether objective is completed
+              example: false
+            metadata:
+              type: object
+              description: Additional objective-specific data
+              additionalProperties: true
+
+    QuestRewards:
+      type: object
+      properties:
+        experience:
+          type: integer
+          minimum: 0
+          description: Experience points reward
+          example: 1500
+        currency:
+          type: object
+          properties:
+            eddies:
+              type: integer
+              minimum: 0
+              description: Eddies (main currency)
+              example: 5000
+            premium:
+              type: integer
+              minimum: 0
+              description: Premium currency
+              example: 100
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RewardItem'
+          description: Item rewards
+        reputation:
+          type: object
+          description: Reputation changes
+          properties:
+            faction_changes:
+              type: array
+              items:
+                type: object
+                properties:
+                  faction_id:
+                    type: string
+                    format: uuid
+                  reputation_delta:
+                    type: integer
+                    description: Reputation change (+/-)
+                    example: 50
+        unlocks:
+          type: array
+          items:
+            type: string
+          description: Unlocked content (quests, areas, items)
+        bonuses:
+          type: object
+          description: Additional bonuses and multipliers
+          additionalProperties:
+            type: number
+
+    RewardItem:
+      type: object
+      required:
+        - item_id
+        - quantity
+      properties:
+        item_id:
+          type: string
+          format: uuid
+          description: Item template ID
+        quantity:
+          type: integer
+          minimum: 1
+          description: Quantity of item
+          example: 3
+        quality:
+          type: string
+          enum: [common, uncommon, rare, epic, legendary]
+          description: Item quality tier
+          example: "rare"
+
+    # Request/Response DTOs
+    CreateQuestRequest:
+      type: object
+      required:
+        - template_id
+        - player_id
+      properties:
+        template_id:
+          type: string
+          format: uuid
+          description: Quest template to instantiate
+        player_id:
+          type: string
+          format: uuid
+          description: Player who will own the quest
+        custom_parameters:
+          type: object
+          description: Custom quest parameters
+          additionalProperties: true
+
+    UpdateQuestRequest:
+      allOf:
+        - $ref: '../common/schemas/game-entities.yaml#/components/schemas/OptimisticLock'
+        - type: object
+          properties:
+            status:
+              type: string
+              enum: [active, cancelled]
+              description: New quest status
+            expires_at:
+              type: string
+              format: date-time
+              description: Update expiration time
+
+    UpdateObjectiveRequest:
+      type: object
+      required:
+        - objective_id
+        - progress_delta
+      properties:
+        objective_id:
+          type: string
+          format: uuid
+          description: Objective to update
+        progress_delta:
+          type: integer
+          description: Progress change (+/-)
+          example: 1
+        metadata:
+          type: object
+          description: Additional progress data
+          additionalProperties: true
+
+    QuestCompletionResult:
+      type: object
+      required:
+        - quest_id
+        - rewards_granted
+        - completion_time
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+        rewards_granted:
+          $ref: '#/components/schemas/QuestRewards'
+        completion_time:
+          type: string
+          format: date-time
+        statistics:
+          type: object
+          properties:
+            time_taken_seconds:
+              type: integer
+              description: Total time to complete
+            objectives_completed:
+              type: integer
+              description: Number of objectives completed
+
+    QuestProgressSyncRequest:
+      type: object
+      required:
+        - quest_id
+        - player_id
+        - client_version
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        client_version:
+          type: integer
+          minimum: 1
+          description: Client state version for conflict resolution
+        objectives_progress:
+          type: array
+          items:
+            type: object
+            properties:
+              objective_id:
+                type: string
+                format: uuid
+              progress_delta:
+                type: integer
+
+    QuestProgressSyncResponse:
+      type: object
+      required:
+        - server_version
+        - conflicts
+        - applied_changes
+      properties:
+        server_version:
+          type: integer
+          description: Server state version
+        conflicts:
+          type: array
+          items:
+            type: object
+            properties:
+              objective_id:
+                type: string
+                format: uuid
+              client_progress:
+                type: integer
+              server_progress:
+                type: integer
+              resolution:
+                type: string
+                enum: [client_wins, server_wins, merged]
+        applied_changes:
+          type: array
+          items:
+            type: object
+            properties:
+              objective_id:
+                type: string
+                format: uuid
+              old_progress:
+                type: integer
+              new_progress:
+                type: integer
+
+    QuestEvent:
+      allOf:
+        - $ref: '../common/schemas/game-entities.yaml#/components/schemas/GameEntity'
+        - type: object
+          required:
+            - event_type
+            - quest_id
+            - player_id
+            - event_data
+            - timestamp
+          properties:
+            event_type:
+              type: string
+              enum: [QuestStarted, ObjectiveProgressed, QuestCompleted, QuestFailed, RewardGranted]
+              description: Type of quest event
+            quest_id:
+              type: string
+              format: uuid
+              description: Quest instance ID
+            player_id:
+              type: string
+              format: uuid
+              description: Player ID
+            event_data:
+              type: object
+              description: Event-specific data
+              additionalProperties: true
+            timestamp:
+              type: string
+              format: date-time
+              description: Event timestamp
+
+  # Common Response Components
+  responses:
+    BadRequest:
+      description: Bad request - invalid parameters
+      content:
+        application/json:
+          schema:
+            $ref: '../common/responses/error.yaml#/BadRequest'
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '../common/responses/error.yaml#/Unauthorized'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '../common/responses/error.yaml#/NotFound'
+    TooManyRequests:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../common/responses/error.yaml#/TooManyRequests'
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
