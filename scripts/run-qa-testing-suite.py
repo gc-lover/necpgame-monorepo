@@ -266,7 +266,7 @@ class QATestingSuiteRunner:
         """Log message to console"""
         if self.ci_mode:
             # In CI mode, use plain text without emojis
-            clean_message = message.replace("✅", "[PASS]").replace("❌", "[FAIL]").replace("⚠️", "[WARN]").replace("🎉", "[SUCCESS]")
+            clean_message = message.replace("[PASS]", "[PASS]").replace("[FAIL]", "[FAIL]").replace("[WARN]", "[WARN]").replace("[SUCCESS]", "[SUCCESS]")
             print(clean_message)
         else:
             print(message)
@@ -303,7 +303,7 @@ class QATestingSuiteRunner:
     </div>
 
     <div class="summary">
-        <h2>📊 Summary</h2>
+        <h2>[SUMMARY] Summary</h2>
         <div class="metric">
             <strong>Total Suites:</strong> {summary['total_suites']}
         </div>
@@ -322,7 +322,7 @@ class QATestingSuiteRunner:
     </div>
 
     <div class="requirements">
-        <h2>✅ Requirements Validated</h2>
+        <h2>[VALIDATED] Requirements Validated</h2>
         <ul>
 """
 
@@ -333,7 +333,7 @@ class QATestingSuiteRunner:
         </ul>
     </div>
 
-    <h2>📋 Suite Results</h2>
+    <h2>[RESULTS] Suite Results</h2>
 """
 
         for suite_name, result in results.items():
@@ -362,7 +362,7 @@ class QATestingSuiteRunner:
         with open(report_path, 'w', encoding='utf-8') as f:
             f.write(html_content)
 
-        self.log(f"📄 Detailed report generated: {report_path}")
+        self.log(f"[REPORT] Detailed report generated: {report_path}")
         return report_path
 
 
