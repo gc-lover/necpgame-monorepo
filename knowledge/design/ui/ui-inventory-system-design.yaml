@@ -1,0 +1,307 @@
+# Issue: #1950
+metadata:
+  id: ui-inventory-system-design
+  title: "UI: Inventory System - Drag&drop, фильтры, быстрая экипировка"
+  document_type: design
+  category: ui-ux-design
+  status: draft
+  version: "1.0.0"
+  last_updated: 2026-01-12T09:45:00Z
+  concept_approved: true
+  owners:
+    - role: ui-ux-designer
+      contact: ui@necp.game
+  tags:
+    - ui-design
+    - inventory-system
+    - drag-drop
+    - filtering
+    - quick-equip
+    - cyberpunk-ui
+    - user-experience
+  topics:
+    - ui-ux-design
+    - inventory-management
+    - drag-drop-interaction
+    - filtering-systems
+  related_systems:
+    - inventory-service
+    - character-service
+    - equipment-service
+  related_documents:
+    - id: loadouts-system-ui-design
+      relation: extends
+    - id: core-ui-framework
+      relation: implements
+    - id: core-ui-components
+      relation: uses
+  source: ui-design-team
+  visibility: internal
+  audience:
+    - ui-designers
+    - game-designers
+    - ue5-developers
+  risk_level: low
+
+summary:
+  problem: |
+    Текущая inventory система не предоставляет эффективных способов управления предметами.
+    Игроки тратят слишком много времени на поиск и организацию предметов,
+    что приводит к фрустрации и снижению игрового опыта.
+  goal: |
+    Создать интуитивную inventory систему, которая позволяет:
+    - Быстро перемещать предметы через drag&drop
+    - Фильтровать и искать предметы по различным критериям
+    - Быстро экипировать предметы через горячие клавиши
+    - Визуально организовывать инвентарь для оптимального управления
+  essence: |
+    Inventory - это твой цифровой арсенал в Night City. Система должна быть такой же
+    быстрой и интуитивной, как управление оружием в реальном бое.
+  key_points:
+    - Seamless drag-and-drop between inventory and equipment
+    - Multi-criteria filtering and search
+    - One-click equip with hotkey support
+    - Visual organization with customizable layouts
+    - Real-time sync with character equipment
+
+core_ui_components:
+  inventory_main_panel:
+    primary_interface:
+      description: "Главное окно инвентаря с drag&drop функциональностью"
+      layout:
+        - "Header: Поиск, фильтры, настройки вида"
+        - "Equipment slots: Визуальные слоты для экипировки"
+        - "Inventory grid: Основная сетка предметов (6x10 по умолчанию)"
+        - "Quick equip bar: Быстрые слоты для горячих клавиш"
+        - "Item details: Информация о выбранном предмете"
+      dimensions:
+        default: "1200x800px"
+        scalable: true
+        responsive_breakpoints:
+          - "4K: 1600x1000px"
+          - "1080p: 1200x800px"
+          - "720p: 900x600px"
+
+    inventory_grid:
+      grid_system:
+        default_layout: "6 columns x 10 rows = 60 slots"
+        expandable: true
+        custom_layouts:
+          - "Compact: 8x8 grid"
+          - "Wide: 10x6 grid"
+          - "Tall: 5x12 grid"
+      slot_types:
+        standard_slot: "Базовый слот для любого предмета"
+        stackable_slot: "Для стакабельных предметов (аммо, consumables)"
+        equipment_slot: "Специфические слоты для оружия/брони"
+        cyberware_slot: "Для имплантов и кибернетических улучшений"
+
+  drag_drop_system:
+    interaction_mechanics:
+      drag_initiation:
+        - "Click and hold on item for 150ms"
+        - "Visual feedback: item glows with neon_blue (#0088FF)"
+        - "Item preview follows cursor with 50% opacity"
+      drop_zones:
+        - "Equipment slots: Highlighted with green glow on hover"
+        - "Inventory slots: Highlighted with blue glow on hover"
+        - "Quick equip bar: Highlighted with yellow glow on hover"
+        - "Invalid drops: Red X indicator"
+      animations:
+        drag_start: "Item scales up 1.1x with neon glow"
+        drag_over_valid: "Target slot pulses with green energy"
+        drop_success: "Item snaps into place with satisfying click sound"
+        drop_invalid: "Item bounces back with error buzz"
+
+    multi_item_operations:
+      shift_click: "Select multiple items for bulk operations"
+      ctrl_click: "Add/remove from selection"
+      drag_selection: "Move entire selection at once"
+      auto_arrange: "Smart sorting by type/rarity/level"
+
+  filtering_search_system:
+    search_bar:
+      location: "Top of inventory panel"
+      features:
+        - "Real-time search as you type"
+        - "Auto-complete suggestions"
+        - "Search history (last 10 queries)"
+        - "Voice search integration"
+      search_criteria:
+        - "Item name (partial matches)"
+        - "Item type (weapon, armor, consumable, etc.)"
+        - "Rarity (common, uncommon, rare, epic, legendary)"
+        - "Level requirements"
+        - "Stats keywords (damage, defense, speed)"
+
+    filter_categories:
+      item_type_filter:
+        categories:
+          - "Weapons: Rifles, Pistols, Melee, Throwable"
+          - "Armor: Head, Body, Arms, Legs, Back"
+          - "Consumables: Health, Boosters, Grenades"
+          - "Cyberware: Neural, Muscle, Skin, Eye"
+          - "Materials: Crafting components"
+          - "Quest Items: Mission-related objects"
+        visual_representation: "Tabbed interface with icons"
+
+      rarity_filter:
+        levels:
+          - "Common: Gray (#666666)"
+          - "Uncommon: Green (#00FF88)"
+          - "Rare: Blue (#0088FF)"
+          - "Epic: Purple (#8800FF)"
+          - "Legendary: Orange (#FF8800)"
+        toggle_mechanism: "Color-coded checkboxes"
+
+      stat_filters:
+        range_sliders:
+          - "Damage: 0-1000"
+          - "Defense: 0-500"
+          - "Speed: 0-200%"
+          - "Weight: 0-50kg"
+        advanced_filters:
+          - "Elemental damage types"
+          - "Status effect modifiers"
+          - "Cyberware compatibility"
+
+    filter_combinations:
+      logical_operators: "AND/OR logic for complex queries"
+      saved_filters: "Up to 10 custom filter presets"
+      quick_filters: "One-click filters for common searches"
+
+  quick_equip_system:
+    hotkey_bar:
+      location: "Bottom of inventory panel"
+      slots: "8 customizable quick equip slots"
+      key_bindings: "F1-F8 by default, customizable"
+      visual_feedback:
+        - "Slot highlighting on key press"
+        - "Cooldown indicators for temporary items"
+        - "Durability bars for equipment"
+
+    equip_mechanics:
+      single_click_equip: "Click item to equip in appropriate slot"
+      drag_to_hotkey: "Drag item to hotkey bar for instant access"
+      auto_equip: "Smart suggestions for optimal loadouts"
+      batch_equip: "Equip entire sets with one action"
+
+    equipment_validation:
+      compatibility_checks:
+        - "Level requirements"
+        - "Class restrictions"
+        - "Cyberware dependencies"
+        - "Stat prerequisites"
+      visual_indicators:
+        - "Green checkmark: Compatible"
+        - "Yellow warning: Partial compatibility"
+        - "Red X: Incompatible"
+
+visual_design_system:
+  cyberpunk_theme:
+    color_scheme:
+      primary: "Neon green (#00FF88) for UI highlights"
+      secondary: "Electric blue (#0088FF) for interactions"
+      accent: "Cyber red (#FF0044) for warnings/errors"
+      background: "Deep black (#0A0A0A) with subtle grid pattern"
+      text_primary: "Bright white (#FFFFFF) with green glow"
+      text_secondary: "Muted green (#88FFAA)"
+
+    visual_effects:
+      glow_effects: "Neon glow around interactive elements"
+      scan_lines: "Subtle horizontal scan lines on panels"
+      glitch_effects: "Occasional UI glitches for atmosphere"
+      particle_systems: "Digital particles on item interactions"
+
+    typography:
+      headers: "Orbitron Bold, 18-24px, all caps"
+      body_text: "Rajdhani Regular, 14px"
+      item_names: "Rajdhani Medium, color-coded by rarity"
+      stats: "Fira Code Regular, monospace for numbers"
+
+  item_visualization:
+    item_cards:
+      layout: "Compact card with icon, name, stats"
+      hover_effects: "3D tilt, enhanced glow, tooltip expansion"
+      rarity_indicators: "Colored borders and corner decorations"
+      stat_display: "Icon + value format for quick scanning"
+
+    slot_states:
+      empty: "Dotted outline with subtle glow"
+      occupied: "Solid border with item icon"
+      selected: "Bright neon outline with pulsing animation"
+      dragging: "Semi-transparent with cursor follow"
+
+    animations:
+      item_drop: "Bounce-in animation with sound effect"
+      equip_success: "Flash of green energy with satisfying sound"
+      filter_apply: "Smooth fade transition with new results"
+      search_results: "Slide-in animation for filtered items"
+
+accessibility_features:
+  keyboard_navigation:
+    tab_order: "Logical flow through inventory elements"
+    arrow_keys: "Grid navigation in inventory"
+    enter_space: "Activate/interact with selected items"
+    escape: "Close panels or cancel operations"
+
+  screen_reader_support:
+    item_descriptions: "Detailed audio descriptions of items"
+    status_announcements: "Voice feedback for actions"
+    keyboard_shortcuts: "Audible shortcut hints"
+
+  visual_alternatives:
+    high_contrast_mode: "Enhanced borders and colors"
+    large_text_option: "Scalable UI elements"
+    color_blind_friendly: "Shape and pattern indicators"
+
+performance_considerations:
+  optimization_targets:
+    render_budget: "< 2ms per frame for inventory UI"
+    memory_usage: "< 50MB for UI assets and textures"
+    network_sync: "Real-time updates without blocking"
+
+  lazy_loading:
+    item_icons: "Load on demand to reduce initial load time"
+    detailed_stats: "Fetch on hover/selection"
+    filter_results: "Paginated loading for large inventories"
+
+  caching_strategy:
+    item_templates: "Cache commonly used item visuals"
+    filter_states: "Remember user preferences"
+    search_history: "Persistent across sessions"
+
+implementation_requirements:
+  unreal_engine_integration:
+    ui_framework: "UMG (Unreal Motion Graphics)"
+    blueprint_scripts: "For drag-drop logic and interactions"
+    material_system: "Custom materials for neon effects"
+    animation_system: "UMG animations for transitions"
+
+  backend_integration:
+    inventory_service: "Real-time sync via WebSocket"
+    equipment_service: "Validation and stat calculations"
+    character_service: "Class/level restrictions"
+
+  data_structures:
+    item_definitions: "YAML configs for item properties"
+    ui_layouts: "Configurable grid systems"
+    filter_presets: "User-saved filter combinations"
+
+testing_validation:
+  user_testing_scenarios:
+    - "New player inventory tutorial"
+    - "Veteran player bulk operations"
+    - "High-stress combat inventory management"
+    - "Mobile device adaptation"
+
+  performance_benchmarks:
+    - "Inventory open time: < 200ms"
+    - "Drag-drop responsiveness: < 16ms latency"
+    - "Filter application: < 50ms for 1000 items"
+
+  edge_cases:
+    - "Full inventory management"
+    - "Rare item identification"
+    - "Equipment conflicts resolution"
+    - "Network sync failures"
