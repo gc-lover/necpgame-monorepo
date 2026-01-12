@@ -1,35 +1,319 @@
-title: Соц/медиа — аренда сцен в хабах
 # Issue: #1815
+metadata:
+  id: mechanics-social-stage-rental-1815
+  title: "Аренда сцен в хабах для шоу/стримов"
+  document_type: mechanics
+  category: social
+  status: balanced
+  version: "1.1.0"
+  last_updated: 2026-01-12T18:30:00Z
+  concept_approved: true
+  concept_reviewed_at: 2026-01-12T18:30:00Z
+  owners:
+    - role: social_designer
+      contact: social@necp.game
+  tags:
+    - social
+    - stage-rental
+    - streaming
+    - entertainment
+    - cosmetics-only
+  topics:
+    - entertainment
+    - streaming
+    - social-gathering
+  related_systems:
+    - social-service
+    - creator-service
+    - moderation-service
+    - streaming-service
+  related_documents:
+    - id: mechanics-social-creator-ecosystem
+      relation: integrates
+    - id: mechanics-meta-entertainment-system
+      relation: references
+  source: "shared/docs/knowledge/mechanics/social/stage-rental.md"
+  visibility: internal
+  audience:
+    - social
+    - product
+    - business
+    - analytics
+  risk_level: medium
+review:
+  chain:
+    - role: social_designer
+      reviewer: ""
+      reviewed_at: ""
+      status: pending
+  next_actions: [ ]
 summary:
-  goal: Аренда сцен по слотам с базовыми инструментами камеры/света, интеграцией ссылки на эфир (YouTube/Twitch). Только соц/визуал.
-slots:
-  booking_window_days: 7
-  slot_length_min: 30
-  cooldown_per_creator_h: 4
-  moderation: auto + ручное подтверждение
-tools:
-  camera: пан/зум/углы пресеты
-  lights: 3 пресета (key/fill/back), яркость 0-100%
-  link_embed: показ QR/ссылки на экран сцены
-limits:
-  max_concurrent_scenes_per_hub: 3
-  audience_cap: 150 локально, 500 стрим-хаб
-  nsfw_filter: обязателен, блокирует запуск при флагах
-anti_abuse:
-  spam: отмена и бан на 24ч за пустые/нарушающие брони
-  impersonation: верификация канала перед ссылкой
-  botting: подозрительные всплески зрителей → капча/заморозка показа
-telemetry:
-  - metric: stage_bookings
-    desc: брони по времени/локации
-  - metric: stage_attendance
-    desc: уникальные зрители, среднее время просмотра
-  - metric: link_clicks
-    desc: клики/сканы QR по платформам
-  - metric: moderation_flags
-    desc: флаги модерации и исходы
-edge_cases:
-  - outage: при падении видео-хостинга сцена остаётся, ссылка скрыта
-  - overlap: попытка брони в занятый слот даёт альтернативы
-  - cosmetics_only: никакой пользы в бою/статах
+  problem: "Нужен механизм аренды сцен в хабах для проведения шоу и стримов с базовыми инструментами."
+  goal: "Определить систему бронирования, инструменты сцены, аудиторию, модерацию и телеметрию."
+  essence: "Аренда сцен по слотам: креаторы бронируют время, получают инструменты камеры/света, интегрируют стримы. Только социальное развлечение без gameplay влияния."
+  key_points:
+    - "Комплексная система бронирования с расписанием."
+    - "Профессиональные инструменты сцены для качественного контента."
+    - "Управление аудиторией и взаимодействием."
+    - "Строгая модерация контента и поведения."
+    - "Полная телеметрия для анализа использования."
+content:
+  sections:
+    - id: stage-types
+      title: "Типы сцен и локации"
+      body: |
+        **Типы сцен:**
+        • **Basic Stage**: Стандартная сцена с базовыми инструментами
+        • **Premium Stage**: Расширенные возможности и лучшее расположение
+        • **Concert Stage**: Специализированная для музыкальных выступлений
+        • **Theater Stage**: Для театральных постановок и перформансов
+        • **Interactive Stage**: С элементами взаимодействия с аудиторией
+
+        **Локации размещения:**
+        • **Major Hubs**: Night City Center, Afterlife, Misty's Esoterica
+        • **District Centers**: Heywood Market, Watson Plaza, Westbrook Business
+        • **Entertainment Zones**: Kabuki, Totentanz Club, Red Dirt Bar
+        • **Special Venues**: Концертные залы, театры, фестивальные площадки
+
+        **Технические характеристики:**
+        • **Stage Size**: От 10x10м до 30x30м в зависимости от типа
+        • **Audience Capacity**: 50-500 человек в зависимости от локации
+        • **Audio System**: Интегрированная звуковая система с микрофонами
+        • **Lighting Grid**: Профессиональная система освещения
+        • **Camera Network**: Множественные камеры для разных ракурсов
+
+        **Атмосферные элементы:**
+        • **Environmental Effects**: Дым, конфетти, пиротехника (безопасная)
+        • **Interactive Props**: Элементы сцены для взаимодействия
+        • **Audience Seating**: Автоматическая расстановка сидений
+        • **Ambient Music**: Фоновая музыка и звуковые эффекты
+      mechanics_links:
+        - mechanics-meta-entertainment-system
+      assets: [ ]
+    - id: booking-system
+      title: "Система бронирования"
+      body: |
+        **Процесс бронирования:**
+        • **Advance Booking**: Бронирование за 7-30 дней
+        • **Last-minute Slots**: Доступные слоты за 24 часа
+        • **Priority Queue**: Система приоритетов для популярных креаторов
+        • **Waitlist System**: Очередь на желаемые временные слоты
+
+        **Временные слоты:**
+        • **Duration Options**: 30 мин, 1 час, 2 часа, 4 часа
+        • **Peak Hours**: Дневные и вечерние слоты (дороже)
+        • **Off-peak Hours**: Ночные и ранние утренние слоты
+        • **Special Events**: Тематические мероприятия и фестивали
+
+        **Стоимость и ценообразование:**
+        • **Base Rates**: 500-5000 кредитов в зависимости от типа сцены
+        • **Dynamic Pricing**: Корректировка по спросу и популярности
+        • **Volume Discounts**: Скидки за множественные бронирования
+        • **Creator Tiers**: Разные ставки для разных уровней популярности
+
+        **Управление бронями:**
+        • **Booking Dashboard**: Централизованный интерфейс управления
+        • **Real-time Availability**: Обновление доступности в реальном времени
+        • **Modification Policies**: Правила изменения и отмены броней
+        • **Refund System**: Политика возвратов и компенсаций
+      mechanics_links: [ ]
+      assets: [ ]
+    - id: stage-tools
+      title: "Инструменты сцены"
+      body: |
+        **Камерные инструменты:**
+        • **Camera Controls**: Пан, зум, фокус, углы съёмки
+        • **Multiple Cameras**: 3-8 камер для разных ракурсов
+        • **Director Mode**: Переключение между камерами в реальном времени
+        • **Recording Options**: Запись выступления для последующего монтажа
+
+        **Осветительные инструменты:**
+        • **Lighting Presets**: Key, fill, back lighting конфигурации
+        • **Color Controls**: Полный спектр RGB с интенсивностью
+        • **Dynamic Effects**: Автоматические переходы и эффекты
+        • **Spotlights**: Фокусированные прожекторы для артистов
+
+        **Аудио инструменты:**
+        • **Microphone System**: Беспроводные микрофоны с шумоподавлением
+        • **Sound Mixing**: Базовый микшер для баланса звука
+        • **Effects Processing**: Реверберация и эффекты для голоса
+        • **Music Integration**: Подключение внешних музыкальных источников
+
+        **Визуальные инструменты:**
+        • **Screen Overlays**: Графические наложения и нижние трети
+        • **Virtual Sets**: Цифровые фоны и декорации
+        • **Live Graphics**: Реал-тайм генерация графики
+        • **Audience Interaction**: Элементы вовлечения зрителей
+      mechanics_links: [ ]
+      assets: [ ]
+    - id: streaming-integration
+      title: "Интеграция стримов"
+      body: |
+        **Платформы поддержки:**
+        • **Twitch**: Основная платформа для игрового стриминга
+        • **YouTube**: Для записей и долгосрочного хранения
+        • **TikTok**: Для коротких выступлений и клипов
+        • **Custom Platforms**: Интеграция с другими сервисами
+
+        **Техническая интеграция:**
+        • **Stream Keys**: Безопасная генерация и управление ключами
+        • **Quality Settings**: Адаптивное качество под условия сети
+        • **Delay Controls**: Управление задержкой трансляции
+        • **Multi-platform**: Одновременная трансляция на несколько платформ
+
+        **Аудитория и взаимодействие:**
+        • **Chat Integration**: Синхронизация чатов между платформами
+        • **Donation System**: Интеграция с системами донатов
+        • **Polls & Quizzes**: Интерактивные элементы для зрителей
+        • **Virtual Attendance**: Трекинг виртуальной аудитории
+
+        **Аналитика стримов:**
+        • **Viewer Statistics**: Количество зрителей, пики просмотров
+        • **Engagement Metrics**: Лайки, комментарии, донаты
+        • **Technical Quality**: Качество звука/видео, задержки
+        • **Content Performance**: Популярность разных типов контента
+      mechanics_links:
+        - mechanics-social-fan-economy-cheers
+      assets: [ ]
+    - id: audience-management
+      title: "Управление аудиторией"
+      body: |
+        **Вместимость и распределение:**
+        • **Physical Capacity**: Локальные зрители в радиусе сцены
+        • **Virtual Capacity**: Стриминговые зрители без ограничений
+        • **VIP Areas**: Специальные зоны для подписчиков и донаторов
+        • **Interactive Zones**: Области для активного участия зрителей
+
+        **Вовлечение аудитории:**
+        • **Participation Mechanics**: Голосования, реакции, мини-игры
+        • **Social Features**: Совместные фото, групповые эффекты
+        • **Reward Systems**: Значки и награды за активность
+        • **Community Building**: Создание сообществ вокруг мероприятий
+
+        **Безопасность и комфорт:**
+        • **Crowd Control**: Управление плотностью и движением толпы
+        • **Emergency Protocols**: Планы действий в чрезвычайных ситуациях
+        • **Accessibility**: Поддержка для людей с ограниченными возможностями
+        • **Age Restrictions**: Возрастные ограничения по типам контента
+
+        **Мониторинг и поддержка:**
+        • **Real-time Monitoring**: Отслеживание состояния аудитории
+        • **Support Staff**: Персонал для помощи и контроля
+        • **Feedback Systems**: Сбор отзывов от зрителей
+        • **Quality Assurance**: Гарантия комфортного опыта
+      mechanics_links: [ ]
+      assets: [ ]
+    - id: moderation-safety
+      title: "Модерация и безопасность"
+      body: |
+        **Контентная модерация:**
+        • **AI Pre-screening**: Автоматическая проверка контента перед запуском
+        • **Live Moderation**: Мониторинг во время трансляции
+        • **Community Reporting**: Система жалоб от зрителей
+        • **Content Categories**: Классификация и рейтинги контента
+
+        **Безопасность мероприятий:**
+        • **Crowd Management**: Контроль толпы и предотвращение давки
+        • **Emergency Response**: Протоколы для медицинских и security ситуаций
+        • **Platform Security**: Защита от DDoS и технических атак
+        • **Data Privacy**: Защита персональных данных участников
+
+        **Анти-эксплойт меры:**
+        • **Spam Prevention**: Защита от массовых фейковых броней
+        • **Impersonation Checks**: Верификация личности стримеров
+        • **Bot Detection**: Выявление автоматизированных систем
+        • **Abuse Monitoring**: Отслеживание подозрительной активности
+
+        **Юридическая защита:**
+        • **Copyright Enforcement**: Защита интеллектуальной собственности
+        • **Terms Compliance**: Соблюдение условий использования платформы
+        • **Legal Review**: Юридическая проверка контента и мероприятий
+        • **Liability Management**: Управление ответственностью за инциденты
+      mechanics_links:
+        - mechanics-security-moderation
+      assets: [ ]
+    - id: business-analytics
+      title: "Бизнес-аналитика"
+      body: |
+        **Метрики использования:**
+        • **Booking Rates**: Процент занятых слотов по времени и локациям
+        • **Revenue Tracking**: Доходы от аренды и дополнительных услуг
+        • **Utilization Metrics**: Эффективность использования сцен
+        • **Demand Patterns**: Анализ спроса по дням и времени
+
+        **Аудитория и вовлечённость:**
+        • **Attendance Numbers**: Физические и виртуальные зрители
+        • **Engagement Levels**: Время просмотра, взаимодействия
+        • **Satisfaction Scores**: Отзывы и рейтинги мероприятий
+        • **Repeat Attendance**: Возврат зрителей на мероприятия
+
+        **Техническая производительность:**
+        • **Stream Quality**: Качество трансляций и технические проблемы
+        • **Platform Stability**: Надёжность сервисов и время работы
+        • **User Experience**: Показатели комфорта и удобства
+        • **Support Tickets**: Количество обращений в поддержку
+
+        **Бизнес эффективность:**
+        • **ROI Analysis**: Возврат инвестиций в инфраструктуру
+        • **Creator Satisfaction**: Удовлетворённость арендаторов
+        • **Market Expansion**: Рост популярности и охвата
+        • **Competitive Analysis**: Сравнение с аналогичными сервисами
+
+        **Целевые показатели:**
+        • **Utilization Rate**: 70-85% занятости сцен в пиковые часы
+        • **Audience Satisfaction**: >4.5/5 средний рейтинг мероприятий
+        • **Technical Uptime**: >99.5% доступность сервисов
+        • **Revenue Growth**: 25-40% ежеквартальный рост доходов
+      mechanics_links:
+        - mechanics-analytics-telemetry
+      assets: [ ]
+appendix:
+  glossary:
+    - term: "Stage rental"
+      definition: "Временная аренда сценических площадок в игровых локациях для проведения мероприятий"
+    - term: "Stream integration"
+      definition: "Техническая связь между игровой сценой и внешними стриминговыми платформами"
+    - term: "Audience capacity"
+      definition: "Максимальное количество зрителей, которое может одновременно присутствовать на мероприятии"
+    - term: "Moderation pipeline"
+      definition: "Последовательность проверок и фильтров для обеспечения безопасности контента"
+  references:
+    - id: mechanics-social-creator-ecosystem
+      title: "Экосистема креаторов"
+      type: document
+    - id: mechanics-meta-entertainment-system
+      title: "Система развлечений"
+      type: document
+  decisions:
+    - rationale: "Строго косметическая система без gameplay влияния"
+      impact: "Сохраняет баланс игры, фокус на социальном взаимодействии"
+    - rationale: "Комплексная модерация для безопасного контента"
+      impact: "Защищает сообщество, обеспечивает комфортный опыт для всех"
+    - rationale: "Профессиональные инструменты для качественного контента"
+      impact: "Повышает ценность сервиса, привлекает профессиональных креаторов"
+    - rationale: "Гибкая система ценообразования"
+      impact: "Оптимизирует доходы, делает сервис доступным для разных аудиторий"
+  balance_analysis:
+    risk_reward_ratio: "Low-Medium"
+    counterplay_options: "Moderation systems, safety protocols, user reporting"
+    synergy_potential: "High (with creator economy, social features, entertainment)"
+    player_skill_impact: "None (purely social/entertainment)"
+    recommended_monthly_revenue_target: "150,000-300,000 credits"
+implementation:
+  github_issue: 1815
+  needs_task: false
+  queue_reference: [ ]
+  blockers: [ ]
+history:
+  - version: "1.1.0"
+    date: 2026-01-12
+    author: content_writer
+    changes: "Расширение до enterprise стандарта: типы сцен, бронирование, инструменты, стриминг, аудитория, модерация, аналитика."
+  - version: "1.0.0"
+    date: 2025-12-12
+    author: idea_writer
+    changes: "Базовый каркас аренды сцен: слоты, инструменты, лимиты, телеметрия."
+validation:
+  checksum: ""
+  schema_version: "1.0"
 
