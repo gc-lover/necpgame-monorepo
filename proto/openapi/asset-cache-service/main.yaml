@@ -1,0 +1,246 @@
+openapi: 3.0.0
+info:
+  title: Asset Cache Service API
+  description: High-performance memory-mapped asset caching for large game files
+  version: 1.0.0
+  contact:
+    name: NECPGAME Team
+    email: dev@necp.game
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local development server
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+                  service:
+                    type: string
+                    example: "asset-cache-service"
+
+  /assets/{assetId}:
+    get:
+      summary: Get cached asset
+      operationId: getAsset
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Asset data
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Asset not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      summary: Store asset in cache
+      operationId: putAsset
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      responses:
+        '201':
+          description: Asset stored successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  asset_id:
+                    type: string
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Delete asset from cache
+      operationId: deleteAsset
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Asset deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  asset_id:
+                    type: string
+        '404':
+          description: Asset not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /cache/stats:
+    get:
+      summary: Get cache statistics
+      operationId: getCacheStats
+      responses:
+        '200':
+          description: Cache statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CacheStats'
+
+  /cache/preload:
+    post:
+      summary: Preload assets into memory
+      operationId: preloadAssets
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                asset_ids:
+                  type: array
+                  items:
+                    type: string
+              required:
+                - asset_ids
+      responses:
+        '200':
+          description: Assets preloaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  count:
+                    type: integer
+
+  /cache/cleanup:
+    post:
+      summary: Cleanup expired assets
+      operationId: cleanupExpiredAssets
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                max_age_hours:
+                  type: integer
+                  minimum: 1
+                  default: 24
+      responses:
+        '200':
+          description: Cleanup completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  max_age_hours:
+                    type: integer
+
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+      required:
+        - error
+
+    CacheStats:
+      type: object
+      properties:
+        memory_stats:
+          $ref: '#/components/schemas/MemoryStats'
+        database_stats:
+          $ref: '#/components/schemas/DatabaseStats'
+      required:
+        - memory_stats
+        - database_stats
+
+    MemoryStats:
+      type: object
+      properties:
+        memory_used_mb:
+          type: number
+          format: float
+        max_memory_mb:
+          type: number
+          format: float
+        files_mapped:
+          type: integer
+        lru_cache_size:
+          type: integer
+        cache_hit_ratio:
+          type: number
+          format: float
+
+    DatabaseStats:
+      type: object
+      properties:
+        total_assets:
+          type: integer
+          format: int64
+        total_size_bytes:
+          type: integer
+          format: int64
+        cache_hits:
+          type: integer
+          format: int64
+        cache_misses:
+          type: integer
+          format: int64
+        average_access_time_ms:
+          type: number
+          format: float

@@ -1,0 +1,275 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: guild-war-service
+  namespace: necpgame
+  labels:
+    app: guild-war-service
+    version: v2.0.0
+    component: guild-system
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: guild-war-service
+  template:
+    metadata:
+      labels:
+        app: guild-war-service
+        version: v2.0.0
+        component: guild-system
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8086"
+        prometheus.io/path: "/metrics"
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 2000
+      containers:
+      - name: guild-war-service
+        image: necpgame/guild-war-service:v2.0.0
+        ports:
+        - containerPort: 8086
+          name: http
+          protocol: TCP
+        env:
+        - name: PORT
+          value: "8086"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: necpgame-secrets
+              key: database-url
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: necpgame-secrets
+              key: redis-url
+        - name: KAFKA_BROKERS
+          valueFrom:
+            secretKeyRef:
+              name: necpgame-secrets
+              key: kafka-brokers
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: necpgame-secrets
+              key: jwt-secret
+        - name: LOG_LEVEL
+          value: "info"
+        - name: GOMEMLIMIT
+          value: "200MiB"
+        resources:
+          requests:
+            cpu: 300m
+            memory: 384Mi
+          limits:
+            cpu: 1500m
+            memory: 768Mi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8086
+          initialDelaySeconds: 45
+          periodSeconds: 15
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8086
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 1000
+          capabilities:
+            drop:
+            - ALL
+      serviceAccountName: necpgame-service-account
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - guild-war-service
+              topologyKey: kubernetes.io/hostname
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: guild-war-service
+  namespace: necpgame
+  labels:
+    app: guild-war-service
+    version: v2.0.0
+    component: guild-system
+spec:
+  selector:
+    app: guild-war-service
+  ports:
+  - name: http
+    port: 8086
+    targetPort: 8086
+    protocol: TCP
+  type: ClusterIP
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: guild-war-virtualservice
+  namespace: necpgame
+spec:
+  hosts:
+  - "guild-api.necpgame.com"
+  gateways:
+  - guild-core-gateway
+  http:
+  - match:
+    - uri:
+        prefix: "/api/v2/wars"
+    route:
+    - destination:
+        host: guild-war-service
+        port:
+          number: 8086
+    timeout: 45s
+    retries:
+      attempts: 2
+      perTryTimeout: 15s
+    headers:
+      request:
+        add:
+          x-request-id: "%REQ(X-REQUEST-ID)%"
+      response:
+        add:
+          x-version: "v2.0.0"
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: guild-war-service-hpa
+  namespace: necpgame
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: guild-war-service
+  minReplicas: 2
+  maxReplicas: 8
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 75
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 85
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 600
+      policies:
+      - type: Percent
+        value: 20
+        periodSeconds: 120
+    scaleUp:
+      stabilizationWindowSeconds: 120
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 120
+      - type: Pods
+        value: 3
+        periodSeconds: 120
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: guild-war-service-pdb
+  namespace: necpgame
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: guild-war-service
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: guild-war-service-config
+  namespace: necpgame
+data:
+  config.yaml: |
+    server:
+      port: 8086
+      readTimeout: 45s
+      writeTimeout: 45s
+      maxHeaderBytes: 2097152
+
+    database:
+      maxOpenConns: 30
+      maxIdleConns: 8
+      connMaxLifetime: 10m
+      connMaxIdleTime: 5m
+
+    redis:
+      maxRetries: 5
+      minRetryBackoff: 200ms
+      maxRetryBackoff: 5s
+      dialTimeout: 10s
+      readTimeout: 5s
+      writeTimeout: 5s
+
+    kafka:
+      brokers: "kafka-cluster:9092"
+      topic: "guild-war-events"
+      groupId: "guild-war-service"
+      maxMessageBytes: 1048576
+      sessionTimeout: 30s
+      heartbeatInterval: 3s
+
+    logging:
+      level: info
+      format: json
+
+    metrics:
+      enabled: true
+      path: /metrics
+      namespace: necpgame_guild_war
+
+    security:
+      jwt:
+        issuer: necpgame
+        audience: guild-war-api
+        expiration: 24h
+
+    war:
+      maxConcurrentWars: 1000
+      territoryUpdateInterval: 30s
+      allianceCheckInterval: 60s
+      resourceCalculationInterval: 300s
+      maxWarDuration: 168h  # 7 days
+      minWarDuration: 1h
+      maxParticipantsPerWar: 100
+      victoryConditionCheckInterval: 60s
