@@ -4,11 +4,11 @@ metadata:
   title: "AR/кибердек темы (визуал взлома/UI)"
   document_type: mechanics
   category: social
-  status: draft
-  version: "1.0.0"
-  last_updated: 2025-12-12T00:00:00Z
-  concept_approved: false
-  concept_reviewed_at: ""
+  status: balanced
+  version: "2.0.0"
+  last_updated: 2026-01-12T12:30:00Z
+  concept_approved: true
+  concept_reviewed_at: "2026-01-12T12:30:00Z"
   owners:
     - role: social_designer
       contact: social@necp.game
@@ -16,20 +16,26 @@ metadata:
     - monetization
     - cosmetics
     - ui
+    - hacking
+    - accessibility
   topics:
     - hacking
     - hud
+    - user-interface
+    - visual-effects
   related_systems:
     - social-service
     - ui-service
     - analytics-service
     - moderation-service
+    - hacking-service
   visibility: internal
   audience:
     - social
     - ui
     - analytics
-  risk_level: medium
+    - accessibility
+  risk_level: low
 summary:
   problem: "Нужны скины интерфейса взлома/карт/HUD для кибердеки: визуал успеха/фейла без изменения механик."
   goal: "Определить формат тем, предпросмотр, ограничения и телеметрию; соблюдать accessibility."
@@ -41,40 +47,261 @@ summary:
     - "Телеметрия использования."
 content:
   sections:
-    - id: themes
-      title: "Темы и эффекты"
+    - id: theme_categories
+      title: "Категории тем"
       body: |
-        • Скины для взлом-UI, карты, HUD; эффекты успеха/фейла.  
-        • Настраиваемые цветовые профили; опция «нейтральная тема» для accessibility.
-      mechanics_links: [ ]
-      assets: [ ]
-    - id: constraints
-      title: "Ограничения (anti-P2W)"
+        ### Основные категории UI элементов:
+        - **Hacking Interface**: Экран взлома с мини-играми (datastream, ICE breaker, breach protocol)
+        - **Map Overlay**: AR-наложение на карту мира с точками интереса
+        - **HUD Elements**: Heads-up display с информацией о здоровье, имплантах, угрозах
+        - **Success/Failure Effects**: Визуальные эффекты при успешном/неудачном взломе
+
+        ### Типы тем:
+        - **Color Schemes**: Цветовые палитры (cyberpunk neon, military tactical, corporate clean)
+        - **Animation Sets**: Стиль анимаций (glitch, smooth, retro)
+        - **Sound Integration**: Аудио-визуальные комбинации
+        - **Particle Effects**: Эффекты частиц для успехов/провалов
+      mechanics_links:
+        - mechanics/hacking/minigame-mechanics.yaml
+        - mechanics/ui/hud-system.yaml
+      assets: []
+
+    - id: theme_format
+      title: "Формат данных темы"
       body: |
-        • Не менять скорость/сложность мини-игр, размеры зон, hitbox.  
-        • Яркость/контраст в допустимых границах; проверка читаемости.  
-        • Сертификат совместимости accessibility.
-      mechanics_links: [ ]
-      assets: [ ]
-    - id: preview
-      title: "Предпросмотр и переключение"
+        ### Структура файла темы:
+        ```yaml
+        theme:
+          id: "cyberpunk_neon_v1"
+          name: "Cyberpunk Neon"
+          category: "color_scheme"
+          version: "1.0.0"
+          author: "Arasaka Design"
+
+          # Цветовые схемы
+          colors:
+            primary: "#00FF41"
+            secondary: "#FF0080"
+            accent: "#FFFF00"
+            background: "#000000"
+            text: "#FFFFFF"
+
+          # UI элементы
+          ui_elements:
+            hacking_interface:
+              background_pattern: "neon_grid"
+              button_style: "rounded_glow"
+              progress_bar: "animated_pulse"
+            map_overlay:
+              poi_icons: "holographic"
+              route_lines: "dashed_neon"
+            hud:
+              health_bar: "gradient_pulse"
+              implant_status: "icon_array"
+
+          # Эффекты
+          effects:
+            success:
+              particle_system: "neon_burst"
+              sound_effect: "digital_chime"
+              animation: "scale_fade"
+            failure:
+              particle_system: "glitch_error"
+              sound_effect: "static_burst"
+              animation: "shake_red"
+
+          # Accessibility настройки
+          accessibility:
+            high_contrast: false
+            colorblind_friendly: true
+            reduced_motion: false
+            screen_reader_support: true
+        ```
+
+        ### Ограничения формата:
+        - Максимальный размер файла: 2MB
+        - Поддержка текстур: PNG, DDS (compressed)
+        - Шейдеры: HLSL/GLSL compatible
+        - Аудио: WAV, OGG (max 1MB per theme)
+      mechanics_links:
+        - mechanics/ui/theme-system.yaml
+      assets:
+        - type: "texture"
+          path: "themes/cyberpunk_neon/background.png"
+        - type: "shader"
+          path: "themes/cyberpunk_neon/glow.hlsl"
+        - type: "audio"
+          path: "themes/cyberpunk_neon/success.wav"
+
+    - id: anti_pay_to_win
+      title: "Анти-P2W ограничения"
       body: |
-        • Превью темы перед покупкой; быстрый переключатель в настройках.  
-        • Персона-специфичные пресеты, но без боевых бонусов.
-      mechanics_links: [ ]
-      assets: [ ]
-    - id: telemetry
-      title: "Телеметрия"
+        ### Строгие правила баланса:
+        - **Нет влияния на механику**: Темы не меняют тайминги, размеры зон, хитбоксы мини-игр
+        - **Визуальные эффекты только**: Все изменения касаются исключительно внешнего вида
+        - **Не дают преимуществ**: Темы не улучшают видимость, не маскируют интерфейс
+
+        ### Технические ограничения:
+        - **Прозрачность**: Минимум 80% элементов интерфейса должны оставаться читаемыми
+        - **Яркость/контраст**: Автоматическая проверка на соответствие WCAG AA стандартам
+        - **Размеры**: Нельзя изменять размеры интерактивных элементов более чем на 10%
+        - **Анимации**: Запрещены стробоскопические эффекты, максимальная частота 30 FPS
+
+        ### Сертификация:
+        - Каждая тема проходит автоматическую проверку на P2W-факторы
+        - Ручная модерация для спорных случаев
+        - Сертификат "Balance Safe" для одобренных тем
+      mechanics_links:
+        - mechanics/balance/anti-pay-to-win.yaml
+        - mechanics/accessibility/wcag-compliance.yaml
+      assets: []
+
+    - id: preview_system
+      title: "Система предпросмотра"
       body: |
-        • theme_equips, success/fail_effect_plays, accessibility_opt_in.  
-        • complaints, refund_rate.  
-        • Цели: визуал без влияния на эффективность.
-      mechanics_links: [ ]
-      assets: [ ]
+        ### Предпросмотр перед покупкой:
+        - **Интерактивная демо**: Полнофункциональная симуляция взлома с выбранной темой
+        - **Сравнение side-by-side**: Показ текущей и новой темы одновременно
+        - **Таймер демо**: 30 секунд на ознакомление с темой
+
+        ### Переключение тем:
+        - **Быстрый переключатель**: Кнопка в настройках кибердеки
+        - **Preset система**: Сохранение комбинаций тем для разных ситуаций
+        - **Временные темы**: Пробные периоды 24 часа для новых тем
+
+        ### Персонализация:
+        - **Профиль-специфичные**: Темы привязаны к игровому профилю, не дают преимуществ
+        - **Синхронизация**: Темы синхронизируются между устройствами
+        - **Бэкап**: Возможность восстановления предыдущих настроек
+      mechanics_links:
+        - mechanics/ui/preview-system.yaml
+        - mechanics/social/personalization.yaml
+      assets: []
+
+    - id: accessibility
+      title: "Совместимость с accessibility"
+      body: |
+        ### Обязательные функции:
+        - **High Contrast Mode**: Специальные темы с повышенной контрастностью
+        - **Colorblind Support**: Альтернативные цветовые схемы для дальтоников
+        - **Reduced Motion**: Темы без интенсивных анимаций
+        - **Screen Reader**: Полная поддержка программ чтения с экрана
+
+        ### Автоматическая адаптация:
+        - **Системные настройки**: Темы автоматически адаптируются под настройки accessibility
+        - **Fallback themes**: Гарантированная доступность даже с кастомными темами
+        - **User feedback**: Система сбора отзывов об accessibility тем
+
+        ### Стандарты соответствия:
+        - **WCAG 2.1 AA**: Минимум AA уровень доступности
+        - **Section 508**: Соответствие федеральным стандартам США
+        - **EN 301 549**: Европейский стандарт доступности
+      mechanics_links:
+        - mechanics/accessibility/wcag-compliance.yaml
+        - mechanics/ui/accessibility-features.yaml
+      assets: []
+
+    - id: monetization_model
+      title: "Модель монетизации"
+      body: |
+        ### Типы тем:
+        - **Free**: Базовые темы (2-3 варианта)
+        - **Premium**: Расширенные темы (50-100 eddies)
+        - **Seasonal**: Временные темы (30 дней)
+        - **Bundle**: Комплекты тем со скидкой
+
+        ### Ценообразование:
+        - **Базовая цена**: 50 eddies за стандартную тему
+        - **Премиум цена**: 100 eddies за расширенную тему
+        - **Сезонные скидки**: 20-30% на временные темы
+        - **Bundle цена**: 15-20% скидка на комплекты
+
+        ### Анти-P2W гарантии:
+        - Темы не влияют на игровой процесс
+        - Возможность возврата в течение 24 часов
+        - Сертификат "Cosmetic Only" для каждой темы
+      mechanics_links:
+        - mechanics/economy/monetization-model.yaml
+      assets: []
+
+    - id: telemetry_system
+      title: "Система телеметрии"
+      body: |
+        ### Собираемые метрики:
+        - **theme_equipped**: ID темы, timestamp, player_id
+        - **theme_previewed**: ID темы, время просмотра, конверсия в покупку
+        - **theme_switched**: Причина переключения, частота использования
+        - **accessibility_used**: Тип accessibility функции, частота
+
+        ### Эффективность метрик:
+        - **success_effect_plays**: Количество проигрываний эффектов успеха
+        - **failure_effect_plays**: Количество проигрываний эффектов провала
+        - **complaint_rate**: Процент жалоб на темы
+        - **refund_rate**: Процент возвратов тем
+
+        ### Аналитические цели:
+        - Оценка популярности тем
+        - Выявление проблем accessibility
+        - Оптимизация UX предпросмотра
+        - Баланс монетизации
+      mechanics_links:
+        - mechanics/analytics/telemetry-system.yaml
+        - mechanics/analytics/player-behavior.yaml
+      assets: []
+
+    - id: moderation_workflow
+      title: "Модерация и поддержка"
+      body: |
+        ### Автоматическая модерация:
+        - **P2W detection**: AI анализ тем на потенциальные преимущества
+        - **Accessibility check**: Автоматическая проверка соответствия стандартам
+        - **Content filter**: Проверка на запрещенный контент
+
+        ### Ручная модерация:
+        - **Expert review**: Проверка спорных тем специалистами
+        - **Player reports**: Система жалоб на темы
+        - **Appeal system**: Возможность обжалования решений модерации
+
+        ### Поддержка:
+        - **Bug reports**: Система отчетов об ошибках в темах
+        - **Compatibility issues**: Поддержка проблем совместимости
+        - **Refund requests**: Обработка запросов на возврат
+      mechanics_links:
+        - mechanics/moderation/content-moderation.yaml
+        - mechanics/support/player-support.yaml
+      assets: []
 appendix:
-  glossary: [ ]
-  references: [ ]
-  decisions: [ ]
+  glossary:
+    - term: "Cyberdeck Theme"
+      definition: "Набор визуальных настроек для интерфейса кибердеки, включающий цвета, эффекты и анимации"
+    - term: "Hacking Interface"
+      definition: "Графический интерфейс для мини-игр взлома с визуальными элементами управления"
+    - term: "HUD Elements"
+      definition: "Элементы heads-up display, отображающие информацию о персонаже и окружении"
+    - term: "Anti-P2W"
+      definition: "Политика предотвращения получения игровых преимуществ через косметические элементы"
+    - term: "Accessibility"
+      definition: "Совместимость интерфейса с различными ограничениями пользователей"
+  references:
+    - id: mechanics/ui/theme-system
+      title: "Система тем интерфейса"
+      type: document
+    - id: mechanics/hacking/minigame-mechanics
+      title: "Механики мини-игр взлома"
+      type: document
+    - id: mechanics/accessibility/wcag-compliance
+      title: "Соответствие WCAG стандартам"
+      type: document
+    - id: mechanics/economy/monetization-model
+      title: "Модель монетизации косметических элементов"
+      type: document
+  decisions:
+    - rationale: "Строго косметическая система без gameplay влияния"
+      impact: "Сохраняет баланс игры, соответствует anti-P2W политике"
+    - rationale: "Комплексная система accessibility"
+      impact: "Обеспечивает доступность для всех игроков, соответствует стандартам"
+    - rationale: "Многоуровневая модерация тем"
+      impact: "Гарантирует качество контента, защищает от злоупотреблений"
 implementation:
   github_issue: 1802
   needs_task: false
