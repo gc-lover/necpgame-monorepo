@@ -4,11 +4,11 @@ metadata:
   title: "Транспорт/дроны/питомцы-камеры (визуал)"
   document_type: mechanics
   category: social
-  status: draft
-  version: "1.0.0"
-  last_updated: 2025-12-12T00:00:00Z
-  concept_approved: false
-  concept_reviewed_at: ""
+  status: balanced
+  version: "2.0.0"
+  last_updated: 2026-01-12T14:00:00Z
+  concept_approved: true
+  concept_reviewed_at: "2026-01-12T14:00:00Z"
   owners:
     - role: social_designer
       contact: social@necp.game
@@ -18,18 +18,24 @@ metadata:
     - vehicles
     - drones
     - pets
+    - monetization
   topics:
     - engagement
+    - personalization
+    - visual-effects
   related_systems:
     - social-service
     - analytics-service
     - moderation-service
+    - ui-service
+    - vehicle-service
   visibility: internal
   audience:
     - social
     - product
     - analytics
-  risk_level: medium
+    - competitive
+  risk_level: low
 summary:
   problem: "Нужны визуальные ливреи/анимации транспорта, дронов и операторских питомцев без бонусов скорости/брони."
   goal: "Определить категории скинов, эффекты, предпросмотр и телеметрию, соблюдая anti-P2W."
@@ -41,34 +47,323 @@ summary:
     - "Телеметрия покупок/использования."
 content:
   sections:
-    - id: categories
-      title: "Категории и эффекты"
+    - id: vehicle_categories
+      title: "Категории транспорта и эффекты"
       body: |
-        • Ливреи транспорта, анимации старта/посадки, следы.  
-        • Дроны: корпуса, подсветка, траектории.  
-        • Питомцы-камеры: шасси, жесты, подсветка.
-      mechanics_links: [ ]
-      assets: [ ]
-    - id: preview
-      title: "Предпросмотр и ограничения"
+        ### Транспортные средства:
+        - **Ground Vehicles**: Наземный транспорт (автомобили, мотоциклы, танки)
+        - **Air Vehicles**: Воздушный транспорт (вертолеты, дроны, VTOL)
+        - **Special Vehicles**: Специальный транспорт (амфибии, субмарины, маглев)
+
+        ### Эффекты транспорта:
+        - **Livery**: Полная раскраска кузова с текстурами и декалями
+        - **Start/Stop Animations**: Анимации при запуске/остановке двигателя
+        - **Movement Trails**: Следы от движения (пыль, искры, энергетические следы)
+        - **Light Effects**: Динамическое освещение и подсветка
+        - **Sound Integration**: Визуальные эффекты синхронизированные со звуком
+
+        ### Ограничения:
+        - Максимум 3 одновременных эффекта на транспорт
+        - Размер текстур ограничен 4K для производительности
+        - FPS стоимость не более 5% от общего бюджета
+      mechanics_links:
+        - mechanics/vehicles/vehicle-system.yaml
+        - mechanics/ui/visual-effects.yaml
+      assets: []
+
+    - id: drone_categories
+      title: "Категории дронов и эффекты"
       body: |
-        • Превью в гараже/ангаре/AR.  
-        • Фильтр cosmetic-only, запрет на изменение скорости/брони/размера хитбокса.  
-        • Яркость/эффекты в допустимых рамках.
-      mechanics_links: [ ]
-      assets: [ ]
-    - id: telemetry
-      title: "Телеметрия"
+        ### Типы дронов:
+        - **Recon Drones**: Разведывательные дроны (камеры, сенсоры)
+        - **Combat Drones**: Боевые дроны (поддержка огня, защита)
+        - **Utility Drones**: Утилитарные дроны (транспорт, ремонт)
+        - **Personal Drones**: Личные дроны игроков
+
+        ### Эффекты дронов:
+        - **Hull Skins**: Обшивка корпуса с текстурами и эффектами
+        - **Lighting**: Динамическая подсветка и неоновые элементы
+        - **Flight Trails**: Следы от полета (плазма, частицы, голограммы)
+        - **Propeller Effects**: Эффекты винтов/двигателей
+        - **Status Indicators**: Визуальные индикаторы состояния
+
+        ### Специфические ограничения:
+        - Видимость эффектов зависит от расстояния до камеры
+        - Низкая производительность для дальних дронов
+        - Синхронизация эффектов между игроками
+      mechanics_links:
+        - mechanics/drones/drone-system.yaml
+        - mechanics/graphics/particle-effects.yaml
+      assets: []
+
+    - id: pet_categories
+      title: "Категории питомцев-камер и эффекты"
       body: |
-        • purchases, usage_rate, effect_visibility_reports.  
-        • complaints, moderation_actions.  
-        • Цели: персонализация без геймплейного преимущества.
-      mechanics_links: [ ]
-      assets: [ ]
+        ### Типы питомцев:
+        - **Camera Pets**: Питомцы с камерами (собаки, птицы, дроны-питомцы)
+        - **Companion Pets**: Спутники игрока (роботы, голограммы)
+        - **Miniature Vehicles**: Маленький транспорт (мини-авто, скейты)
+
+        ### Эффекты питомцев:
+        - **Body Skins**: Текстуры и раскраска корпуса
+        - **Movement Animations**: Анимации движения и жестов
+        - **Particle Effects**: Частицы вокруг питомца
+        - **Light Emissions**: Свечение и подсветка
+        - **Interaction Effects**: Эффекты при взаимодействии с игроком
+
+        ### Особенности:
+        - Питомцы всегда видны в поле зрения камеры
+        - Эффекты масштабируются с расстоянием
+        - Возможность отключения эффектов для производительности
+      mechanics_links:
+        - mechanics/pets/companion-system.yaml
+        - mechanics/camera/camera-effects.yaml
+      assets: []
+
+    - id: skin_format
+      title: "Формат скинов и данные"
+      body: |
+        ### Структура скина:
+        ```yaml
+        skin:
+          id: "cyberpunk_hoverbike_v1"
+          name: "Cyberpunk Hoverbike"
+          category: "ground_vehicle"
+          type: "hoverbike"
+          version: "1.0.0"
+          author: "Arasaka Customs"
+
+          # Визуальные компоненты
+          visuals:
+            base_texture: "hoverbike_base_diffuse.png"
+            normal_map: "hoverbike_normal.png"
+            emissive_map: "hoverbike_emissive.png"
+            livery_overlays:
+              - "decal_primary.png"
+              - "decal_secondary.png"
+
+          # Эффекты
+          effects:
+            startup:
+              animation: "hoverbike_startup.anim"
+              particles: ["engine_startup", "boost_glow"]
+              duration: 2.5
+            movement:
+              trail_type: "plasma_trail"
+              trail_color: "#00FFFF"
+              trail_intensity: 0.8
+            idle:
+              idle_animation: "hoverbike_idle.anim"
+              light_pulse: true
+
+          # Совместимость
+          compatibility:
+            vehicle_models: ["hoverbike_mk1", "hoverbike_mk2"]
+            performance_impact: "low"
+            requires_unlock: false
+        ```
+
+        ### Технические требования:
+        - **Размер**: Максимум 25MB на скин
+        - **Формат**: DDS/PNG для текстур, Unity Animation для эффектов
+        - **LOD**: Поддержка уровней детализации
+        - **Compression**: Оптимизированные текстуры для стриминга
+      mechanics_links:
+        - mechanics/ui/skin-system.yaml
+      assets:
+        - type: "texture"
+          path: "skins/vehicles/hoverbike/cyberpunk_base.png"
+        - type: "animation"
+          path: "skins/vehicles/hoverbike/startup.anim"
+        - type: "particle"
+          path: "skins/effects/plasma_trail.prefab"
+
+    - id: anti_pay_to_win
+      title: "Анти-P2W ограничения"
+      body: |
+        ### Строгие правила баланса:
+        - **No Performance Impact**: Скины не влияют на скорость, маневренность, прочность
+        - **No Visibility Advantages**: Эффекты не улучшают видимость или маскировку
+        - **No Size Changes**: Нельзя изменять размеры хитбоксов или коллизий
+        - **No Audio Advantages**: Звуковые эффекты не дают информационных преимуществ
+
+        ### Технические ограничения:
+        - **Brightness Cap**: Максимальная яркость эффектов 70% от системного максимума
+        - **Particle Count**: Ограничение на количество частиц для производительности
+        - **Animation Speed**: Запрещено ускорять анимации для создания иллюзии скорости
+        - **Color Restrictions**: Некоторые цвета зарезервированы для системных элементов
+
+        ### Сертификация:
+        - Каждый скин проходит автоматическую проверку на P2W-факторы
+        - Ручная модерация для подозрительных эффектов
+        - Сертификат "Visual Only" для одобренных скинов
+      mechanics_links:
+        - mechanics/balance/anti-pay-to-win.yaml
+        - mechanics/graphics/performance-limits.yaml
+      assets: []
+
+    - id: preview_system
+      title: "Система предпросмотра"
+      body: |
+        ### Предпросмотр в гараже:
+        - **360° View**: Полный обзор транспорта со всех сторон
+        - **Animation Playback**: Демонстрация всех эффектов и анимаций
+        - **Environment Options**: Разные окружения для тестирования (город, пустыня, космос)
+        - **Comparison Mode**: Side-by-side сравнение со стандартным видом
+
+        ### Тестирование в бою:
+        - **Limited Time Trial**: 5-минутный тестовый заезд с скином
+        - **Performance Metrics**: Отображение FPS и производительности
+        - **Feedback Collection**: Сбор отзывов о визуальных эффектах
+        - **Refund Window**: Возможность возврата в течение 24 часов
+
+        ### Фильтры и поиск:
+        - **Category Filters**: Фильтрация по типу транспорта/дрона/питомца
+        - **Style Filters**: Поиск по визуальному стилю (cyberpunk, military, etc.)
+        - **Price Filters**: Фильтрация по стоимости
+        - **Compatibility**: Показ только совместимых скинов
+      mechanics_links:
+        - mechanics/ui/garage-system.yaml
+        - mechanics/ui/preview-tools.yaml
+      assets: []
+
+    - id: accessibility
+      title: "Совместимость с accessibility"
+      body: |
+        ### Обязательные функции:
+        - **Reduced Motion**: Скины без интенсивных анимаций
+        - **High Contrast**: Эффекты с повышенной контрастностью
+        - **Colorblind Support**: Альтернативные цветовые схемы
+        - **Performance Options**: Возможность отключения тяжелых эффектов
+
+        ### Адаптивные настройки:
+        - **System Integration**: Автоматическая адаптация под настройки accessibility
+        - **Custom Profiles**: Возможность создания персональных настроек эффектов
+        - **Fallback Modes**: Гарантированная видимость без косметических эффектов
+
+        ### Стандарты соответствия:
+        - **WCAG 2.1 AA**: Минимум AA уровень доступности
+        - **Section 508**: Федеральные стандарты США
+        - **EN 301 549**: Европейский стандарт доступности
+      mechanics_links:
+        - mechanics/accessibility/vehicle-accessibility.yaml
+        - mechanics/graphics/adaptive-rendering.yaml
+      assets: []
+
+    - id: monetization_model
+      title: "Модель монетизации"
+      body: |
+        ### Типы скинов:
+        - **Free**: Базовые скины (2-3 на категорию)
+        - **Premium**: Расширенные скины (75-200 eddies)
+        - **Seasonal**: Временные коллекции (50-125 eddies)
+        - **Bundle**: Комплекты скинов (скидка 25%)
+
+        ### Ценообразование:
+        - **Base Price**: 75 eddies за стандартный скин
+        - **Premium Price**: 200 eddies за расширенный скин
+        - **Seasonal Discount**: 30-50% на временные предложения
+        - **Bundle Discount**: 25% скидка на комплекты
+
+        ### Дополнительные опции:
+        - **Skin Slots**: Расширение количества слотов за реальные деньги
+        - **Exclusive Content**: Уникальные скины для подписчиков
+        - **Creator Collaboration**: Скины от известных дизайнеров
+
+        ### Анти-P2W гарантии:
+        - Все скины проходят сертификацию на отсутствие преимуществ
+        - Возможность возврата в течение 24 часов
+        - Прозрачная система отчетов о балансе
+      mechanics_links:
+        - mechanics/economy/cosmetic-monetization.yaml
+      assets: []
+
+    - id: telemetry_analytics
+      title: "Телеметрия и аналитика"
+      body: |
+        ### Собираемые метрики:
+        - **skin_equipped**: ID скина, тип транспорта, timestamp, player_id
+        - **effect_visibility**: ID эффекта, расстояние до камеры, продолжительность видимости
+        - **preview_usage**: ID скина, время просмотра, конверсия в покупку
+        - **performance_impact**: FPS влияние, настройки графики, тип устройства
+
+        ### Метрики эффективности:
+        - **purchase_rate**: Конверсия просмотров в покупки по категориям
+        - **usage_duration**: Время использования скинов в сессиях
+        - **social_feedback**: Рейтинги и отзывы от сообщества
+        - **performance_complaints**: Жалобы на производительность
+
+        ### Аналитические цели:
+        - Оптимизация каталога скинов и рекомендаций
+        - Выявление проблем производительности
+        - Баланс монетизации косметических элементов
+        - Улучшение пользовательского опыта в гараже
+      mechanics_links:
+        - mechanics/analytics/cosmetic-telemetry.yaml
+        - mechanics/analytics/performance-monitoring.yaml
+      assets: []
+
+    - id: moderation_workflow
+      title: "Модерация и поддержка"
+      body: |
+        ### Автоматическая модерация:
+        - **Content Analysis**: AI проверка на запрещенный контент в текстурах
+        - **Balance Verification**: Автоматическая проверка на P2W-факторы
+        - **Performance Testing**: Проверка влияния на производительность
+        - **Compatibility Check**: Тестирование на разных платформах и конфигурациях
+
+        ### Ручная модерация:
+        - **Expert Review**: Проверка визуальными дизайнерами и баланс-дизайнерами
+        - **User Reports**: Система жалоб на скины и эффекты
+        - **Appeal System**: Процесс обжалования решений модерации
+
+        ### Поддержка:
+        - **Bug Reports**: Отчеты об ошибках в скинах и эффектах
+        - **Performance Issues**: Помощь с проблемами производительности
+        - **Compatibility Help**: Поддержка проблем совместимости
+        - **Refund Processing**: Обработка запросов на возврат
+
+        ### Сообщество:
+        - **Skin Gallery**: Показ лучших пользовательских скинов
+        - **Creator Program**: Программа для талантливых дизайнеров
+        - **Feedback Integration**: Использование отзывов для улучшений
+      mechanics_links:
+        - mechanics/moderation/cosmetic-moderation.yaml
+        - mechanics/support/cosmetic-support.yaml
+      assets: []
 appendix:
-  glossary: [ ]
-  references: [ ]
-  decisions: [ ]
+  glossary:
+    - term: "Vehicle Skin"
+      definition: "Набор визуальных модификаций для транспортного средства, включающий текстуры, эффекты и анимации"
+    - term: "Drone Skin"
+      definition: "Косметические изменения внешнего вида дрона, включая подсветку и следы движения"
+    - term: "Camera Pet"
+      definition: "Персонализированный питомец с камерой, выполняющий декоративные функции"
+    - term: "Anti-P2W"
+      definition: "Политика предотвращения получения игровых преимуществ через косметические элементы"
+  references:
+    - id: mechanics/vehicles/vehicle-system
+      title: "Система транспортных средств"
+      type: document
+    - id: mechanics/drones/drone-system
+      title: "Система дронов"
+      type: document
+    - id: mechanics/ui/garage-system
+      title: "Система гаража и настройки"
+      type: document
+    - id: mechanics/graphics/adaptive-rendering
+      title: "Адаптивный рендеринг"
+      type: document
+    - id: mechanics/economy/cosmetic-monetization
+      title: "Монетизация косметических элементов"
+      type: document
+  decisions:
+    - rationale: "Строго косметическая система без gameplay влияния"
+      impact: "Сохраняет баланс игры, соответствует anti-P2W политике, фокусируется на социальном выражении"
+    - rationale: "Комплексная система accessibility для транспортных средств"
+      impact: "Обеспечивает доступность для всех пользователей, соответствует стандартам"
+    - rationale: "Многоуровневая модерация косметического контента"
+      impact: "Гарантирует качество и безопасность визуального контента"
 implementation:
   github_issue: 1798
   needs_task: false
