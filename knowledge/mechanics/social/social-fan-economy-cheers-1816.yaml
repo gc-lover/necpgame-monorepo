@@ -1,41 +1,292 @@
-title: Соц/медиа — фан-экономика (чирсы/эмоуты)
 # Issue: #1816
+metadata:
+  id: mechanics-social-fan-economy-cheers-1816
+  title: "Фан-экономика (чирсы/эмоуты для креаторов)"
+  document_type: mechanics
+  category: social
+  status: balanced
+  version: "1.1.0"
+  last_updated: 2026-01-12T18:00:00Z
+  concept_approved: true
+  concept_reviewed_at: 2026-01-12T18:00:00Z
+  owners:
+    - role: social_designer
+      contact: social@necp.game
+  tags:
+    - social
+    - fan-economy
+    - cheers
+    - emotes
+    - creator-economy
+  topics:
+    - monetization
+    - engagement
+    - cosmetics-only
+  related_systems:
+    - social-service
+    - creator-service
+    - moderation-service
+    - payment-service
+  related_documents:
+    - id: mechanics-social-creator-ecosystem
+      relation: integrates
+    - id: mechanics-meta-payment-system
+      relation: references
+  source: "shared/docs/knowledge/mechanics/social/fan-economy-cheers.md"
+  visibility: internal
+  audience:
+    - social
+    - product
+    - business
+    - analytics
+  risk_level: medium
+review:
+  chain:
+    - role: social_designer
+      reviewer: ""
+      reviewed_at: ""
+      status: pending
+  next_actions: [ ]
 summary:
-  goal: Донаты в пользу креатора через косметические чирсы/эмоуты во время ивентов/стримов. Без баффов.
-  scope: чат + AR-оверлеи, ревшар и лимиты анти-спам.
-catalog:
-  cheers:
-    tiers: [ common, rare, epic ]
-    price_range: [ 100, 500, 1200 ] # внутр. валюта/кредиты
-    visuals: стикеры/эмоуты, аудио = off
-  revshare:
-    creator_pct: 50
-    platform_pct: 50
-limits:
-  per_event_spend_cap: 10000
-  per_user_per_minute: 3 sends
-  per_user_daily_creators: 10
-  flood_control:
-    cooldown_s: 5
-display:
-  chat_overlay: compact, имя + иконка
-  ar_overlay: только в ивент-зонах, max 1s fade
-  moderation: auto NSFW filter + manual review queue
-anti_abuse:
-  bot_detection: аномальные паттерны → временный бан отправки
-  chargeback_flag: при споре — заморозка ревшара до решения
-  creator_limit: бан за NSFW/фрод, выручка удерживается до 30д расследования
-telemetry:
-  - metric: cheers_sent
-    desc: количество/сумма по tier и зонам
-  - metric: cheers_revshare
-    desc: распределение выплат (creator/platform)
-  - metric: cheers_spam_flags
-    desc: сработки анти-спама/банов
-  - metric: ar_overlay_usage
-    desc: доля AR-показов vs чат
-edge_cases:
-  - outage: при недоступности модерации отправка блокируется, ревшар не начисляется
-  - minors: возрастные ограничения — скрыть AR/аудио, только текст + иконка
-  - cosmetics_only: никакого влияния на бой/статы
+  problem: "Нужен механизм поддержки креаторов через косметические донаты (чирсы/эмоуты) без влияния на геймплей."
+  goal: "Определить систему чирсов, ревшар, лимиты, анти-спам и телеметрию для здоровой фан-экономики."
+  essence: "Косметическая система поддержки: игроки покупают чирсы/эмоуты для креаторов во время ивентов; ревшар распределяется между платформой и создателем."
+  key_points:
+    - "Строго косметические эффекты без gameplay бонусов."
+    - "Комплексная система анти-спам и модерации."
+    - "Прозрачное распределение доходов (ревшар)."
+    - "Полная телеметрия для анализа вовлечённости."
+content:
+  sections:
+    - id: cheers-catalog
+      title: "Каталог чирсов и эмоутов"
+      body: |
+        **Уровни редкости:**
+        • **Common**: Базовые эмоуты и чирсы (100-200 кредитов)
+        • **Rare**: Улучшенные эффекты с анимацией (300-600 кредитов)
+        • **Epic**: Премиум эффекты с частицами (800-1500 кредитов)
+        • **Legendary**: Эксклюзивные эффекты (2000+ кредитов)
+        • **Mythic**: Коллекционные лимитированные (5000+ кредитов)
+
+        **Типы чирсов:**
+        • **Text Cheers**: Текстовые сообщения с эффектами
+        • **Emote Cheers**: Анимированные эмоуты и стикеры
+        • **Sound Cheers**: Аудио эффекты (опционально, с настройками)
+        • **Visual Cheers**: Визуальные эффекты в AR пространстве
+        • **Combo Cheers**: Комбинации нескольких типов
+
+        **Визуальные эффекты:**
+        • **Screen Effects**: Полноэкранные наложения и анимации
+        • **Particle Systems**: Частицы, искры, световые эффекты
+        • **3D Models**: Трёхмерные объекты в пространстве
+        • **Shader Effects**: Специальные визуальные фильтры
+        • **UI Animations**: Анимации интерфейса и элементов
+
+        **Аудио компоненты:**
+        • **Sound Effects**: Короткие звуковые эффекты
+        • **Voice Lines**: Записанные голосовые сообщения
+        • **Music Stings**: Короткие музыкальные фрагменты
+        • **Ambient Audio**: Фоновые звуковые эффекты
+      mechanics_links:
+        - mechanics-meta-cosmetic-system
+      assets: [ ]
+    - id: purchase-system
+      title: "Система покупок и платежей"
+      body: |
+        **Валюты и оплата:**
+        • **Game Credits**: Основная внутриигровая валюта
+        • **Premium Currency**: Премиум валюта для больших покупок
+        • **Real Money**: Прямые покупки через магазин
+        • **Event Tokens**: Специальные токены для мероприятий
+
+        **Ценообразование:**
+        • **Dynamic Pricing**: Корректировка цен по спросу
+        • **Bundle Deals**: Пакеты чирсов со скидками
+        • **Loyalty Discounts**: Скидки для постоянных покупателей
+        • **Seasonal Promotions**: Тематические акции и скидки
+
+        **Платёжные методы:**
+        • **Instant Purchase**: Немедленная покупка и использование
+        • **Gift Cards**: Подарочные карты для других игроков
+        • **Subscriptions**: Автоматическая покупка чирсов
+        • **Crowdfunding**: Коллективные цели для креаторов
+
+        **Refund политика:**
+        • **Technical Issues**: Полный возврат при сбоях
+        • **Service Outages**: Компенсация за недоступность
+        • **Quality Issues**: Возврат за неработающие эффекты
+        • **Appeal Process**: Процесс обжалования решений
+      mechanics_links:
+        - mechanics-meta-payment-system
+      assets: [ ]
+    - id: revenue-sharing
+      title: "Распределение доходов (ревшар)"
+      body: |
+        **Стандартное распределение:**
+        • **Creator Share**: 50-70% от стоимости чирса
+        • **Platform Share**: 30-50% для поддержания сервиса
+        • **Taxes & Fees**: 5-10% на юридические и платёжные сборы
+        • **Charity Portion**: 5% на благотворительность (опционально)
+
+        **Бонусные программы:**
+        • **Creator Milestones**: Дополнительные проценты за достижения
+        • **Platform Rewards**: Бонусы за долгосрочное сотрудничество
+        • **Seasonal Boosts**: Временные увеличения доли
+        • **Performance Bonuses**: За высокую вовлечённость
+
+        **Расчёт и выплаты:**
+        • **Real-time Tracking**: Мгновенный учёт доходов
+        • **Weekly Payouts**: Регулярные выплаты креаторам
+        • **Minimum Thresholds**: Минимальные суммы для выплат
+        • **Currency Conversion**: Автоматическая конвертация валют
+
+        **Налоговый комплаенс:**
+        • **Automatic Withholding**: Удержание налогов по юрисдикциям
+        • **Tax Documentation**: Предоставление отчётности
+        • **International Support**: Поддержка разных налоговых систем
+        • **Audit Trail**: Полная traceability транзакций
+      mechanics_links: [ ]
+      assets: [ ]
+    - id: display-moderation
+      title: "Отображение и модерация"
+      body: |
+        **Системы отображения:**
+        • **Chat Overlay**: Компактные сообщения в чате
+        • **AR Overlay**: Иммерсивные эффекты в игровом мире
+        • **HUD Integration**: Элементы в интерфейсе игрока
+        • **Spectator Mode**: Специальный режим для зрителей
+
+        **Модерация контента:**
+        • **AI Filtering**: Автоматическая проверка на NSFW
+        • **Community Reporting**: Система жалоб от игроков
+        • **Creator Guidelines**: Правила для контента креаторов
+        • **Content Categories**: Классификация по типам и рейтингу
+
+        **Безопасность и приватность:**
+        • **Age Restrictions**: Ограничения по возрасту
+        • **Content Filtering**: Персонализированная фильтрация
+        • **Privacy Controls**: Настройки приватности
+        • **Data Protection**: Защита персональных данных
+
+        **Технические ограничения:**
+        • **Performance Limits**: Ограничения на ресурсоёмкие эффекты
+        • **Network Optimization**: Минимизация трафика
+        • **Cross-platform**: Работа на всех платформах
+        • **Accessibility**: Поддержка специальных возможностей
+      mechanics_links:
+        - mechanics-security-moderation
+      assets: [ ]
+    - id: anti-abuse-system
+      title: "Анти-эксплойт система"
+      body: |
+        **Спам защита:**
+        • **Rate Limiting**: Ограничения на частоту отправки
+        • **Flood Control**: Предотвращение массовых отправок
+        • **Bot Detection**: AI анализ подозрительной активности
+        • **Pattern Recognition**: Выявление автоматизированных систем
+
+        **Финансовые защиты:**
+        • **Chargeback Monitoring**: Отслеживание споров по платежам
+        • **Fraud Detection**: Выявление мошеннических транзакций
+        • **Laundering Prevention**: Предотвращение отмывания средств
+        • **AML Compliance**: Соблюдение норм по борьбе с отмыванием
+
+        **Контент защита:**
+        • **Copyright Enforcement**: Защита интеллектуальной собственности
+        • **Trademark Protection**: Охрана торговых марок
+        • **Harassment Prevention**: Предотвращение домогательств
+        • **Hate Speech Filtering**: Фильтр ненавистнического контента
+
+        **Санкции и восстановление:**
+        • **Temporary Bans**: Временные блокировки за нарушения
+        • **Account Suspensions**: Полная блокировка аккаунтов
+        • **Revenue Holds**: Заморозка выплат при подозрениях
+        • **Appeal Systems**: Процессы обжалования решений
+      mechanics_links:
+        - mechanics-security-anti-fraud
+      assets: [ ]
+    - id: analytics-insights
+      title: "Аналитика и инсайты"
+      body: |
+        **Метрики вовлечённости:**
+        • **Cheers Sent**: Количество отправленных чирсов по типам
+        • **Active Users**: Количество активных пользователей системы
+        • **Session Duration**: Время проведённое в ивентах
+        • **Creator Popularity**: Рейтинг популярности креаторов
+
+        **Финансовые метрики:**
+        • **Revenue Generated**: Общий доход от системы
+        • **Creator Earnings**: Выплаты креаторам по категориям
+        • **Platform Profit**: Доход платформы после расходов
+        • **ROI Analysis**: Возврат инвестиций в систему
+
+        **Качественные метрики:**
+        • **User Satisfaction**: Опросы и отзывы пользователей
+        • **Creator Satisfaction**: Обратная связь от креаторов
+        • **Content Quality**: Оценки качества контента
+        • **Community Health**: Общее здоровье сообщества
+
+        **Технические метрики:**
+        • **System Performance**: Время отклика и надёжность
+        • **Moderation Accuracy**: Точность автоматической модерации
+        • **Fraud Prevention**: Эффективность анти-фрод мер
+        • **Platform Scalability**: Способность к росту нагрузки
+
+        **Целевые показатели:**
+        • **Daily Active Users**: 10-15% от общей базы игроков
+        • **Average Revenue per User**: 50-100 кредитов в месяц
+        • **Creator Retention**: >80% активных креаторов ежемесячно
+        • **Moderation Accuracy**: >95% правильных решений
+      mechanics_links:
+        - mechanics-analytics-telemetry
+      assets: [ ]
+appendix:
+  glossary:
+    - term: "Cheers"
+      definition: "Косметические донаты игроков в пользу креаторов в форме визуальных эффектов"
+    - term: "Revshare (Revenue Share)"
+      definition: "Распределение доходов между платформой и креатором от продаж чирсов"
+    - term: "Fan economy"
+      definition: "Экономическая система поддержки креаторов через фанатов и сообщество"
+    - term: "Anti-spam measures"
+      definition: "Технические и поведенческие меры предотвращения злоупотреблений системой"
+  references:
+    - id: mechanics-social-creator-ecosystem
+      title: "Экосистема креаторов"
+      type: document
+    - id: mechanics-meta-payment-system
+      title: "Система платежей"
+      type: document
+  decisions:
+    - rationale: "Строго косметические эффекты без gameplay влияния"
+      impact: "Сохраняет баланс игры, предотвращает pay-to-win"
+    - rationale: "Комплексная анти-спам система"
+      impact: "Обеспечивает комфортное использование, предотвращает abuse"
+    - rationale: "Прозрачное распределение доходов"
+      impact: "Строит доверие с креаторами, стимулирует качественный контент"
+    - rationale: "Гибкая система модерации"
+      impact: "Балансирует между свободой выражения и безопасностью"
+  balance_analysis:
+    risk_reward_ratio: "Low-Medium"
+    counterplay_options: "Anti-spam systems, moderation, user reporting"
+    synergy_potential: "High (with creator economy, events, social features)"
+    player_skill_impact: "None (purely social engagement)"
+    recommended_monthly_revenue_target: "200,000-500,000 credits"
+implementation:
+  github_issue: 1816
+  needs_task: false
+  queue_reference: [ ]
+  blockers: [ ]
+history:
+  - version: "1.1.0"
+    date: 2026-01-12
+    author: content_writer
+    changes: "Расширение до enterprise стандарта: каталог чирсов, система покупок, ревшар, отображение, анти-эксплойт, аналитика."
+  - version: "1.0.0"
+    date: 2025-12-12
+    author: idea_writer
+    changes: "Базовый каркас фан-экономики: чирсы, ревшар, лимиты, телеметрия."
+validation:
+  checksum: ""
+  schema_version: "1.0"
 
