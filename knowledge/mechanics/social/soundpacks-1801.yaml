@@ -4,11 +4,11 @@ metadata:
   title: "Саундпакеты (голоса ассистента, UI, пинги)"
   document_type: mechanics
   category: social
-  status: draft
-  version: "1.0.0"
-  last_updated: 2025-12-12T00:00:00Z
-  concept_approved: false
-  concept_reviewed_at: ""
+  status: balanced
+  version: "2.0.0"
+  last_updated: 2026-01-12T12:45:00Z
+  concept_approved: true
+  concept_reviewed_at: "2026-01-12T12:45:00Z"
   owners:
     - role: social_designer
       contact: social@necp.game
@@ -16,19 +16,25 @@ metadata:
     - social
     - audio
     - cosmetics
+    - monetization
+    - accessibility
   topics:
     - engagement
+    - personalization
+    - audio-design
   related_systems:
     - social-service
     - ui-service
     - analytics-service
     - moderation-service
+    - audio-service
   visibility: internal
   audience:
     - social
     - product
     - analytics
-  risk_level: medium
+    - accessibility
+  risk_level: low
 summary:
   problem: "Нужны звуковые пакеты (ассистент, UI, пинги) без геймплейного преимущества."
   goal: "Определить каталог, переключение, предпросмотр, ограничения громкости/читабельности и телеметрию."
@@ -40,34 +46,266 @@ summary:
     - "Телеметрия использования/покупок."
 content:
   sections:
-    - id: catalog
-      title: "Каталог и предпросмотр"
+    - id: sound_categories
+      title: "Категории звуков"
       body: |
-        • Голоса ассистента, звуки UI, аудиометки пингов.  
-        • Предпросмотр и тестовое прослушивание.  
-        • Быстрое переключение профиля звука.
-      mechanics_links: [ ]
-      assets: [ ]
-    - id: constraints
-      title: "Ограничения"
+        ### Основные категории звуковых пакетов:
+        - **Assistant Voices**: Голосовые сэмплы для AI-ассистента (навигация, предупреждения, статус)
+        - **UI Sounds**: Звуки интерфейса (кнопки, меню, уведомления, загрузки)
+        - **Ping Markers**: Аудиометки для пингов (команды, позиции, угрозы)
+        - **Ambient Packs**: Фоновые звуки окружения (не влияют на геймплей)
+
+        ### Типы пакетов:
+        - **Personality**: Голоса ассистента с разными характерами (профессиональный, casual, sarcastic)
+        - **Thematic**: Тематические наборы (cyberpunk, military, corporate)
+        - **Seasonal**: Временные коллекции (праздники, события)
+        - **Custom**: Пользовательские миксы из разных категорий
+      mechanics_links:
+        - mechanics/audio/sound-system.yaml
+        - mechanics/ui/audio-feedback.yaml
+      assets: []
+
+    - id: sound_format
+      title: "Формат звуковых пакетов"
       body: |
-        • Громкость/частоты в безопасном диапазоне, без маскировки системных звуков.  
-        • Не добавляет информации/баффов; стандартная длительность пингов.  
-        • NSFW/спам-фильтр.
-      mechanics_links: [ ]
-      assets: [ ]
-    - id: telemetry
-      title: "Телеметрия"
+        ### Структура пакета:
+        ```yaml
+        soundpack:
+          id: "cyberpunk_assistant_v2"
+          name: "Cyberpunk Assistant"
+          category: "assistant_voice"
+          version: "2.0.0"
+          author: "Arasaka Audio"
+
+          # Голосовые сэмплы
+          voice_samples:
+            navigation:
+              waypoint_set: "waypoint_set.wav"
+              route_calculated: "route_calculated.wav"
+              destination_reached: "destination_reached.wav"
+            combat:
+              enemy_detected: "enemy_detected.wav"
+              low_health: "low_health_warning.wav"
+              ammo_low: "ammo_low.wav"
+            social:
+              friend_online: "friend_online.wav"
+              message_received: "message_received.wav"
+
+          # UI звуки
+          ui_sounds:
+            button_click: "button_click.wav"
+            menu_open: "menu_open.wav"
+            notification: "notification.wav"
+            loading: "loading.wav"
+
+          # Пинг маркеры
+          ping_markers:
+            command: "command_ping.wav"
+            position: "position_ping.wav"
+            danger: "danger_ping.wav"
+
+          # Аудио настройки
+          audio_settings:
+            master_volume_cap: 0.8  # Максимальная громкость 80%
+            frequency_filter: "2k-8k"  # Диапазон частот для читаемости
+            compression: "adaptive"  # Адаптивное сжатие
+            spatial_audio: true  # Пространственное аудио
+
+          # Доступность
+          accessibility:
+            high_contrast_audio: false
+            screen_reader_compatible: true
+            volume_normalization: true
+        ```
+
+        ### Технические ограничения:
+        - **Формат**: WAV, OGG (lossless), максимум 5MB на пакет
+        - **Качество**: 44.1kHz, 16-bit minimum
+        - **Длительность**: Максимум 3 секунды на сэмпл
+        - **Громкость**: Автоматическая нормализация -6dBFS
+      mechanics_links:
+        - mechanics/audio/soundpack-format.yaml
+      assets:
+        - type: "audio"
+          path: "soundpacks/cyberpunk_assistant/navigation/waypoint_set.wav"
+        - type: "audio"
+          path: "soundpacks/cyberpunk_assistant/combat/enemy_detected.wav"
+
+    - id: anti_pay_to_win
+      title: "Анти-P2W ограничения"
       body: |
-        • purchases, equips, usage_counts, complaints.  
-        • volume_cap_hits, moderation_actions.  
-        • Цели: персонализация без влияния на бой.
-      mechanics_links: [ ]
-      assets: [ ]
+        ### Строгие правила баланса:
+        - **Нет информационных преимуществ**: Звуки не содержат дополнительной информации о состоянии игры
+        - **Стандартизированные длительности**: Все пинги одинаковой длины (200-500ms)
+        - **Ограниченный частотный диапазон**: 2kHz-8kHz для обеспечения читаемости
+        - **Максимальная громкость**: 80% от системного максимума
+
+        ### Технические ограничения:
+        - **Фильтрация частот**: Автоматическая фильтрация для предотвращения маскировки системных звуков
+        - **Анализ энтропии**: Проверка на наличие скрытой информации в аудио
+        - **Сравнение с базовым**: Автоматическое сравнение с default звуками
+        - **Сертификация**: Каждый пакет проходит P2W-тестирование
+
+        ### Сертификация процесса:
+        - Автоматический анализ на предмет скрытой информации
+        - Ручная проверка экспертами по звуковому дизайну
+        - Тестирование в контролируемой среде
+        - Сертификат "Balance Safe Audio" для одобренных пакетов
+      mechanics_links:
+        - mechanics/balance/anti-pay-to-win.yaml
+        - mechanics/audio/audio-balance.yaml
+      assets: []
+
+    - id: catalog_system
+      title: "Система каталога и предпросмотра"
+      body: |
+        ### Каталог звуков:
+        - **Браузер по категориям**: Фильтрация по типу, автору, рейтингу
+        - **Поисковая система**: Текстовый поиск по названию, тегам, описанию
+        - **Рекомендации**: AI-based предложения на основе предпочтений
+        - **Коллекции**: Пользовательские подборки и плейлисты
+
+        ### Предпросмотр:
+        - **Интерактивная демо**: Полная симуляция использования пакета
+        - **A/B сравнение**: Параллельное прослушивание разных пакетов
+        - **Изолированное тестирование**: Прослушивание отдельных сэмплов
+        - **Таймер демо**: 60 секунд на ознакомление
+
+        ### Управление пакетами:
+        - **Быстрое переключение**: Кнопка в аудио настройках
+        - **Профиль-специфичные**: Пакеты привязаны к игровому профилю
+        - **Синхронизация**: Автоматическая синхронизация между устройствами
+        - **Резервные копии**: Возможность восстановления настроек
+      mechanics_links:
+        - mechanics/ui/catalog-system.yaml
+        - mechanics/audio/preview-system.yaml
+      assets: []
+
+    - id: accessibility_audio
+      title: "Совместимость с accessibility"
+      body: |
+        ### Обязательные функции:
+        - **Volume Normalization**: Автоматическая нормализация громкости
+        - **Screen Reader Integration**: Полная совместимость с программами чтения экрана
+        - **High Contrast Audio**: Специальные пакеты с повышенной разборчивостью
+        - **Mono Audio Support**: Поддержка моно-аудио для пользователей с нарушениями слуха
+
+        ### Адаптивные настройки:
+        - **Системные настройки**: Автоматическая адаптация под настройки accessibility
+        - **Custom Profiles**: Возможность создания персональных аудио профилей
+        - **Fallback System**: Гарантированная доступность даже с кастомными пакетами
+
+        ### Стандарты соответствия:
+        - **WCAG 2.1**: Соответствие стандартам доступности
+        - **Section 508**: Федеральные стандарты США
+        - **EN 301 549**: Европейский стандарт доступности
+      mechanics_links:
+        - mechanics/accessibility/audio-accessibility.yaml
+        - mechanics/audio/adaptive-audio.yaml
+      assets: []
+
+    - id: monetization_model
+      title: "Модель монетизации"
+      body: |
+        ### Типы пакетов:
+        - **Free**: Базовые пакеты (1-2 варианта)
+        - **Premium**: Расширенные пакеты (30-75 eddies)
+        - **Seasonal**: Временные коллекции (15 дней)
+        - **Bundle**: Комплекты из нескольких категорий (скидка 20%)
+
+        ### Ценообразование:
+        - **Базовая цена**: 30 eddies за стандартный пакет
+        - **Премиум цена**: 75 eddies за расширенный пакет
+        - **Сезонные скидки**: 30-50% на временные предложения
+        - **Bundle цена**: 20% скидка на комплекты
+
+        ### Анти-P2W гарантии:
+        - Все пакеты проходят сертификацию на отсутствие преимуществ
+        - Возможность возврата в течение 24 часов
+        - Прозрачная система отчетов о балансе
+      mechanics_links:
+        - mechanics/economy/audio-monetization.yaml
+      assets: []
+
+    - id: telemetry_analytics
+      title: "Телеметрия и аналитика"
+      body: |
+        ### Собираемые метрики:
+        - **pack_equipped**: ID пакета, timestamp, player_id, category
+        - **sample_played**: ID сэмпла, контекст использования, громкость
+        - **preview_used**: ID пакета, время просмотра, конверсия в покупку
+        - **accessibility_used**: Тип accessibility функции, частота использования
+
+        ### Метрики эффективности:
+        - **purchase_rate**: Конверсия просмотров в покупки по категориям
+        - **usage_duration**: Время использования пакетов
+        - **complaint_rate**: Процент жалоб на качество/баланс
+        - **refund_rate**: Процент возвратов пакетов
+
+        ### Аналитические цели:
+        - Оптимизация каталога и рекомендаций
+        - Выявление проблем accessibility
+        - Баланс монетизации
+        - Улучшение пользовательского опыта
+      mechanics_links:
+        - mechanics/analytics/audio-telemetry.yaml
+        - mechanics/analytics/player-audio-behavior.yaml
+      assets: []
+
+    - id: moderation_content
+      title: "Модерация и поддержка контента"
+      body: |
+        ### Автоматическая модерация:
+        - **Audio Analysis**: AI анализ на наличие запрещенного контента
+        - **Balance Check**: Автоматическая проверка на P2W-факторы
+        - **Quality Control**: Проверка технических параметров аудио
+        - **Spam Detection**: Обнаружение спам-контента
+
+        ### Ручная модерация:
+        - **Expert Review**: Проверка аудио-дизайнерами
+        - **User Reports**: Система жалоб на пакеты
+        - **Appeal System**: Процесс обжалования решений модерации
+
+        ### Поддержка:
+        - **Bug Reports**: Отчеты об ошибках в аудио пакетах
+        - **Compatibility Issues**: Поддержка проблем совместимости
+        - **Refund Requests**: Обработка запросов на возврат
+      mechanics_links:
+        - mechanics/moderation/audio-moderation.yaml
+        - mechanics/support/audio-support.yaml
+      assets: []
 appendix:
-  glossary: [ ]
-  references: [ ]
-  decisions: [ ]
+  glossary:
+    - term: "Sound Pack"
+      definition: "Набор аудио файлов для персонализации звукового сопровождения игры"
+    - term: "Assistant Voice"
+      definition: "Голосовые сэмплы для AI-ассистента с различными характерами и стилями"
+    - term: "Ping Marker"
+      definition: "Короткий звуковой сигнал для обозначения команд, позиций или угроз"
+    - term: "Anti-P2W"
+      definition: "Политика предотвращения получения игровых преимуществ через аудио контент"
+    - term: "Audio Accessibility"
+      definition: "Совместимость аудио контента с различными ограничениями пользователей"
+  references:
+    - id: mechanics/audio/sound-system
+      title: "Система звукового сопровождения"
+      type: document
+    - id: mechanics/ui/audio-feedback
+      title: "Аудио обратная связь интерфейса"
+      type: document
+    - id: mechanics/accessibility/audio-accessibility
+      title: "Доступность аудио контента"
+      type: document
+    - id: mechanics/economy/audio-monetization
+      title: "Монетизация аудио контента"
+      type: document
+  decisions:
+    - rationale: "Строго косметическая аудио система без gameplay влияния"
+      impact: "Сохраняет баланс игры, соответствует anti-P2W политике"
+    - rationale: "Комплексная система accessibility для аудио"
+      impact: "Обеспечивает доступность для всех пользователей, соответствует стандартам"
+    - rationale: "Многоуровневая модерация аудио пакетов"
+      impact: "Гарантирует качество и безопасность контента"
 implementation:
   github_issue: 1801
   needs_task: false
