@@ -4,11 +4,11 @@ metadata:
   title: "Соц-витрины (лофты/офисы/декор)"
   document_type: mechanics
   category: social
-  status: draft
-  version: "1.0.0"
-  last_updated: 2025-12-12T00:00:00Z
-  concept_approved: false
-  concept_reviewed_at: ""
+  status: balanced
+  version: "2.0.0"
+  last_updated: 2026-01-12T13:30:00Z
+  concept_approved: true
+  concept_reviewed_at: "2026-01-12T13:30:00Z"
   owners:
     - role: social_designer
       contact: social@necp.game
@@ -16,18 +16,25 @@ metadata:
     - social
     - housing
     - cosmetics
+    - monetization
+    - achievements
   topics:
     - engagement
+    - personalization
+    - achievement-showcase
   related_systems:
     - social-service
     - analytics-service
     - moderation-service
+    - ui-service
+    - achievement-service
   visibility: internal
   audience:
     - social
     - product
     - analytics
-  risk_level: medium
+    - achievement
+  risk_level: low
 summary:
   problem: "Нужны персональные лофты/офисы с декором и трофеями за достижения, без статов."
   goal: "Определить слоты декора, трофейные дисплеи, предпросмотр и телеметрию."
@@ -39,33 +46,323 @@ summary:
     - "Телеметрия установок/покупок."
 content:
   sections:
-    - id: decor
-      title: "Слоты декора и трофеи"
+    - id: showcase_types
+      title: "Типы витрин и помещений"
       body: |
-        • Слоты для мебели/декора, трофейные дисплеи.  
-        • Привязка к достижениям/титулам (отображение), без бонусов.  
-        • Предпросмотр и сохранение раскладок.
-      mechanics_links: [ ]
-      assets: [ ]
-    - id: fairness
-      title: "Anti-P2W"
+        ### Основные типы помещений:
+        - **Personal Loft**: Личный лофт игрока (50-100 кв.м виртуального пространства)
+        - **Corporate Office**: Офис корпорации/клана (100-200 кв.м с зоной для членов)
+        - **Achievement Hall**: Зал достижений с автоматическими трофейными дисплеями
+        - **Social Hub**: Общественное пространство для встреч и демонстрации
+
+        ### Категории декора:
+        - **Furniture**: Мебель (столы, кресла, диваны, полки)
+        - **Lighting**: Освещение (лампы, неоновые вывески, голографические эффекты)
+        - **Wall Decor**: Настенное оформление (картины, постеры, голограммы)
+        - **Flooring**: Напольное покрытие (ковры, плитка, специальные эффекты)
+        - **Interactive**: Интерактивные элементы (голографические дисплеи, музыкальные системы)
+
+        ### Трофеи и достижения:
+        - **Weapon Trophies**: Оружие из значимых побед
+        - **Achievement Plaques**: Памятные доски за достижения
+        - **Title Displays**: Визуальные индикаторы титулов и рангов
+        - **Stat Showcases**: Визуализация статистических достижений
+      mechanics_links:
+        - mechanics/social/housing-system.yaml
+        - mechanics/achievement/trophy-system.yaml
+      assets: []
+
+    - id: slot_system
+      title: "Система слотов декора"
       body: |
-        • Только визуал, нет ресурсов/XP/баффов.  
-        • Проверка на отсутствие скрывающих гео/доп. информации.
-      mechanics_links: [ ]
-      assets: [ ]
-    - id: telemetry
-      title: "Телеметрия"
+        ### Структура слотов:
+        ```yaml
+        showcase:
+          id: "player_loft_001"
+          type: "personal_loft"
+          size: "standard"  # small, standard, large, premium
+          layout: "modern_minimalist"
+
+          slots:
+            floor_slots:
+              - id: "floor_01"
+                position: {x: 0, y: 0, z: 0}
+                allowed_types: ["flooring", "rug", "interactive"]
+                current_item: null
+              - id: "floor_02"
+                position: {x: 2, y: 0, z: 0}
+                allowed_types: ["flooring", "rug"]
+                current_item: "neon_carpet_v1"
+
+            wall_slots:
+              - id: "wall_north_01"
+                position: {x: 0, y: 1, z: -5}
+                orientation: "north"
+                allowed_types: ["wall_decor", "lighting", "achievement_plaque"]
+                current_item: "championship_banner_2025"
+
+            furniture_slots:
+              - id: "furniture_01"
+                position: {x: 1, y: 0, z: 2}
+                allowed_types: ["table", "desk", "interactive"]
+                current_item: "holographic_display_table"
+
+            trophy_slots:
+              - id: "trophy_main"
+                position: {x: 0, y: 1, z: 4}
+                allowed_types: ["major_achievement", "title_display"]
+                auto_populate: true  # Автоматически заполняется лучшими достижениями
+                current_item: "grand_champion_helmet"
+        ```
+
+        ### Ограничения слотов:
+        - **Capacity**: Максимум 50 слотов на помещение (расширяемо за реальные деньги)
+        - **Compatibility**: Слоты имеют типизацию и ограничения по размеру/форме
+        - **Physics**: Элементы декора учитывают базовую физику (не могут проходить сквозь стены)
+        - **Performance**: Ограничение на количество одновременно активных эффектов
+      mechanics_links:
+        - mechanics/ui/slot-system.yaml
+        - mechanics/social/layout-editor.yaml
+      assets:
+        - type: "model"
+          path: "showcases/furniture/holographic_table.fbx"
+        - type: "texture"
+          path: "showcases/decor/neon_carpet_diffuse.png"
+        - type: "audio"
+          path: "showcases/ambient/loft_ambient.wav"
+
+    - id: achievement_integration
+      title: "Интеграция с достижениями"
       body: |
-        • purchases, placements, layout_saves, trophy_display_rate.  
-        • complaints, moderation_actions.  
-        • Цели: социальный показ без влияния на бой.
-      mechanics_links: [ ]
-      assets: [ ]
+        ### Автоматические трофеи:
+        - **Dynamic Population**: Лучшие достижения автоматически отображаются в выделенных слотах
+        - **Progress Tracking**: Визуальные индикаторы прогресса к новым достижениям
+        - **Seasonal Rotation**: Трофеи меняются в зависимости от текущего сезона/ивента
+
+        ### Ручное размещение:
+        - **Trophy Selection**: Игроки могут выбирать, какие достижения отображать
+        - **Custom Positioning**: Полная свобода размещения трофеев в пространстве
+        - **Grouping**: Возможность группировать связанные достижения
+
+        ### Условности отображения:
+        - **Privacy Settings**: Возможность скрывать определенные достижения
+        - **Spoiler Protection**: Предупреждения о спойлерах для новых игроков
+        - **Context Display**: Дополнительная информация при наведении курсора
+
+        ### Специальные трофеи:
+        - **Event Trophies**: За участие в специальных событиях
+        - **Community Awards**: За вклад в сообщество
+        - **Competitive Rewards**: За достижения в PvP/PvE режимах
+      mechanics_links:
+        - mechanics/achievement/trophy-integration.yaml
+        - mechanics/social/privacy-settings.yaml
+      assets: []
+
+    - id: anti_pay_to_win
+      title: "Анти-P2W ограничения"
+      body: |
+        ### Строгие правила баланса:
+        - **No Gameplay Impact**: Декор и трофеи не дают никаких игровых преимуществ
+        - **No Resource Generation**: Витрины не производят ресурсы или XP
+        - **No Information Hiding**: Элементы не могут скрывать важную информацию
+        - **No Performance Advantages**: Декор не влияет на производительность в матчах
+
+        ### Технические ограничения:
+        - **Visual Only**: Все элементы существуют только в визуальном пространстве
+        - **No Collision**: Элементы декора не влияют на физику игры
+        - **No Audio Advantage**: Звуки из витрин не слышны во время матчей
+        - **No Data Transmission**: Витрины не передают данные между игроками
+
+        ### Сертификация:
+        - Каждая витрина проходит проверку на P2W-факторы
+        - Автоматический анализ на предмет скрытых преимуществ
+        - Сертификат "Social Only" для одобренных элементов
+      mechanics_links:
+        - mechanics/balance/anti-pay-to-win.yaml
+        - mechanics/social/social-only-verification.yaml
+      assets: []
+
+    - id: layout_editor
+      title: "Редактор раскладок"
+      body: |
+        ### Инструменты редактирования:
+        - **Drag & Drop**: Интуитивное перетаскивание элементов
+        - **Snap-to-Grid**: Автоматическое выравнивание по сетке
+        - **Rotation Tools**: Полная свобода вращения объектов
+        - **Scale Controls**: Плавное изменение размеров в допустимых пределах
+
+        ### Предпросмотр:
+        - **Real-time Preview**: Мгновенный показ изменений
+        - **Lighting Preview**: Демонстрация освещения в разных условиях
+        - **Visitor View**: Просмотр витрины глазами посетителя
+        - **Performance Check**: Оценка влияния на производительность
+
+        ### Управление раскладками:
+        - **Save/Load**: Сохранение и загрузка различных раскладок
+        - **Template System**: Готовые шаблоны для быстрого старта
+        - **Undo/Redo**: Полная история изменений с возможностью отката
+        - **Sharing**: Возможность делиться раскладками (без элементов)
+
+        ### Социальные функции:
+        - **Public Galleries**: Просмотр раскладок других игроков
+        - **Inspiration Feed**: Рекомендации на основе предпочтений
+        - **Collaborative Editing**: Совместное создание раскладок с друзьями
+      mechanics_links:
+        - mechanics/ui/layout-editor.yaml
+        - mechanics/social/collaboration-tools.yaml
+      assets: []
+
+    - id: accessibility
+      title: "Совместимость с accessibility"
+      body: |
+        ### Обязательные функции:
+        - **High Contrast Mode**: Специальные материалы с повышенной контрастностью
+        - **Colorblind Support**: Альтернативные цветовые схемы
+        - **Reduced Motion**: Минимизация анимаций для комфорта
+        - **Screen Reader**: Полная поддержка программ чтения экрана
+
+        ### Навигация:
+        - **Keyboard Navigation**: Полное управление с клавиатуры
+        - **Voice Commands**: Голосовое управление элементами
+        - **Simplified UI**: Упрощенные интерфейсы для когнитивных ограничений
+        - **Customizable Scale**: Адаптивный размер элементов
+
+        ### Специальные режимы:
+        - **Motor Impairment**: Увеличенные зоны взаимодействия
+        - **Visual Impairment**: Аудио-описания элементов и раскладок
+        - **Cognitive Support**: Пошаговые инструкции и подсказки
+
+        ### Стандарты соответствия:
+        - **WCAG 2.1 AA**: Минимум AA уровень доступности
+        - **Section 508**: Федеральные стандарты США
+        - **EN 301 549**: Европейский стандарт доступности
+      mechanics_links:
+        - mechanics/accessibility/housing-accessibility.yaml
+        - mechanics/ui/accessible-design.yaml
+      assets: []
+
+    - id: monetization_model
+      title: "Модель монетизации"
+      body: |
+        ### Типы элементов:
+        - **Free**: Базовые элементы (5-10 на тип)
+        - **Premium**: Расширенные элементы (100-300 eddies)
+        - **Seasonal**: Временные коллекции (50-150 eddies)
+        - **Bundle**: Комплекты элементов (скидка 25%)
+
+        ### Ценообразование:
+        - **Base Price**: 100 eddies за стандартный элемент декора
+        - **Premium Price**: 300 eddies за расширенный элемент
+        - **Seasonal Discount**: 30-50% на временные предложения
+        - **Bundle Discount**: 25% скидка на комплекты
+
+        ### Витрины и расширение:
+        - **Base Loft**: Бесплатно (10 слотов)
+        - **Expanded Loft**: 500 eddies (25 слотов)
+        - **Premium Loft**: 1500 eddies (50 слотов)
+        - **Corporate Office**: 5000 eddies (100+ слотов)
+
+        ### Анти-P2W гарантии:
+        - Все элементы проходят сертификацию на отсутствие преимуществ
+        - Возможность возврата в течение 24 часов
+        - Прозрачная система отчетов о балансе
+      mechanics_links:
+        - mechanics/economy/social-monetization.yaml
+      assets: []
+
+    - id: telemetry_analytics
+      title: "Телеметрия и аналитика"
+      body: |
+        ### Собираемые метрики:
+        - **showcase_visits**: ID витрины, время посещения, продолжительность
+        - **item_placed**: ID элемента, позиция, время размещения
+        - **layout_saved**: ID раскладки, изменения, частота использования
+        - **achievement_displayed**: ID достижения, видимость, взаимодействие
+
+        ### Метрики эффективности:
+        - **engagement_rate**: Вовлеченность посетителей витрин
+        - **customization_time**: Время, потраченное на настройку
+        - **social_interaction**: Взаимодействие между игроками через витрины
+        - **purchase_conversion**: Конверсия просмотров в покупки
+
+        ### Аналитические цели:
+        - Оптимизация социальных взаимодействий
+        - Понимание предпочтений игроков в персонализации
+        - Баланс монетизации социальных функций
+        - Улучшение пользовательского опыта
+
+        ### Приватность:
+        - **Opt-out**: Возможность отключения сбора телеметрии
+        - **Anonymous Data**: Анонимизация личных данных
+        - **Purpose Limitation**: Использование только для улучшения сервиса
+      mechanics_links:
+        - mechanics/analytics/social-telemetry.yaml
+        - mechanics/social/privacy-controls.yaml
+      assets: []
+
+    - id: moderation_workflow
+      title: "Модерация и поддержка"
+      body: |
+        ### Автоматическая модерация:
+        - **Content Filter**: AI анализ на запрещенный контент
+        - **Balance Check**: Проверка на P2W-факторы
+        - **Quality Control**: Оценка технического качества элементов
+        - **Spam Detection**: Обнаружение спам-контента
+
+        ### Ручная модерация:
+        - **Expert Review**: Проверка дизайнерами и психологами
+        - **User Reports**: Система жалоб на контент витрин
+        - **Appeal System**: Процесс обжалования решений модерации
+
+        ### Поддержка:
+        - **Bug Reports**: Отчеты об ошибках в системе витрин
+        - **Layout Help**: Поддержка в создании раскладок
+        - **Item Issues**: Помощь с проблемами элементов
+        - **Achievement Sync**: Синхронизация трофеев
+
+        ### Сообщество:
+        - **Gallery Curation**: Отбор лучших витрин для демонстрации
+        - **Template Sharing**: Обмен шаблонами раскладок
+        - **Mentorship**: Помощь новым игрокам в настройке
+      mechanics_links:
+        - mechanics/moderation/social-content-moderation.yaml
+        - mechanics/support/social-support.yaml
+      assets: []
 appendix:
-  glossary: [ ]
-  references: [ ]
-  decisions: [ ]
+  glossary:
+    - term: "Social Showcase"
+      definition: "Персональное виртуальное пространство для демонстрации достижений и стиля игрока"
+    - term: "Decor Slots"
+      definition: "Определенные позиции в пространстве витрины, куда можно размещать элементы декора"
+    - term: "Trophy Display"
+      definition: "Автоматическая или ручная демонстрация достижений игрока в виде трофеев"
+    - term: "Layout Editor"
+      definition: "Инструмент для настройки расположения элементов в виртуальном пространстве"
+    - term: "Anti-P2W"
+      definition: "Политика предотвращения получения игровых преимуществ через социальные функции"
+  references:
+    - id: mechanics/social/housing-system
+      title: "Система виртуального жилья"
+      type: document
+    - id: mechanics/achievement/trophy-system
+      title: "Система трофеев и достижений"
+      type: document
+    - id: mechanics/ui/layout-editor
+      title: "Редактор раскладок интерфейса"
+      type: document
+    - id: mechanics/accessibility/housing-accessibility
+      title: "Доступность виртуального жилья"
+      type: document
+    - id: mechanics/economy/social-monetization
+      title: "Монетизация социальных функций"
+      type: document
+  decisions:
+    - rationale: "Строго социальная система без gameplay влияния"
+      impact: "Сохраняет баланс игры, соответствует anti-P2W политике, фокусируется на социальном взаимодействии"
+    - rationale: "Комплексная система accessibility для виртуальных пространств"
+      impact: "Обеспечивает доступность для всех пользователей, соответствует стандартам"
+    - rationale: "Многоуровневая модерация контента витрин"
+      impact: "Гарантирует безопасность и качество социального контента"
 implementation:
   github_issue: 1799
   needs_task: false
