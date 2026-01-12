@@ -1,0 +1,64 @@
+title: AI враг — Турель-кимера с адаптацией урона
+# Issue: #1826
+summary:
+  role: Стационарная турель с адаптацией типа урона по телеметрии боя; уязвима к взлому модуля адаптации.
+  layer: Tactical/Mythic; уязвима к фокусу по weakpoint и взлому.
+behavior:
+  damage_tracking: сканирует входящий/исходящий урон; адаптирует тип каждые N секунд.
+  target_priority: фокусирует уязвимые цели; меняет тип если цель резистит.
+abilities:
+  адаптация_урона:
+    params:
+      damage_types: "kinetic, laser, emp"
+      switch_interval_s: 8-12
+      telemetry_window_s: 30
+      adaptation_threshold: 0.7
+      base_damage_hp_pct: 18
+  модуль_адаптации:
+    params:
+      hp_pct: 25
+      weakpoint_multiplier: 2.0
+      hack_duration_s: 4
+      hack_effect: "locks_damage_type"
+      hack_cooldown_s: 20
+  кинетический_режим:
+    params:
+      damage_hp_pct: 22
+      armor_penetration: 0.8
+      falloff_start_m: 25
+      effective_range_m: 35
+      rate_of_fire_rpm: 180
+  лазерный_режим:
+    params:
+      damage_hp_pct: 20
+      energy_drain: true
+      overheat_threshold: 15
+      beam_duration_s: 2.5
+      cooldown_s: 3
+  emp_режим:
+    params:
+      damage_hp_pct: 16
+      stun_duration_s: 3
+      implant_disruption: true
+      disruption_radius_m: 8
+      energy_cost: high
+ai_logic:
+  adaptation: меняет тип урона если эффективность падает ниже threshold; предпочитает counter к резистам цели.
+  target_selection: приоритет по уязвимым (низкий HP, без щита); избегает резистентных целей.
+  synergy: работает с мехами поддержки (починка) и шагоходами (укрытие).
+  defense: если модуль взломан — переходит в fallback режим с пониженным уроном.
+telemetry:
+  - metric: damage_type_switches
+    desc: частота смены типов урона и причины адаптации
+  - metric: adaptation_module_hacks
+    desc: успешные взломы модуля и продолжительность блокировки
+  - metric: turret_kills_by_type
+    desc: киллы по типам урона и эффективность каждого режима
+  - metric: target_resistance_tracking
+    desc: анализ резистов целей и успешность адаптации
+edge_cases:
+  - анти-абуз: при спаме одного типа — снижает switch_interval_s до 6, но повышает energy_cost
+  - кооп: две турели не используют одинаковый тип одновременно в радиусе 20м
+  - соло: base_damage_hp_pct снижен до 15, но switch_interval_s до 6
+  - перегрузка: при частых сменах — risk overheat (временное отключение на 8с)
+
