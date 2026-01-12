@@ -1,0 +1,321 @@
+# NECPGAME World Simulation System
+# Issue: #1796 - Live world ticks and NPC/economy reactions
+
+metadata:
+  issue: "#1796"
+  title: "Live World Simulation - Ticks, NPC Reactions, Economy"
+  description: "Dynamic world simulation with scheduled events, NPC reactions, and economic systems"
+  version: "1.0.0"
+  created: "2026-01-12"
+  author: "Content Agent"
+  next_agent: "Architect"
+  categories: ["world", "simulation", "economy", "npc", "factions"]
+
+# Core Philosophy
+philosophy:
+  - "LIVING WORLD: Events happen even without player presence"
+  - "PLAYER IMPACT: Actions create lasting consequences"
+  - "DYNAMIC ECONOMY: Markets react to player activities"
+  - "SOCIAL REACTIONS: NPCs remember and respond to reputation"
+
+# 1. TECHNICAL FEASIBILITY ASSESSMENT
+technical_feasibility:
+  world_service:
+    complexity: "Medium"
+    requirements:
+      - "Background world state simulation"
+      - "Scheduled event system"
+      - "State persistence across sessions"
+      - "Performance optimization for idle worlds"
+    estimated_effort: "2-3 weeks"
+
+  economy_service:
+    complexity: "Medium-High"
+    requirements:
+      - "Market fluctuation algorithms"
+      - "Supply/demand modeling"
+      - "Cross-region price synchronization"
+      - "Economic event triggers"
+    estimated_effort: "3-4 weeks"
+
+  faction_service:
+    complexity: "High"
+    requirements:
+      - "Territory control mechanics"
+      - "Faction AI decision making"
+      - "Campaign progression systems"
+      - "Multi-faction conflict resolution"
+    estimated_effort: "4-5 weeks"
+
+  npc_service:
+    complexity: "Medium"
+    requirements:
+      - "NPC memory systems"
+      - "Reputation tracking"
+      - "Social reaction algorithms"
+      - "Dynamic behavior scripting"
+    estimated_effort: "2-3 weeks"
+
+# 2. WORLD TICK SYSTEM
+world_ticks:
+  tick_interval: "5 minutes"  # Real-world time between simulation updates
+  tick_duration: "1 second"   # Maximum processing time per tick
+
+  scheduled_events:
+    faction_movements:
+      - name: "Corporate Convoys"
+        schedule: "Every 2 hours"
+        description: "Armored convoys transport valuable cargo between districts"
+        impact: "Temporary roadblocks, increased security in transit areas"
+
+      - name: "Nomad Caravans"
+        schedule: "Every 4 hours"
+        description: "Nomad trading caravans move between safe zones"
+        impact: "Temporary markets, black market opportunities"
+
+      - name: "Gang Patrol Shifts"
+        schedule: "Every 1 hour"
+        description: "Street gangs rotate patrol routes and territories"
+        impact: "Changing safe/unsafe zones, ambush opportunities"
+
+    economic_events:
+      - name: "Market Fluctuations"
+        schedule: "Every 30 minutes"
+        description: "Prices change based on supply/demand and events"
+        impact: "Dynamic pricing, trading opportunities/risks"
+
+      - name: "Black Market Surges"
+        schedule: "Every 6 hours"
+        description: "Illegal goods become more/less available"
+        impact: "Rare item availability, increased gang activity"
+
+    infrastructure_changes:
+      - name: "Security Updates"
+        schedule: "Every 3 hours"
+        description: "Corporations adjust security based on recent incidents"
+        impact: "Changing guard patrols, access restrictions"
+
+      - name: "Utility Fluctuations"
+        schedule: "Every 2 hours"
+        description: "Power/water/comms services experience outages/surges"
+        impact: "Area effects on gameplay, temporary bonuses/penalties"
+
+# 3. NPC REACTION SYSTEM
+npc_reactions:
+  reputation_system:
+    scale: "-100 to +100"
+    decay_rate: "1 point per day (inactive players)"
+    visibility_radius: "500 meters"
+
+    reputation_sources:
+      - "Combat kills: -5 per civilian, -2 per gang member"
+      - "Property damage: -10 per major incident"
+      - "Theft/robbery: -15 per incident"
+      - "Corporate sabotage: -20 per incident"
+      - "Heroic actions: +10 per major save"
+      - "Gang elimination: +5 per gang stronghold cleared"
+      - "Mercenary contracts: +2-5 per completed job"
+
+  reaction_types:
+    shop_owners:
+      neutral: "Normal prices, standard inventory"
+      hostile: "Price gouging (+50%), reduced inventory, call guards"
+      friendly: "Discounts (-20%), special items, tips about opportunities"
+
+    street_vendors:
+      neutral: "Standard black market access"
+      hostile: "No service, spread rumors, potential ambushes"
+      friendly: "Rare items, information about hidden opportunities"
+
+    corporate_employees:
+      neutral: "Ignore player presence"
+      hostile: "Report to security, restrict access, hostile chatter"
+      friendly: "Share corporate intel, provide backdoor access"
+
+    gang_members:
+      neutral: "Standard gang interactions"
+      hostile: "Aggressive posturing, increased ambush risk"
+      friendly: "Safe passage, job offers, territory information"
+
+  social_memory:
+    event_memory_duration: "7 days"
+    reputation_memory_duration: "30 days"
+    gossip_spread_radius: "2000 meters"
+    gossip_decay_rate: "50% per day"
+
+# 4. DYNAMIC ECONOMY SYSTEM
+economy_system:
+  market_mechanics:
+    base_price_fluctuation: "±25% from baseline"
+    supply_demand_modifier: "±50% based on activity"
+    event_modifier: "±100% during major events"
+
+    commodities:
+      weapons:
+        - name: "Assault Rifles"
+          base_price: 2500
+          volatility: "Medium"
+          supply_zones: ["Gang territories", "Black markets"]
+
+      cyberware:
+        - name: "Basic Implants"
+          base_price: 5000
+          volatility: "High"
+          supply_zones: ["Ripperdoc clinics", "Corporate districts"]
+
+      consumables:
+        - name: "Medkits"
+          base_price: 200
+          volatility: "Low"
+          supply_zones: ["Pharmacies", "Street vendors"]
+
+  resource_ecology:
+    loot_zones:
+      depleted_threshold: "70% resource extraction"
+      depletion_effects:
+        - "50% drop rate reduction"
+        - "Price increase +200%"
+        - "Aggressive defender spawns"
+        - "Rare item scarcity"
+
+      recovery_mechanisms:
+        - "Time-based regeneration (24 hours for full recovery)"
+        - "Faction restocking events"
+        - "Player investment opportunities"
+
+    protected_zones:
+      security_threshold: "80% area control"
+      premium_effects:
+        - "Rare item availability +50%"
+        - "Price reduction -30%"
+        - "Safe trading zones"
+        - "Bonus experience rewards"
+
+# 5. FACTION CAMPAIGN SYSTEM
+faction_campaigns:
+  territory_control:
+    control_levels: ["Contested", "Influenced", "Controlled", "Dominant"]
+    control_decay: "5% per day (without active presence)"
+    influence_sources:
+      - "Eliminate faction leaders: +25% control"
+      - "Destroy faction infrastructure: +20% control"
+      - "Complete faction contracts: +15% control"
+      - "Establish safe houses: +30% control"
+
+  campaign_types:
+    corporate_takeover:
+      duration: "7 days"
+      objectives: ["Secure key buildings", "Eliminate rival forces", "Establish corporate presence"]
+      rewards: ["Territory bonuses", "Exclusive contracts", "Corporate reputation"]
+
+    gang_war:
+      duration: "3 days"
+      objectives: ["Control drug labs", "Eliminate rival gangs", "Secure smuggling routes"]
+      rewards: ["Black market access", "Gang alliances", "Territory protection"]
+
+    nomad_territory:
+      duration: "5 days"
+      objectives: ["Secure caravan routes", "Establish outposts", "Defend against raiders"]
+      rewards: ["Safe passage", "Trading bonuses", "Nomad reputation"]
+
+  infrastructure_changes:
+    visual_indicators:
+      - "Faction flags and banners"
+      - "Security checkpoint changes"
+      - "Shop ownership changes"
+      - "Patrol route modifications"
+
+    gameplay_effects:
+      - "Access restrictions/permissions"
+      - "Price modifiers"
+      - "NPC behavior changes"
+      - "Event spawn modifications"
+
+# 6. STREET STATE SYSTEM
+street_states:
+  mood_types:
+    panic:
+      triggers: ["Major incidents", "Faction wars", "Economic crashes"]
+      effects:
+        - "NPC flee behavior +100%"
+        - "Shop closures +50%"
+        - "Guard aggression +75%"
+        - "Price volatility +100%"
+
+    aggression:
+      triggers: ["Gang activity", "Turf wars", "Resource scarcity"]
+      effects:
+        - "Random encounters +150%"
+        - "Hostile NPC behavior +50%"
+        - "Black market opportunities +100%"
+        - "Safe zones reduction -30%"
+
+    prosperity:
+      triggers: ["Economic booms", "Peaceful periods", "Faction stability"]
+      effects:
+        - "Shop discounts -25%"
+        - "Rare item availability +50%"
+        - "Cooperative NPC behavior +30%"
+        - "Safe trading zones +100%"
+
+    calm:
+      triggers: ["Stable periods", "Low activity", "Economic equilibrium"]
+      effects:
+        - "Standard behavior"
+        - "Predictable pricing"
+        - "Normal NPC interactions"
+
+  mood_transition:
+    base_duration: "4 hours"
+    transition_probability: "30% per tick"
+    influence_factors:
+      - "Player activity: +20% change chance"
+      - "Economic events: +15% change chance"
+      - "Faction conflicts: +25% change chance"
+
+# 7. SUCCESS METRICS
+success_metrics:
+  world_liveness:
+    target: "80% world areas show dynamic changes"
+    current_baseline: "Static world state"
+    measurement: "Areas with active simulation / total areas"
+
+  player_impact:
+    target: "75% player actions create lasting consequences"
+    current_baseline: "No persistent effects"
+    measurement: "Actions with visible long-term effects / total actions"
+
+  economic_volatility:
+    target: "Price changes >25% in 60% of markets"
+    current_baseline: "Static pricing"
+    measurement: "Markets with price fluctuations / total markets"
+
+  npc_reactivity:
+    target: "70% NPCs show reputation-based behavior"
+    current_baseline: "Generic NPC behavior"
+    measurement: "Context-aware NPCs / total NPCs"
+
+  faction_dynamics:
+    target: "50% territories show faction control changes"
+    current_baseline: "Static faction presence"
+    measurement: "Dynamic territories / total territories"
+
+# 8. IMPLEMENTATION ROADMAP
+implementation_roadmap:
+  phase_1: "World Ticks & Basic Events (2 weeks)"
+  phase_2: "NPC Reactions & Reputation (2 weeks)"
+  phase_3: "Dynamic Economy (3 weeks)"
+  phase_4: "Faction Campaigns (3 weeks)"
+  phase_5: "Street States & Polish (2 weeks)"
+
+  total_effort: "12 weeks"
+  risk_level: "Medium"
+  testing_requirements: "Extensive simulation testing, performance profiling"
+
+# Next Steps
+next_steps:
+  - "Architect Agent: Design service architecture and data flows"
+  - "Backend Agent: Implement world simulation services"
+  - "Database Agent: Design state persistence schemas"
+  - "Network Agent: Design real-time state synchronization"
+  - "Performance Agent: Optimize for large-scale simulation"
