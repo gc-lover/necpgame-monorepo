@@ -1,58 +1,96 @@
 title: AI враг — Босс-нетворкер (сетевой AI)
 # Issue: #1828
 summary:
-  role:
-    Рейдовый босс-нетраннер, бой в двух слоях: физический и хакерский.
-  layer: Raid/Mythic; требует нетраннеров + бойцов.
+  role: Сетевой босс с двухслойным боем (физика + хакинг); спавнит демонов, вызывает ICE-волны, открывает окна уязвимости ядра
+  layer: Raid/Mythic; требует координации бойцов и нетраннеров
+behavior:
+  positioning: дальняя дистанция 25-35 м; держит группу в радиусе действия способностей
+  focus: мульти-таргет; физически атакует танков, цифрово - нетраннеров
 phases:
-  - фаза_1_демоны:
-      actions:
-        - спавн_демонов: 3-4, усиливаются рядом с боссом
-        - hud_glitch: искажение HUD на 6 с
-      params:
-        demon_hp_scale: raid_tier
-        hud_glitch_duration_s: 6
-  - фаза_2_ice_волна:
-      actions:
-        - ice_wave: периодические волны, сбивают каналы
-        - имплант_block: временный блок имплантов
-      params:
-        ice_wave_interval_s: 12
-        ice_wave_damage_hp_pct: 10
-        implant_block_duration_s: 5
-  - фаза_3_уязвимость_ядра:
-      actions:
-        - core_exposed: ядро уязвимо 15 с
-        - spawn_support: вызывает подкрепление дронов
-      params:
-        core_vuln_duration_s: 15
-        support_count: 4-6
-mechanics:
-  hud_glitches:
-    effects: дрожание прицела, пропадание маркеров
-    cooldown_s: 18
-  anti_implant:
-    effects: блок активок на 5 с
-    cooldown_s: 20
-  demons:
-    synergy: рядом с боссом получают +15% урона
-    counter: анти-ICE деки снижают бафф до 5%
+  phase_1:
+    name: "Демоны"
+    duration_s: 45
+    hp_threshold: 100-71
+    mechanics:
+      - demon_spawn: каждые 14-20с волна демонов (3-5 шт)
+      - hud_glitches: помехи/блики 1-2с, кд 10-14с
+      - implant_block: короткий блок 4-6с в радиусе 12-18м, кд 24-32с
+  phase_2:
+    name: "ICE-волна"
+    duration_s: 30
+    hp_threshold: 70-41
+    mechanics:
+      - ice_wave: пульс каждые 22-30с, дебафф имплантов на 8-12с
+      - implant_efficiency: снижение эффективности на 40-60%
+      - aoe_glitches: массовые помехи на весь экран 2-3с
+  phase_3:
+    name: "Уязвимое ядро"
+    duration_s: 10-14
+    hp_threshold: 40-0
+    mechanics:
+      - core_exposure: ядро открыто для взлома
+      - vulnerability_multiplier: урон от ICE/EMP x2.5
+      - pattern_change: после взлома меняет поведение на 30с
+abilities:
+  демоны:
+    params:
+      spawn_interval_s: 14-20
+      wave_size: 3-5
+      demon_types: "hacker_demons, shield_demons, damage_demons"
+      pressure_on_netrunners: true
+      synergy_bonus: "работают с фантомами/турелями"
+  ice_волна:
+    params:
+      interval_s: 22-30
+      debuff_duration_s: 8-12
+      implant_reduction_pct: 40-60
+      aoe_radius_m: 15-20
+      cooldown_s: 15-20
+  hud_глитчи:
+    params:
+      duration_s: 1-2
+      intensity: "visual_distortion, input_lag, minimap_jamming"
+      cooldown_s: 10-14
+      range_m: 25-35
+  блок_имплантов:
+    params:
+      duration_s: 4-6
+      radius_m: 12-18
+      affected_implants: "combat, stealth, medical"
+      cooldown_s: 24-32
+      visual_indicator: "red_outline_pulse"
+  подкрепления:
+    params:
+      trigger_hp_pct: 70, 40
+      spawn_types: "cyberdogs, turrets, phantoms"
+      spawn_count: 2-4
+      spawn_delay_s: 5-8
+      reinforcement_cooldown_s: 30-45
 ai_logic:
-  pattern: циклично фаза1 → фаза2 → фаза3 → повтор; ускоряет цикл при 50% HP.
-  target_priority: фокусит нетраннеров/медиков цифровыми атаками, бойцов — физическими демонами.
+  multi_target: физически атакует танков, цифрово - деку нетраннеров
+  distance_management: держит оптимальную дистанцию для способностей
+  pattern_adaptation: после взлома ядра меняет тактику на 30с
+  reinforcement_calls: при падении HP порогов вызывает помощь
+  core_protection: закрывает ядро после окна уязвимости
 telemetry:
-  - metric: networker_battle_duration
-    desc: длительность боя
-  - metric: networker_wipes
-    desc: вайпы и на какой фазе
-  - metric: networker_core_damage
-    desc: урон по ядру в окна уязвимости
-  - metric: demon_spawns
-    desc: количество демонов и их убийства
-  - metric: implant_blocks
-    desc: сколько раз отключены импланты
+  - metric: networker_fight_duration
+    desc: средняя длительность боя в секундах
+  - metric: networker_netrunner_participation
+    desc: процент боев с участием нетраннеров
+  - metric: networker_wipes_count
+    desc: количество вайпов на группу
+  - metric: networker_core_hack_success
+    desc: процент успешных взломов ядра
+  - metric: networker_demon_wave_kills
+    desc: время убийства волны демонов
+  - metric: networker_ice_wave_hits
+    desc: количество попаданий ICE-волной
+  - metric: networker_reinforcement_calls
+    desc: частота вызовов подкреплений
 edge_cases:
-  - анти-абуз: при чрезмерном кайте (>25 м постоянной дистанции) сокращает ice_wave_interval_s до 9
-  - кооп: ядро открыто для всего рейда; баффы не стакаются между копиями босса
-  - соло: damage_hp_pct ice_wave снижен до 6
+  - соло: без нетраннера бой невозможен - ICE защита максимальна
+  - кооп_без_нета: бойцы держат демонов, ждут окна ядра для EMP
+  - спам_взломов: после 3 взломов подряд ядро получает иммунитет на 60с
+  - подкрепления_перегруз: максимум 8 активных миньонов одновременно
+  - глитчи_антиабуз: при частом сканировании HUD глитчи становятся короче
 
