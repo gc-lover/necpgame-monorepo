@@ -4,11 +4,11 @@ metadata:
   title: "Боевые интро/аутро, баннеры киллфида, MVP рамки"
   document_type: mechanics
   category: meta
-  status: draft
-  version: "1.0.0"
-  last_updated: 2025-12-12T00:00:00Z
-  concept_approved: false
-  concept_reviewed_at: ""
+  status: balanced
+  version: "2.0.0"
+  last_updated: 2026-01-12T13:00:00Z
+  concept_approved: true
+  concept_reviewed_at: "2026-01-12T13:00:00Z"
   owners:
     - role: meta_designer
       contact: meta@necp.game
@@ -16,18 +16,24 @@ metadata:
     - cosmetics
     - combat
     - pvp
+    - monetization
+    - competitive
   topics:
     - competitive
+    - personalization
+    - visual-effects
   related_systems:
     - gameplay-service
     - analytics-service
     - moderation-service
+    - ui-service
   visibility: internal
   audience:
     - meta
     - gameplay
     - analytics
-  risk_level: medium
+    - competitive
+  risk_level: low
 summary:
   problem: "Нужны кастом интро/аутро, баннеры киллфида и рамки MVP, чисто визуальные."
   goal: "Определить каталог, триггеры показа, предпросмотр и телеметрию, без баффов."
@@ -39,34 +45,278 @@ summary:
     - "Телеметрия использования."
 content:
   sections:
-    - id: catalog
-      title: "Каталог и предпросмотр"
+    - id: content_categories
+      title: "Категории контента"
       body: |
-        • Интро/аутро-анимации, баннеры киллфида, рамки MVP.  
-        • Предпросмотр и звуковые отключаемые опции.  
-        • Только визуал, без баффов.
-      mechanics_links: [ ]
-      assets: [ ]
-    - id: triggers
-      title: "Триггеры показа"
+        ### Основные категории визуальных эффектов:
+        - **Combat Intros**: Анимации появления на поле боя (3-5 секунд)
+        - **Combat Outros**: Анимации ухода с поля боя (2-4 секунды)
+        - **Killfeed Banners**: Специальные баннеры для киллфида (1-2 секунды)
+        - **MVP Frames**: Рамки вокруг портретов MVP игроков (постоянно во время показа)
+
+        ### Типы эффектов:
+        - **Personal**: Индивидуальные интро/аутро игрока
+        - **Team**: Командные эффекты для клана/группы
+        - **Seasonal**: Тематические эффекты (праздники, события)
+        - **Achievement**: Эффекты за достижения (MVP, киллстрики)
+      mechanics_links:
+        - mechanics/ui/visual-effects.yaml
+        - mechanics/combat/match-flow.yaml
+      assets: []
+
+    - id: content_format
+      title: "Формат контента"
       body: |
-        • Матчи/арены; привязка к событиям: старт, киллфид, итог.  
-        • Ограничение частоты, чтобы не спамить UI.  
-        • Отключение в соревновательных режимах по настройке турниров.
-      mechanics_links: [ ]
-      assets: [ ]
-    - id: telemetry
-      title: "Телеметрия"
+        ### Структура эффекта:
+        ```yaml
+        effect:
+          id: "cyberpunk_intro_v1"
+          name: "Cyberpunk Intro"
+          category: "combat_intro"
+          type: "personal"
+          version: "1.0.0"
+          author: "Arasaka Visuals"
+
+          # Визуальные параметры
+          visuals:
+            animation_sequence: "cyberpunk_intro.anim"
+            particle_effects: ["neon_burst", "hologram_glitch"]
+            lighting_preset: "neon_blue"
+            camera_movement: "dramatic_entry"
+
+          # Аудио компоненты (опционально)
+          audio:
+            background_track: "cyberpunk_theme.wav"
+            sound_effects: ["digital_chime", "energy_burst"]
+            volume_normalization: true
+
+          # Параметры показа
+          display:
+            duration_seconds: 4.5
+            screen_space: "full_screen"
+            interruptible: false
+            skip_allowed: true
+
+          # Совместимость
+          compatibility:
+            platforms: ["pc", "console"]
+            aspect_ratios: ["16:9", "21:9"]
+            performance_requirements: "medium"
+        ```
+
+        ### Технические ограничения:
+        - **Размер**: Максимум 50MB на эффект
+        - **Длительность**: 1-5 секунд для интро/аутро, 1-2 секунды для баннеров
+        - **Формат**: Unity Animation/Particle System
+        - **Производительность**: <10ms на кадр
+      mechanics_links:
+        - mechanics/ui/effect-system.yaml
+      assets:
+        - type: "animation"
+          path: "effects/combat/cyberpunk_intro.anim"
+        - type: "particle"
+          path: "effects/particles/neon_burst.prefab"
+        - type: "audio"
+          path: "effects/audio/digital_chime.wav"
+
+    - id: anti_pay_to_win
+      title: "Анти-P2W ограничения"
       body: |
-        • purchases, equip_rate, show_events, mute_events.  
-        • complaints, moderation_actions.  
-        • Цели: персонализация без влияния на бой.
-      mechanics_links: [ ]
-      assets: [ ]
+        ### Строгие правила баланса:
+        - **Нет игровых преимуществ**: Эффекты не дают дополнительной информации
+        - **Стандартизированная длительность**: Все эффекты одинаковой длины
+        - **Не блокируют важную информацию**: Эффекты не перекрывают HUD/UI
+        - **Отключаемы**: Игроки могут отключить все эффекты
+
+        ### Технические ограничения:
+        - **Прозрачность**: Эффекты не блокируют >20% экрана
+        - **Звук**: Максимальная громкость 70% от системной
+        - **Частота**: Не чаще 1 раза в 30 секунд
+        - **Синхронизация**: Эффекты не влияют на сетевую синхронизацию
+
+        ### Сертификация:
+        - Каждая эффект проходит автоматическую проверку на P2W-факторы
+        - Ручная модерация для спорных случаев
+        - Сертификат "Balance Safe Visual" для одобренных эффектов
+      mechanics_links:
+        - mechanics/balance/anti-pay-to-win.yaml
+        - mechanics/ui/ui-blocking-rules.yaml
+      assets: []
+
+    - id: trigger_system
+      title: "Система триггеров"
+      body: |
+        ### Триггеры показа эффектов:
+        - **Match Start**: Интро при начале матча (после загрузки)
+        - **Match End**: Аутро при завершении матча (перед результатами)
+        - **Kill Events**: Баннеры при киллах (с задержкой 0.5-1 сек)
+        - **MVP Selection**: Рамки при объявлении MVP (во время показа таблицы)
+
+        ### Условия показа:
+        - **Режим матча**: Разные эффекты для разных режимов (FFA, Team Deathmatch, etc.)
+        - **Ранг игрока**: Эффекты разблокированы по рангу/уровню
+        - **Частота**: Ограничение частоты показа (не чаще 1/30 сек)
+        - **Настройки**: Игроки могут отключить эффекты по категориям
+
+        ### Приоритезация:
+        - **Высокий приоритет**: Match start/end (всегда показываются если активны)
+        - **Средний приоритет**: MVP frames (показываются в таблице результатов)
+        - **Низкий приоритет**: Killfeed banners (могут быть пропущены при высокой частоте)
+      mechanics_links:
+        - mechanics/combat/match-events.yaml
+        - mechanics/ui/priority-system.yaml
+      assets: []
+
+    - id: preview_system
+      title: "Система предпросмотра"
+      body: |
+        ### Предпросмотр перед покупкой:
+        - **Интерактивная демо**: Полная симуляция эффекта в тестовом окружении
+        - **Side-by-side**: Сравнение с текущими эффектами
+        - **Изолированное тестирование**: Просмотр отдельных компонентов
+        - **Таймер демо**: 30 секунд на ознакомление
+
+        ### Настройки тестирования:
+        - **Разные условия**: Предпросмотр в разных режимах/условиях освещения
+        - **Производительность**: Проверка FPS во время эффекта
+        - **Совместимость**: Тестирование на разных конфигурациях
+        - **Отзывы**: Система сбора отзывов от пользователей
+
+        ### Управление эффектами:
+        - **Быстрое переключение**: Кнопка в настройках матчей
+        - **Профиль-специфичные**: Эффекты привязаны к игровому профилю
+        - **Синхронизация**: Автоматическая синхронизация между устройствами
+        - **Резервные копии**: Возможность восстановления настроек
+      mechanics_links:
+        - mechanics/ui/preview-system.yaml
+        - mechanics/social/personalization.yaml
+      assets: []
+
+    - id: accessibility
+      title: "Совместимость с accessibility"
+      body: |
+        ### Обязательные функции:
+        - **Reduced Motion**: Эффекты без интенсивных анимаций
+        - **High Contrast**: Эффекты с повышенной контрастностью
+        - **Screen Reader**: Полная совместимость с программами чтения экрана
+        - **Colorblind Support**: Эффекты без цветовой зависимости
+
+        ### Адаптивные настройки:
+        - **Системные настройки**: Автоматическая адаптация под настройки accessibility
+        - **Custom Profiles**: Возможность создания персональных настроек
+        - **Fallback System**: Гарантированная доступность даже с кастомными эффектами
+
+        ### Стандарты соответствия:
+        - **WCAG 2.1 AA**: Минимум AA уровень доступности
+        - **Section 508**: Федеральные стандарты США
+        - **EN 301 549**: Европейский стандарт доступности
+      mechanics_links:
+        - mechanics/accessibility/visual-effects.yaml
+        - mechanics/ui/accessibility-features.yaml
+      assets: []
+
+    - id: monetization_model
+      title: "Модель монетизации"
+      body: |
+        ### Типы эффектов:
+        - **Free**: Базовые эффекты (2-3 варианта)
+        - **Premium**: Расширенные эффекты (50-150 eddies)
+        - **Seasonal**: Временные эффекты (30 дней)
+        - **Bundle**: Комплекты эффектов (скидка 20%)
+
+        ### Ценообразование:
+        - **Базовая цена**: 50 eddies за стандартный эффект
+        - **Премиум цена**: 150 eddies за расширенный эффект
+        - **Сезонные скидки**: 25-40% на временные предложения
+        - **Bundle цена**: 20% скидка на комплекты
+
+        ### Анти-P2W гарантии:
+        - Все эффекты проходят сертификацию на отсутствие преимуществ
+        - Возможность возврата в течение 24 часов
+        - Прозрачная система отчетов о балансе
+      mechanics_links:
+        - mechanics/economy/visual-effects-monetization.yaml
+      assets: []
+
+    - id: telemetry_analytics
+      title: "Телеметрия и аналитика"
+      body: |
+        ### Собираемые метрики:
+        - **effect_equipped**: ID эффекта, timestamp, player_id, category
+        - **effect_triggered**: ID эффекта, trigger_type, match_context
+        - **preview_used**: ID эффекта, время просмотра, конверсия в покупку
+        - **accessibility_used**: Тип accessibility функции, частота
+
+        ### Метрики эффективности:
+        - **purchase_rate**: Конверсия просмотров в покупки по категориям
+        - **usage_duration**: Время использования эффектов в матчах
+        - **complaint_rate**: Процент жалоб на качество/баланс
+        - **performance_impact**: Влияние на FPS/производительность
+
+        ### Аналитические цели:
+        - Оптимизация каталога и рекомендаций
+        - Выявление проблем accessibility
+        - Баланс монетизации
+        - Улучшение пользовательского опыта
+      mechanics_links:
+        - mechanics/analytics/visual-effects-telemetry.yaml
+        - mechanics/analytics/match-performance.yaml
+      assets: []
+
+    - id: moderation_workflow
+      title: "Модерация и поддержка"
+      body: |
+        ### Автоматическая модерация:
+        - **Content Analysis**: AI анализ на наличие запрещенного контента
+        - **Balance Check**: Автоматическая проверка на P2W-факторы
+        - **Performance Test**: Проверка влияния на производительность
+        - **Compatibility Check**: Тестирование на разных платформах
+
+        ### Ручная модерация:
+        - **Expert Review**: Проверка визуальными дизайнерами
+        - **User Reports**: Система жалоб на эффекты
+        - **Appeal System**: Процесс обжалования решений модерации
+
+        ### Поддержка:
+        - **Bug Reports**: Отчеты об ошибках в эффектах
+        - **Compatibility Issues**: Поддержка проблем совместимости
+        - **Refund Requests**: Обработка запросов на возврат
+      mechanics_links:
+        - mechanics/moderation/visual-content-moderation.yaml
+        - mechanics/support/effects-support.yaml
+      assets: []
 appendix:
-  glossary: [ ]
-  references: [ ]
-  decisions: [ ]
+  glossary:
+    - term: "Combat Intro"
+      definition: "Визуальный эффект, показываемый при появлении игрока на поле боя"
+    - term: "Combat Outro"
+      definition: "Визуальный эффект, показываемый при уходе игрока с поля боя"
+    - term: "Killfeed Banner"
+      definition: "Специальный баннер, отображаемый при убийствах в киллфиде"
+    - term: "MVP Frame"
+      definition: "Рамка вокруг портрета игрока, признанного MVP матча"
+    - term: "Anti-P2W"
+      definition: "Политика предотвращения получения игровых преимуществ через визуальные эффекты"
+  references:
+    - id: mechanics/ui/visual-effects
+      title: "Система визуальных эффектов"
+      type: document
+    - id: mechanics/combat/match-flow
+      title: "Поток матча и события"
+      type: document
+    - id: mechanics/accessibility/visual-effects
+      title: "Доступность визуальных эффектов"
+      type: document
+    - id: mechanics/economy/visual-effects-monetization
+      title: "Монетизация визуальных эффектов"
+      type: document
+  decisions:
+    - rationale: "Строго косметическая система без gameplay влияния"
+      impact: "Сохраняет баланс игры, соответствует anti-P2W политике"
+    - rationale: "Комплексная система accessibility для визуальных эффектов"
+      impact: "Обеспечивает доступность для всех пользователей, соответствует стандартам"
+    - rationale: "Многоуровневая модерация визуальных эффектов"
+      impact: "Гарантирует качество и безопасность контента"
 implementation:
   github_issue: 1800
   needs_task: false
