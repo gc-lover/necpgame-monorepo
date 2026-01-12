@@ -1,43 +1,51 @@
 title: AI враг — Инженерный мех поддержки
 # Issue: #1823
 summary:
-  role: Ремонтник/саппорт — чинит укрытия и союзников, ставит мини-турели, даёт EMP-щит.
-  layer: Tactical/Mythic; уязвим к фокусу/взлому.
+  role: Мех-ремонтник с поддержкой: чинит союзников, разворачивает мини-турели, даёт EMP-щит.
+  layer: Tactical/Mythic саппорт; уязвим к фокусу/взлому.
 behavior:
-  positioning: держится за танками/шагоходами; при фокусе ставит щит и отступает.
-  threat_response: при угрозе ближке выпускает турели, зовёт рой/киберпсов.
+  positioning: держится за спинами танков/шагоходов; отступает при фокусе.
+  support_role: ремонт союзников в приоритете; турели при угрозе ближке.
 abilities:
   ремонт:
     params:
-      cover_repair_pct: 25
-      mech_repair_pct: 20
-      cooldown_s: 12
+      repair_pct: 25
+      targets: covers/walkers
+      range_m: 8
+      cooldown_s: 15
+      heal_over_time: true
   мини_турели:
     params:
-      count: 2
-      dps_hp_pct: 6
-      hp: low
-      adaptation: переключение типа урона каждые 10 с
-      cooldown_s: 18
+      count: 1-2
+      hp: 120
+      dps: 18
+      damage_type: adaptive
+      duration_s: 45
+      deploy_cooldown_s: 25
   emp_щит:
     params:
       duration_s: 5
-      damage_reduction_pct: 20
-      signal_dampen: true
-      radius_m: 8
-      cooldown_s: 20
+      damage_reduction_pct: 35
+      signal_jamming: true
+      radius_m: 6
+      cooldown_s: 30
+      ally_buff: true
 ai_logic:
-  priority: чинит сначала шагоход/турель, затем укрытия/союзников.
-  retreat: при потере 30% HP отходит за танк, оставляя турель.
+  positioning: за укрытиями танков; при угрозе ставит щит и отступает.
+  support_calls: зовёт рои/киберпсов при угрозе ближке.
+  repair_priority: чинит укрытия/шагоходы в первую очередь.
+  synergy: снижает эффективность взлома рядом с собой.
 telemetry:
-  - metric: mech_repairs
-    desc: объём ремонта по типам (укрытия/мехи/союзники)
-  - metric: mini_turret_uptime
-    desc: аптайм мини-турелей и их урон
-  - metric: emp_shields_cast
-    desc: количество и длительность щитов
+  - metric: mech_repair_efficiency
+    desc: процент восстановленной брони и успех ремонтов
+  - metric: turret_deployments
+    desc: сколько турелей развернуто и их эффективность
+  - metric: shield_uptime
+    desc: использование EMP-щита и снижение урона
+  - metric: mech_survival_rate
+    desc: сколько мехов доживает до конца боя
 edge_cases:
-  - анти-абуз: если турели быстро уничтожают (<5 с), следующий щит усиливается до 25% reduct, но cooldown_s +4
-  - кооп: несколько мехов не стакают сигнал_dampen; берётся максимальный радиус
-  - соло: dps_hp_pct турели снижен до 5
+  - анти-абуз: при взломе турели deploy_cooldown_s увеличивается на 50%
+  - кооп: несколько мехов не ремонтируют один таргет одновременно
+  - соло: repair_pct снижен до 18, но turret_dps повышен до 22
 
