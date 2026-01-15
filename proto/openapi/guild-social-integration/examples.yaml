@@ -1,0 +1,386 @@
+# Guild-Social Integration API - UE5 Client Examples
+# Issue: #1961 - UE5 Integration Testing Examples
+
+examples:
+
+  # Example 1: Get Integrated Guild Data
+  get_integrated_guild:
+    description: "Retrieve complete guild information for UE5 client"
+    request:
+      method: GET
+      url: "/guilds/550e8400-e29b-41d4-a716-446655440000/integrated?include_members=true&include_chat=true&include_social=true"
+      headers:
+        Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        Accept: "application/json"
+    response:
+      status: 200
+      body:
+        guild:
+          id: "550e8400-e29b-41d4-a716-446655440000"
+          name: "Night City Mercenaries"
+          description: "Elite mercenary guild operating in Night City"
+          level: 25
+          member_count: 47
+          max_members: 100
+          reputation: 8750
+          created_at: "2025-01-15T10:30:00Z"
+        members:
+          - user_id: "123e4567-e89b-12d3-a456-426614174000"
+            username: "V_Judy"
+            role: "leader"
+            joined_at: "2025-01-15T10:30:00Z"
+            last_active: "2025-01-15T23:45:00Z"
+            is_online: true
+          - user_id: "789e0123-e89b-12d3-a456-426614174001"
+            username: "Panam_2077"
+            role: "officer"
+            joined_at: "2025-01-15T11:00:00Z"
+            last_active: "2025-01-15T23:30:00Z"
+            is_online: true
+        chat:
+          channels:
+            - id: "456e7890-e29b-41d4-a716-446655440001"
+              name: "General"
+              type: "general"
+              member_count: 47
+            - id: "567e8901-e29b-41d4-a716-446655440002"
+              name: "Officers"
+              type: "officers"
+              member_count: 5
+          recent_messages:
+            - id: "678e9012-e29b-41d4-a716-446655440003"
+              user_id: "123e4567-e89b-12d3-a456-426614174000"
+              username: "V_Judy"
+              content: "New contract available in Watson district"
+              timestamp: "2025-01-15T23:40:00Z"
+              channel_id: "456e7890-e29b-41d4-a716-446655440001"
+        social:
+          total_friends: 234
+          active_members: 32
+          chat_messages_today: 1247
+          events_completed: 15
+          social_score: 87.5
+        realtime:
+          websocket_url: "wss://api.necpgame.com/ws/v1/guild-social"
+          connected_clients: 89
+          last_update: "2025-01-15T23:45:15Z"
+
+  # Example 2: Send Guild Chat Message
+  send_guild_message:
+    description: "Send a message to guild chat"
+    request:
+      method: POST
+      url: "/guilds/550e8400-e29b-41d4-a716-446655440000/chat/send"
+      headers:
+        Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        Content-Type: "application/json"
+      body:
+        content: "Ready for the Watson contract, team!"
+        channel_id: "456e7890-e29b-41d4-a716-446655440001"
+        message_type: "text"
+    response:
+      status: 200
+      body:
+        message_id: "789e0123-e29b-41d4-a716-446655440004"
+        timestamp: "2025-01-15T23:46:00Z"
+        status: "sent"
+
+  # Example 3: Get Guild Social Statistics
+  get_guild_social_stats:
+    description: "Retrieve social activity statistics for guild"
+    request:
+      method: GET
+      url: "/guilds/550e8400-e29b-41d4-a716-446655440000/social/stats?period=day"
+      headers:
+        Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+    response:
+      status: 200
+      body:
+        period: "day"
+        metrics:
+          messages_sent: 1247
+          active_members: 32
+          friend_connections: 89
+          events_participated: 15
+          average_session_time: 145
+
+  # Example 4: Get Guild Friends Network
+  get_guild_friends:
+    description: "Get friend connections within guild"
+    request:
+      method: GET
+      url: "/social/guild-friends?guild_id=550e8400-e29b-41d4-a716-446655440000&depth=2"
+      headers:
+        Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+    response:
+      status: 200
+      body:
+        nodes:
+          - user_id: "123e4567-e89b-12d3-a456-426614174000"
+            username: "V_Judy"
+            guild_role: "leader"
+            is_online: true
+          - user_id: "789e0123-e89b-12d3-a456-426614174001"
+            username: "Panam_2077"
+            guild_role: "officer"
+            is_online: true
+          - user_id: "901e2345-e89b-12d3-a456-426614174002"
+            username: "Claire_2077"
+            guild_role: "member"
+            is_online: false
+        connections:
+          - from_user_id: "123e4567-e89b-12d3-a456-426614174000"
+            to_user_id: "789e0123-e89b-12d3-a456-426614174001"
+            relationship_type: "friend"
+          - from_user_id: "789e0123-e89b-12d3-a456-426614174001"
+            to_user_id: "901e2345-e89b-12d3-a456-426614174002"
+            relationship_type: "guild_member"
+
+  # Example 5: WebSocket Real-time Events
+  websocket_events:
+    description: "WebSocket event examples for real-time synchronization"
+    connection_url: "wss://api.necpgame.com/ws/v1/guild-social"
+    authentication: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+    events:
+      # Guild member joined
+      guild_member_joined:
+        type: "guild:member_joined"
+        data:
+          guild_id: "550e8400-e29b-41d4-a716-446655440000"
+          user_id: "012e3456-e89b-12d3-a456-426614174003"
+          username: "NewMerc_2077"
+          role: "recruit"
+          timestamp: "2025-01-15T23:47:00Z"
+
+      # New chat message
+      chat_message:
+        type: "guild:chat_message"
+        data:
+          guild_id: "550e8400-e29b-41d4-a716-446655440000"
+          channel_id: "456e7890-e29b-41d4-a716-446655440001"
+          message_id: "123e4567-e29b-41d4-a716-446655440005"
+          user_id: "123e4567-e89b-12d3-a456-426614174000"
+          username: "V_Judy"
+          content: "Contract completed! Great work team!"
+          timestamp: "2025-01-15T23:48:00Z"
+
+      # Social activity update
+      social_update:
+        type: "guild:social_update"
+        data:
+          guild_id: "550e8400-e29b-41d4-a716-446655440000"
+          social_score: 88.2
+          active_members: 33
+          timestamp: "2025-01-15T23:49:00Z"
+
+# UE5 Client Integration Test Scenarios
+
+test_scenarios:
+
+  # Scenario 1: Guild Login and Data Sync
+  guild_login_sync:
+    description: "Test UE5 client login and initial guild data synchronization"
+    steps:
+      - "UE5 client authenticates via /auth/login"
+      - "Client requests integrated guild data via /guilds/{guild_id}/integrated"
+      - "Verify all guild, member, chat, and social data is received"
+      - "Establish WebSocket connection for real-time updates"
+    expected_results:
+      - "Guild data loaded within <100ms"
+      - "All member information synchronized"
+      - "Chat history available for display"
+      - "WebSocket connection established"
+
+  # Scenario 2: Guild Chat Communication
+  guild_chat_communication:
+    description: "Test guild chat functionality in UE5 client"
+    steps:
+      - "Send message via /guilds/{guild_id}/chat/send"
+      - "Verify message appears in WebSocket events"
+      - "Test message filtering and moderation"
+      - "Verify message persistence in chat history"
+    expected_results:
+      - "Messages sent within <50ms"
+      - "Real-time delivery via WebSocket"
+      - "Proper message filtering applied"
+      - "Messages stored in chat history"
+
+  # Scenario 3: Social Features Integration
+  social_features_integration:
+    description: "Test social features within guild context"
+    steps:
+      - "Request social statistics via /guilds/{guild_id}/social/stats"
+      - "Get friends network via /social/guild-friends"
+      - "Monitor social activity updates via WebSocket"
+      - "Test social scoring calculations"
+    expected_results:
+      - "Social stats calculated accurately"
+      - "Friends network mapped correctly"
+      - "Real-time social updates received"
+      - "Social scores updated properly"
+
+  # Scenario 4: Performance and Load Testing
+  performance_load_test:
+    description: "Test performance under load for UE5 integration"
+    steps:
+      - "Simulate 1000 concurrent UE5 clients"
+      - "Test API response times under load"
+      - "Monitor WebSocket connection stability"
+      - "Test memory usage and garbage collection"
+    expected_results:
+      - "P99 latency <20ms for API calls"
+      - "WebSocket connections stable under load"
+      - "Memory usage within limits"
+      - "No connection drops during peak load"
+
+# UE5 Client Code Examples
+
+ue5_integration_code:
+
+  # Authentication Manager
+  auth_manager_h:
+    language: cpp
+    code: |
+      // NecpgAuthManager.h
+      #pragma once
+
+      #include "CoreMinimal.h"
+      #include "UObject/NoExportTypes.h"
+      #include "NecpgAuthManager.generated.h"
+
+      DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAuthSuccess, const FString&, AuthToken);
+      DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAuthFailure, const FString&, ErrorMessage);
+
+      UCLASS(Blueprintable, BlueprintType)
+      class NECPG_API UNecpgAuthManager : public UObject
+      {
+          GENERATED_BODY()
+
+      public:
+          UNecpgAuthManager();
+
+          UFUNCTION(BlueprintCallable, Category = "NECPG|Auth")
+          void Login(const FString& Username, const FString& Password);
+
+          UFUNCTION(BlueprintCallable, Category = "NECPG|Auth")
+          void RefreshToken();
+
+          UFUNCTION(BlueprintCallable, Category = "NECPG|Auth")
+          bool VerifyToken();
+
+          UFUNCTION(BlueprintPure, Category = "NECPG|Auth")
+          FString GetAuthToken() const { return AuthToken; }
+
+      private:
+          FString AuthToken;
+          FString RefreshToken;
+          FTimerHandle TokenRefreshTimer;
+
+          void OnLoginResponse(TSharedPtr<FJsonObject> Response);
+          void OnTokenRefreshResponse(TSharedPtr<FJsonObject> Response);
+      };
+
+  # Guild Manager
+  guild_manager_h:
+    language: cpp
+    code: |
+      // NecpgGuildManager.h
+      #pragma once
+
+      #include "CoreMinimal.h"
+      #include "UObject/NoExportTypes.h"
+      #include "NecpgGuildManager.generated.h"
+
+      USTRUCT(BlueprintType)
+      struct FGuildMember
+      {
+          GENERATED_BODY()
+
+          UPROPERTY(BlueprintReadOnly)
+          FString UserId;
+
+          UPROPERTY(BlueprintReadOnly)
+          FString Username;
+
+          UPROPERTY(BlueprintReadOnly)
+          FString Role;
+
+          UPROPERTY(BlueprintReadOnly)
+          bool bIsOnline;
+      };
+
+      USTRUCT(BlueprintType)
+      struct FGuildData
+      {
+          GENERATED_BODY()
+
+          UPROPERTY(BlueprintReadOnly)
+          FString Id;
+
+          UPROPERTY(BlueprintReadOnly)
+          FString Name;
+
+          UPROPERTY(BlueprintReadOnly)
+          FString Description;
+
+          UPROPERTY(BlueprintReadOnly)
+          int32 Level;
+
+          UPROPERTY(BlueprintReadOnly)
+          int32 MemberCount;
+
+          UPROPERTY(BlueprintReadOnly)
+          TArray<FGuildMember> Members;
+      };
+
+      UCLASS(Blueprintable, BlueprintType)
+      class NECPG_API UNecpgGuildManager : public UObject
+      {
+          GENERATED_BODY()
+
+      public:
+          UNecpgGuildManager();
+
+          UFUNCTION(BlueprintCallable, Category = "NECPG|Guild")
+          void GetIntegratedGuildData(const FString& GuildId);
+
+          UFUNCTION(BlueprintCallable, Category = "NECPG|Guild")
+          void SendGuildMessage(const FString& GuildId, const FString& Message, const FString& ChannelId);
+
+          UFUNCTION(BlueprintPure, Category = "NECPG|Guild")
+          const FGuildData& GetCurrentGuild() const { return CurrentGuild; }
+
+      private:
+          FGuildData CurrentGuild;
+
+          void OnGuildDataReceived(TSharedPtr<FJsonObject> Response);
+          void OnMessageSent(TSharedPtr<FJsonObject> Response);
+      };
+
+# Integration Testing Checklist
+
+testing_checklist:
+  - name: "API Endpoint Availability"
+    description: "All guild-social integration endpoints respond correctly"
+    test_command: "curl -H 'Authorization: Bearer {token}' https://api.necpgame.com/v1/guild-social/health"
+    expected_status: 200
+
+  - name: "WebSocket Connection"
+    description: "WebSocket connection establishes successfully"
+    test_command: "wscat -c wss://api.necpgame.com/ws/v1/guild-social -H 'Authorization: Bearer {token}'"
+    expected_behavior: "Connection established, ping-pong working"
+
+  - name: "Data Synchronization"
+    description: "Guild data synchronizes correctly between services"
+    test_scenario: "Create guild member, verify data appears in integrated endpoint"
+    expected_result: "Data synchronized within 5 seconds"
+
+  - name: "Performance Benchmarks"
+    description: "API performance meets requirements"
+    test_command: "ab -n 1000 -c 10 -H 'Authorization: Bearer {token}' https://api.necpgame.com/v1/guild-social/guilds/{guild_id}/integrated"
+    expected_p99: "<20ms"
+
+  - name: "Real-time Events"
+    description: "WebSocket events deliver correctly"
+    test_scenario: "Send guild message, verify WebSocket event received"
+    expected_timing: "<100ms delivery time"

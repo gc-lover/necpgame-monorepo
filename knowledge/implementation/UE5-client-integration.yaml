@@ -1,0 +1,236 @@
+metadata:
+  id: ue5-client-integration
+  title: 'UE5 Client Integration - Guild System & Social Features'
+  document_type: implementation
+  category: integration
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-01-15T23:30:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-01-15T23:30:00Z
+  owners:
+    - role: integration_lead
+      contact: integration@necp.game
+  tags: [ ue5, client, integration, guild, social, api ]
+  github_issue: 1961
+summary:
+  problem: UE5 клиент нуждается в интеграции с guild system и социальными функциями backend
+  goal: Создать клиентские API и спецификации для подключения UE5 к guild service и social features
+  key_points:
+    - Реализовать authentication API для UE5 клиента
+    - Создать inventory sync API для клиент-сервер синхронизации
+    - Интегрировать guild system с социальными механиками
+    - Обеспечить real-time синхронизацию guild данных
+content:
+  sections:
+    - id: architecture
+      title: Архитектура интеграции
+      body: |
+        UE5 клиент подключается к backend через REST API и WebSocket для real-time обновлений.
+        Используется authentication service для входа, guild-service для гильдий и social-service для социальных функций.
+      mechanics_links: [ ]
+      assets: [ ]
+
+    - id: authentication-api
+      title: Authentication API для UE5
+      body: |
+        ### REST Endpoints:
+        - POST /api/v1/auth/login - вход в систему
+        - POST /api/v1/auth/refresh - обновление токена
+        - GET /api/v1/auth/verify - проверка токена
+
+        ### WebSocket Events:
+        - auth:connected - успешное подключение
+        - auth:disconnected - отключение
+        - auth:token_expired - истечение токена
+
+        ### UE5 Integration:
+        ```cpp
+        class UNecpgAuthManager : public UObject
+        {
+            void Login(FString Username, FString Password);
+            void RefreshToken();
+            bool VerifyToken();
+            FString GetAuthToken();
+        };
+        ```
+      mechanics_links: [ ]
+      assets: [ ]
+
+    - id: inventory-sync-api
+      title: Inventory Synchronization API
+      body: |
+        ### REST Endpoints:
+        - GET /api/v1/inventory/{player_id} - получить инвентарь игрока
+        - PUT /api/v1/inventory/{player_id}/sync - синхронизировать инвентарь
+        - POST /api/v1/inventory/{player_id}/items - добавить предмет
+        - DELETE /api/v1/inventory/{player_id}/items/{item_id} - удалить предмет
+
+        ### WebSocket Events:
+        - inventory:updated - обновление инвентаря
+        - inventory:item_added - добавлен предмет
+        - inventory:item_removed - удален предмет
+
+        ### UE5 Integration:
+        ```cpp
+        class UNecpgInventoryManager : public UObject
+        {
+            void SyncInventory();
+            void AddItem(FInventoryItem Item);
+            void RemoveItem(FString ItemId);
+            TArray<FInventoryItem> GetInventory();
+        };
+        ```
+      mechanics_links: [ ]
+      assets: [ ]
+
+    - id: guild-system-integration
+      title: Guild System Integration
+      body: |
+        ### REST Endpoints:
+        - GET /api/v1/guilds - список доступных гильдий
+        - GET /api/v1/guilds/{guild_id} - детали гильдии
+        - POST /api/v1/guilds/{guild_id}/join - присоединиться к гильдии
+        - POST /api/v1/guilds/{guild_id}/leave - покинуть гильдию
+        - GET /api/v1/guilds/{guild_id}/members - список участников
+        - GET /api/v1/guilds/{guild_id}/contracts - список контрактов
+
+        ### WebSocket Events:
+        - guild:member_joined - новый участник
+        - guild:member_left - участник ушел
+        - guild:contract_available - новый контракт
+        - guild:level_up - повышение уровня гильдии
+
+        ### UE5 Integration:
+        ```cpp
+        class UNecpgGuildManager : public UObject
+        {
+            void GetAvailableGuilds();
+            void JoinGuild(FString GuildId);
+            void LeaveGuild();
+            void GetGuildContracts();
+            FGuildInfo GetCurrentGuild();
+        };
+        ```
+      mechanics_links: [ ]
+      assets: [ ]
+
+    - id: social-features-integration
+      title: Social Features Integration
+      body: |
+        ### REST Endpoints:
+        - GET /api/v1/social/friends - список друзей
+        - POST /api/v1/social/friends/{user_id} - добавить в друзья
+        - DELETE /api/v1/social/friends/{user_id} - удалить из друзей
+        - GET /api/v1/social/messages - сообщения
+        - POST /api/v1/social/messages - отправить сообщение
+
+        ### WebSocket Events:
+        - social:friend_request - запрос в друзья
+        - social:message_received - новое сообщение
+        - social:friend_online - друг онлайн
+        - social:friend_offline - друг оффлайн
+
+        ### UE5 Integration:
+        ```cpp
+        class UNecpgSocialManager : public UObject
+        {
+            void GetFriendsList();
+            void SendFriendRequest(FString UserId);
+            void SendMessage(FString UserId, FString Message);
+            TArray<FMessage> GetMessages();
+        };
+        ```
+      mechanics_links: [ ]
+      assets: [ ]
+
+    - id: realtime-sync
+      title: Real-time Synchronization
+      body: |
+        ### WebSocket Connection:
+        - URL: wss://api.necpgame.com/ws/v1/game
+        - Authentication: Bearer token в header
+        - Heartbeat: каждые 30 секунд
+
+        ### Event Types:
+        - player:position_update - обновление позиции
+        - guild:data_update - обновление данных гильдии
+        - inventory:change - изменение инвентаря
+        - social:notification - социальное уведомление
+
+        ### UE5 Integration:
+        ```cpp
+        class UNecpgWebSocketManager : public UObject
+        {
+            void Connect(FString AuthToken);
+            void SendEvent(FGameEvent Event);
+            void OnEventReceived(FGameEvent Event);
+            void Disconnect();
+        };
+        ```
+      mechanics_links: [ ]
+      assets: [ ]
+
+    - id: implementation-plan
+      title: План реализации
+      body: |
+        ### Phase 1: Core Authentication (Week 1)
+        - Реализовать UNecpgAuthManager
+        - Интегрировать login/refresh/verify endpoints
+        - Добавить token storage в UE5
+
+        ### Phase 2: Inventory Sync (Week 2)
+        - Реализовать UNecpgInventoryManager
+        - Интегрировать inventory REST API
+        - Добавить local inventory cache
+
+        ### Phase 3: Guild System (Week 3)
+        - Реализовать UNecpgGuildManager
+        - Интегрировать guild REST API
+        - Добавить guild UI components
+
+        ### Phase 4: Social Features (Week 4)
+        - Реализовать UNecpgSocialManager
+        - Интегрировать social REST API
+        - Добавить friends list UI
+
+        ### Phase 5: Real-time Integration (Week 5)
+        - Реализовать UNecpgWebSocketManager
+        - Интегрировать WebSocket events
+        - Протестировать end-to-end sync
+      mechanics_links: [ ]
+      assets: [ ]
+
+appendix:
+  glossary:
+    - term: UE5 Integration
+      definition: Подключение Unreal Engine 5 клиента к backend API для guild system и социальных функций
+    - term: Real-time Sync
+      definition: Синхронизация данных в реальном времени через WebSocket
+    - term: Authentication API
+      definition: API для аутентификации пользователей в игре
+  references:
+    - proto/openapi/guild-service/main.yaml
+    - proto/openapi/social-service/main.yaml
+    - proto/openapi/auth-service/main.yaml
+    - proto/openapi/inventory-service/main.yaml
+  decisions:
+    - decision: WebSocket vs REST
+      choice: Hybrid approach - REST for initial data, WebSocket for real-time updates
+      rationale: REST для надежности, WebSocket для скорости обновлений
+    - decision: Client-side caching
+      choice: Implement local cache with server sync
+      rationale: Улучшает производительность и снижает нагрузку на сервер
+implementation:
+  github_issue: 1961
+  needs_task: false
+  queue_reference: [ ]
+  blockers: [ ]
+history:
+  - version: '1.0.0'
+    date: 2025-01-15
+    author: integration_team
+    changes: 'Создан план интеграции UE5 клиента с guild system и социальными функциями'
+validation:
+  checksum: ''
+  schema_version: '1.0'

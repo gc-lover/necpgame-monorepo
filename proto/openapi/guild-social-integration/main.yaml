@@ -1,0 +1,591 @@
+openapi: 3.0.3
+info:
+  title: Guild-Social Integration API - UE5 Client Integration
+  description: '**UE5 Client Integration API for Guild System & Social Features**
+
+    This API provides unified access to guild and social functionality for UE5 clients,
+    combining guild-service and social-service capabilities into a single integration point.
+
+    ## Key Features
+
+    - **Unified Guild Access**: Single API for all guild operations
+    - **Integrated Social Features**: Chat, friends, parties within guild context
+    - **Real-time Synchronization**: WebSocket events for live updates
+    - **UE5 Optimized**: Client-friendly data structures and endpoints
+    - **Performance Optimized**: <20ms P99 latency for UE5 client operations
+
+    ## Domain Purpose
+
+    The Guild-Social Integration domain provides a unified interface for UE5 clients
+    to interact with guild systems and social mechanics, abstracting the complexity
+    of multiple backend services.
+
+    ## Performance Targets
+
+    - P99 Latency: <20ms for integration operations
+    - Memory: <15KB per active guild session
+    - Concurrent guilds: 100,000+ active integrated sessions
+    - Real-time updates: <100ms propagation time
+
+    ## BACKEND NOTE
+    - Struct alignment hints: 30-50% memory savings across all operations
+    - Optimized for UE5 client with low latency social-guild interactions
+    - Context timeouts: 5s for complex guild operations
+    - DB pool config: Dedicated pools for guild-social data
+    - Performance target: <30ms P95 for cross-service operations
+    '
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.necpgame.com/v1/guild-social
+    description: Production server
+  - url: https://staging-api.necpgame.com/v1/guild-social
+    description: Staging server
+  - url: http://localhost:8080/api/v1/guild-social
+    description: Local development server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Health Monitoring
+    description: System health and performance monitoring
+  - name: Guild Integration
+    description: Unified guild operations for UE5 clients
+  - name: Social Integration
+    description: Social features within guild context
+  - name: Real-time Events
+    description: WebSocket events for live synchronization
+
+paths:
+  /health:
+    get:
+      summary: Guild-Social Integration Health Check
+      description: '**Enterprise-grade health check endpoint**
+
+        Provides real-time health status of the guild-social integration service.
+
+        Critical for service discovery, load balancing, and monitoring.
+
+        **Performance:** <1ms response time, cached for 30 seconds
+
+        ## BACKEND NOTE
+        - Health checks both guild-service and social-service
+        - Cached responses with ETag validation
+        - Circuit breaker pattern for service failures
+        '
+      operationId: guildSocialIntegrationHealthCheck
+      tags:
+        - Health Monitoring
+      parameters:
+        - name: Accept-Encoding
+          in: header
+          schema:
+            type: string
+            enum: [gzip, deflate, br]
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=300, s-maxage=600
+            ETag:
+              schema:
+                type: string
+                example: '"guild-social-integration-health-v1.0"'
+            Content-Encoding:
+              schema:
+                type: string
+                enum: [gzip, deflate, br]
+        '503':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /guilds/{guild_id}/integrated:
+    get:
+      summary: Get Integrated Guild Data
+      description: '**Get complete guild information with social features**
+
+        Returns unified guild data including members, chat channels, social stats,
+        and real-time activity for UE5 client integration.
+
+        ## BACKEND NOTE
+        - Aggregates data from guild-service and social-service
+        - Optimized for UE5 client payload size (<50KB)
+        - Cached with 30s TTL for performance
+        - Real-time sync via WebSocket events
+        '
+      operationId: getIntegratedGuildData
+      tags:
+        - Guild Integration
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Guild unique identifier
+        - name: include_members
+          in: query
+          schema:
+            type: boolean
+            default: true
+          description: Include member details
+        - name: include_chat
+          in: query
+          schema:
+            type: boolean
+            default: true
+          description: Include recent chat messages
+        - name: include_social
+          in: query
+          schema:
+            type: boolean
+            default: true
+          description: Include social statistics
+      responses:
+        '200':
+          description: Integrated guild data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntegratedGuildResponse'
+        '404':
+          description: Guild not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /guilds/{guild_id}/chat/send:
+    post:
+      summary: Send Guild Chat Message
+      description: '**Send message to guild chat channel**
+
+        Integrates guild chat with social messaging system for unified communication.
+
+        ## BACKEND NOTE
+        - Routes to social-service chat module
+        - Applies guild-specific moderation rules
+        - Real-time delivery via WebSocket
+        - Anti-spam filtering optimized for guild context
+        '
+      operationId: sendGuildChatMessage
+      tags:
+        - Social Integration
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Guild unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendGuildMessageRequest'
+      responses:
+        '200':
+          description: Message sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '403':
+          description: Not a guild member or insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /guilds/{guild_id}/social/stats:
+    get:
+      summary: Get Guild Social Statistics
+      description: '**Get social activity statistics for guild**
+
+        Provides comprehensive social metrics including member activity,
+        chat volume, friend connections, and social engagement.
+
+        ## BACKEND NOTE
+        - Aggregates data from multiple social services
+        - Real-time calculations with caching
+        - Optimized for UE5 dashboard displays
+        - Updated every 5 minutes
+        '
+      operationId: getGuildSocialStats
+      tags:
+        - Social Integration
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Guild unique identifier
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [hour, day, week, month]
+            default: day
+          description: Time period for statistics
+      responses:
+        '200':
+          description: Social statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildSocialStatsResponse'
+        '404':
+          description: Guild not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /social/guild-friends:
+    get:
+      summary: Get Guild Friends Network
+      description: '**Get friend connections within guild context**
+
+        Returns social graph of friendships and relationships within the guild,
+        optimized for UE5 social features integration.
+
+        ## BACKEND NOTE
+        - Combines guild membership with social friendships
+        - Graph algorithms for relationship mapping
+        - Cached with 10-minute TTL
+        - Privacy-aware data filtering
+        '
+      operationId: getGuildFriendsNetwork
+      tags:
+        - Social Integration
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guild_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by specific guild
+        - name: user_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Get friends for specific user
+        - name: depth
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 3
+            default: 1
+          description: Friendship network depth
+      responses:
+        '200':
+          description: Guild friends network retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildFriendsNetworkResponse'
+        '400':
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+          example: healthy
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+          example: "1.0.0"
+        services:
+          type: object
+          properties:
+            guild_service:
+              type: string
+              enum: [up, down, degraded]
+            social_service:
+              type: string
+              enum: [up, down, degraded]
+            websocket_gateway:
+              type: string
+              enum: [up, down, degraded]
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: "VALIDATION_ERROR"
+            message:
+              type: string
+              example: "Invalid request parameters"
+            details:
+              type: object
+              additionalProperties: true
+
+    IntegratedGuildResponse:
+      type: object
+      properties:
+        guild:
+          $ref: '#/components/schemas/GuildData'
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/GuildMemberData'
+        chat:
+          $ref: '#/components/schemas/GuildChatData'
+        social:
+          $ref: '#/components/schemas/GuildSocialData'
+        realtime:
+          $ref: '#/components/schemas/RealtimeStatus'
+
+    GuildData:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 50
+        description:
+          type: string
+          maxLength: 500
+        level:
+          type: integer
+          minimum: 1
+        member_count:
+          type: integer
+          minimum: 1
+        max_members:
+          type: integer
+          minimum: 1
+        reputation:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    GuildMemberData:
+      type: object
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        role:
+          type: string
+          enum: [leader, officer, member, recruit]
+        joined_at:
+          type: string
+          format: date-time
+        last_active:
+          type: string
+          format: date-time
+        is_online:
+          type: boolean
+
+    GuildChatData:
+      type: object
+      properties:
+        channels:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              name:
+                type: string
+              type:
+                type: string
+                enum: [general, officers, events]
+              member_count:
+                type: integer
+        recent_messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatMessage'
+          maxItems: 50
+
+    GuildSocialData:
+      type: object
+      properties:
+        total_friends:
+          type: integer
+        active_members:
+          type: integer
+        chat_messages_today:
+          type: integer
+        events_completed:
+          type: integer
+        social_score:
+          type: number
+          minimum: 0
+          maximum: 100
+
+    RealtimeStatus:
+      type: object
+      properties:
+        websocket_url:
+          type: string
+          format: uri
+        connected_clients:
+          type: integer
+        last_update:
+          type: string
+          format: date-time
+
+    SendGuildMessageRequest:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+          maxLength: 500
+        channel_id:
+          type: string
+          format: uuid
+        message_type:
+          type: string
+          enum: [text, system, event]
+          default: text
+
+    MessageResponse:
+      type: object
+      properties:
+        message_id:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [sent, delivered, moderated]
+
+    ChatMessage:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        content:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        channel_id:
+          type: string
+          format: uuid
+
+    GuildSocialStatsResponse:
+      type: object
+      properties:
+        period:
+          type: string
+          enum: [hour, day, week, month]
+        metrics:
+          type: object
+          properties:
+            messages_sent:
+              type: integer
+            active_members:
+              type: integer
+            friend_connections:
+              type: integer
+            events_participated:
+              type: integer
+            average_session_time:
+              type: integer
+              description: "Average session time in minutes"
+
+    GuildFriendsNetworkResponse:
+      type: object
+      properties:
+        nodes:
+          type: array
+          items:
+            type: object
+            properties:
+              user_id:
+                type: string
+                format: uuid
+              username:
+                type: string
+              guild_role:
+                type: string
+              is_online:
+                type: boolean
+        connections:
+          type: array
+          items:
+            type: object
+            properties:
+              from_user_id:
+                type: string
+                format: uuid
+              to_user_id:
+                type: string
+                format: uuid
+              relationship_type:
+                type: string
+                enum: [friend, guild_member, mutual_guild]
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
